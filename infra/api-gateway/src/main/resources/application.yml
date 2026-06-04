@@ -3,3 +3,40 @@ server:
 spring:
   application:
     name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: patient-service
+              uri: lb://patient-service
+              predicates:
+                - Path=/api/patients/**
+
+            - id: doctor-service
+              uri: lb://doctor-service
+              predicates:
+                - Path=/api/doctors/**
+
+            - id: appointment-service
+              uri: lb://appointment-service
+              predicates:
+                - Path=/api/appointments/**
+
+            - id: notification-service
+              uri: lb://notification-service
+              predicates:
+                - Path=/api/notifications/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+    register-with-eureka: true
+    fetch-registry: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
