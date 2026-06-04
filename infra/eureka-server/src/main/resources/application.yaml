@@ -3,3 +3,15 @@ server:
 spring:
   application:
     name: eureka-server
+eureka:
+  client:
+    register-with-eureka: false     #eureka not register by itself
+    fetch-registry: false
+  server:
+    enable-self-preservation: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
