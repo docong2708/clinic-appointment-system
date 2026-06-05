@@ -19,6 +19,7 @@
     </properties>
 
     <modules>
+        <module>services/user-service</module>
         <module>services/patient-service</module>
         <module>services/doctor-service</module>
         <module>services/notification-service</module>
@@ -87,3 +88,4 @@
         </pluginManagement>
     </build>
 </project>
+
