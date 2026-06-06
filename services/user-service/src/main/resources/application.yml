@@ -22,6 +22,8 @@ spring:
         format_sql: true
 
 eureka:
+  instance:
+    prefer-ip-address: true
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka
@@ -33,3 +35,10 @@ management:
     web:
       exposure:
         include: health,info
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:mYvRhtw7xJxXlyePdZWA52rxT0qfjwT069nN11NYhIncVJFOzh1v44ftn3JQlS0sGe6LzD6ld82Xn49ErOoBLU}
+    issuer: clinic-appointment-system
+    access-token-expiration: 15m
+    refresh-token-expiration: 7d

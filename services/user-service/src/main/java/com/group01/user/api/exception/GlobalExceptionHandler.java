@@ -1,9 +1,12 @@
 package com.group01.user.api.exception;
 
 import com.group01.user.domain.exception.EmailAlreadyExistsException;
+import com.group01.user.domain.exception.InvalidCredentialsException;
 import com.group01.user.domain.exception.InvalidUserStatusException;
 import com.group01.user.domain.exception.PhoneAlreadyExistsException;
 import com.group01.user.domain.exception.RoleNotFoundException;
+import com.group01.user.domain.exception.TokenExpiredException;
+import com.group01.user.domain.exception.UnauthorizedException;
 import com.group01.user.domain.exception.UserNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -26,6 +29,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({EmailAlreadyExistsException.class, PhoneAlreadyExistsException.class})
     ResponseEntity<ErrorResponse> handleConflict(RuntimeException exception, HttpServletRequest request) {
         return error(HttpStatus.CONFLICT, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler({InvalidCredentialsException.class, TokenExpiredException.class, UnauthorizedException.class})
+    ResponseEntity<ErrorResponse> handleUnauthorized(RuntimeException exception, HttpServletRequest request) {
+        return error(HttpStatus.UNAUTHORIZED, exception.getMessage(), request);
     }
 
     @ExceptionHandler({RoleNotFoundException.class, InvalidUserStatusException.class, IllegalArgumentException.class})
