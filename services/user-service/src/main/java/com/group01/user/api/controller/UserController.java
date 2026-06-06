@@ -15,6 +15,7 @@ import com.group01.user.application.usecase.ChangeUserStatusUseCase;
 import com.group01.user.application.usecase.CreateUserUseCase;
 import com.group01.user.application.usecase.DeleteUserUseCase;
 import com.group01.user.application.usecase.GetAllUsersUseCase;
+import com.group01.user.application.usecase.GetMyProfileUseCase;
 import com.group01.user.application.usecase.GetUserByIdUseCase;
 import com.group01.user.application.usecase.UpdateUserUseCase;
 import com.group01.user.domain.aggregate.Role;
@@ -42,6 +43,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserController {
     private final CreateUserUseCase createUserUseCase;
+    private final GetMyProfileUseCase getMyProfileUseCase;
     private final GetUserByIdUseCase getUserByIdUseCase;
     private final GetAllUsersUseCase getAllUsersUseCase;
     private final UpdateUserUseCase updateUserUseCase;
@@ -54,6 +56,11 @@ public class UserController {
     public UserResponse createUser(@Valid @RequestBody CreateUserRequest request) {
         return toResponse(createUserUseCase.execute(new CreateUserCommand(
                 request.email(), request.fullName(), request.phoneNumber(), request.password(), request.roles())));
+    }
+
+    @GetMapping("/me")
+    public UserResponse getMyProfile() {
+        return toResponse(getMyProfileUseCase.execute());
     }
 
     @GetMapping("/{id}")
