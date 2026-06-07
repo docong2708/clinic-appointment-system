@@ -1,4 +1,4 @@
-package com.group01.appointment.domain.valueobject;
+package com.group01.appointment.domain.vo;
 
 import java.util.UUID;
 
