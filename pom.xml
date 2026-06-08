@@ -23,6 +23,7 @@
         <module>services/doctor-service</module>
         <module>services/notification-service</module>
         <module>services/appointment-service</module>
+        <module>services/medical-record-service</module>
         <module>infra/api-gateway</module>
         <module>infra/config-server</module>
         <module>infra/eureka-server</module>
