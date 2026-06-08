@@ -1,0 +1,4 @@
+﻿eureka pid=18928
+user-service pid=3496
+user-service pid=16340
+api-gateway pid=16152

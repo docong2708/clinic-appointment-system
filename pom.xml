@@ -19,11 +19,11 @@
     </properties>
 
     <modules>
+        <module>services/user-service</module>
         <module>services/patient-service</module>
         <module>services/doctor-service</module>
         <module>services/notification-service</module>
         <module>services/appointment-service</module>
-        <module>services/medical-record-service</module>
         <module>infra/api-gateway</module>
         <module>infra/config-server</module>
         <module>infra/eureka-server</module>
@@ -55,6 +55,13 @@
                 <scope>provided</scope>
             </dependency>
 
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+                <version>5.0.1</version>
+                <scope>compile</scope>
+            </dependency>
+
 <!--            <dependency>-->
 <!--                <groupId>com.talenthub</groupId>-->
 <!--                <artifactId>common-web</artifactId>-->
@@ -81,3 +88,4 @@
         </pluginManagement>
     </build>
 </project>
+

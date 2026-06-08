@@ -1,0 +1,52 @@
+package com.group01.user.domain.aggregate;
+
+import com.group01.user.domain.vo.Email;
+import com.group01.user.domain.vo.PhoneNumber;
+import com.group01.user.domain.vo.UserStatus;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
+@Getter
+@Builder
+@AllArgsConstructor
+public class User {
+    private UUID id;
+    private Email email;
+    private String fullName;
+    private PhoneNumber phoneNumber;
+    private String passwordHash;
+    private UserStatus status;
+    @Builder.Default
+    private Set<Role> roles = new HashSet<>();
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
+    public void updateProfile(String fullName, PhoneNumber phoneNumber) {
+        if (fullName == null || fullName.isBlank()) {
+            throw new IllegalArgumentException("Full name is required");
+        }
+        this.fullName = fullName.trim();
+        this.phoneNumber = phoneNumber;
+    }
+
+    public void assignRoles(Set<Role> roles) {
+        this.roles = roles == null ? new HashSet<>() : new HashSet<>(roles);
+    }
+
+    public void changeStatus(UserStatus status) {
+        if (status == null) {
+            throw new IllegalArgumentException("User status is required");
+        }
+        this.status = status;
+    }
+
+    public void deactivate() {
+        this.status = UserStatus.INACTIVE;
+    }
+}
