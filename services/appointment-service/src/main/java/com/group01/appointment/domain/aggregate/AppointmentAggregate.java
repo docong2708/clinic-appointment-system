@@ -133,6 +133,14 @@ public class AppointmentAggregate {
             UUID cancelledBy,
             ActorRole cancelledByRole
     ) {
+        if (cancelReason == null) {
+            throw new IllegalArgumentException("Cancel reason must not be null");
+        }
+
+        if (cancelledBy == null) {
+            throw new IllegalArgumentException("Cancelled by must not be null");
+        }
+
         if (cancelledByRole == null) {
             throw new IllegalArgumentException("Cancelled by role must not be null");
         }
@@ -235,16 +243,15 @@ public class AppointmentAggregate {
             UUID performedBy,
             ActorRole performedByRole
     ) {
-        AppointmentLog log = AppointmentLog.builder()
-                .id(UUID.randomUUID())
-                .appointmentId(this.appointmentId.value())
-                .action(action.name())
-                .oldStatus(oldStatus == null ? null : oldStatus.name())
-                .newStatus(newStatus == null ? null : newStatus.name())
-                .reason(reason)
-                .performedBy(performedBy)
-                .performedByRole(performedByRole == null ? null : performedByRole.name())
-                .build();
+        AppointmentLog log = AppointmentLog.create(
+                this.appointmentId,
+                action,
+                oldStatus,
+                newStatus,
+                reason,
+                performedBy,
+                performedByRole
+        );
 
         this.logs.add(log);
     }

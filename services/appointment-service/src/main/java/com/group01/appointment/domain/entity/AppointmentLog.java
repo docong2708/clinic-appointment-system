@@ -1,54 +1,143 @@
 package com.group01.appointment.domain.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
+import com.group01.appointment.domain.vo.ActorRole;
+import com.group01.appointment.domain.vo.AppointmentId;
+import com.group01.appointment.domain.vo.AppointmentLogAction;
+import com.group01.appointment.domain.vo.AppointmentStatus;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-@Entity
-@Table(name = "appointment_logs")
 public class AppointmentLog {
 
-    @Id
-    @Column(name = "id", nullable = false)
-    private UUID id;
+    private final UUID id;
+    private final AppointmentId appointmentId;
 
-    @Column(name = "appointment_id", nullable = false)
-    private UUID appointmentId;
+    private final AppointmentLogAction action;
 
-    @Column(name = "action", nullable = false, length = 50)
-    private String action;
+    private final AppointmentStatus oldStatus;
+    private final AppointmentStatus newStatus;
 
-    @Column(name = "old_status", length = 50)
-    private String oldStatus;
+    private final String reason;
 
-    @Column(name = "new_status", length = 50)
-    private String newStatus;
+    private final UUID performedBy;
+    private final ActorRole performedByRole;
 
-    @Column(name = "reason", length = 500)
-    private String reason;
+    private final LocalDateTime createdAt;
 
-    @Column(name = "performed_by")
-    private UUID performedBy;
+    private AppointmentLog(
+            UUID id,
+            AppointmentId appointmentId,
+            AppointmentLogAction action,
+            AppointmentStatus oldStatus,
+            AppointmentStatus newStatus,
+            String reason,
+            UUID performedBy,
+            ActorRole performedByRole,
+            LocalDateTime createdAt
+    ) {
+        if (id == null) {
+            throw new IllegalArgumentException("Appointment log id must not be null");
+        }
 
-    @Column(name = "performed_by_role", length = 50)
-    private String performedByRole;
+        if (appointmentId == null) {
+            throw new IllegalArgumentException("Appointment id must not be null");
+        }
 
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+        if (action == null) {
+            throw new IllegalArgumentException("Appointment log action must not be null");
+        }
+
+        this.id = id;
+        this.appointmentId = appointmentId;
+        this.action = action;
+        this.oldStatus = oldStatus;
+        this.newStatus = newStatus;
+        this.reason = reason;
+        this.performedBy = performedBy;
+        this.performedByRole = performedByRole;
+        this.createdAt = createdAt == null ? LocalDateTime.now() : createdAt;
+    }
+
+    public static AppointmentLog create(
+            AppointmentId appointmentId,
+            AppointmentLogAction action,
+            AppointmentStatus oldStatus,
+            AppointmentStatus newStatus,
+            String reason,
+            UUID performedBy,
+            ActorRole performedByRole
+    ) {
+        return new AppointmentLog(
+                UUID.randomUUID(),
+                appointmentId,
+                action,
+                oldStatus,
+                newStatus,
+                reason,
+                performedBy,
+                performedByRole,
+                LocalDateTime.now()
+        );
+    }
+
+    public static AppointmentLog restore(
+            UUID id,
+            AppointmentId appointmentId,
+            AppointmentLogAction action,
+            AppointmentStatus oldStatus,
+            AppointmentStatus newStatus,
+            String reason,
+            UUID performedBy,
+            ActorRole performedByRole,
+            LocalDateTime createdAt
+    ) {
+        return new AppointmentLog(
+                id,
+                appointmentId,
+                action,
+                oldStatus,
+                newStatus,
+                reason,
+                performedBy,
+                performedByRole,
+                createdAt
+        );
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public AppointmentId getAppointmentId() {
+        return appointmentId;
+    }
+
+    public AppointmentLogAction getAction() {
+        return action;
+    }
+
+    public AppointmentStatus getOldStatus() {
+        return oldStatus;
+    }
+
+    public AppointmentStatus getNewStatus() {
+        return newStatus;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public UUID getPerformedBy() {
+        return performedBy;
+    }
+
+    public ActorRole getPerformedByRole() {
+        return performedByRole;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
 }

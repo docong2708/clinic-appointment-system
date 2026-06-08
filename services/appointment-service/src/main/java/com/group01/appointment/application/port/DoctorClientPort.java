@@ -1,4 +1,8 @@
 package com.group01.appointment.application.port;
 
-public class DoctorClientPort {
+import java.util.UUID;
+
+public interface DoctorClientPort {
+
+    boolean existsById(UUID doctorId);
 }

@@ -1,4 +1,11 @@
 package com.group01.appointment.application.command;
 
-public class CancelAppointmentCommand {
+import java.util.UUID;
+
+public record CancelAppointmentCommand(
+        UUID appointmentId,
+        UUID cancelledBy,
+        String cancelledByRole,
+        String cancelReason
+) {
 }

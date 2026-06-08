@@ -1,6 +1,5 @@
 package com.group01.appointment.infrastructure.persistence;
 
-
 import com.group01.appointment.domain.aggregate.AppointmentAggregate;
 import com.group01.appointment.domain.vo.ActorRole;
 import com.group01.appointment.domain.vo.AppointmentId;
@@ -68,5 +67,4 @@ public class AppointmentMapper {
                 entity.getUpdatedAt()
         );
     }
-}
 }
