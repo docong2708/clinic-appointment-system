@@ -1,5 +1,6 @@
 server:
   port: 8081
+
 spring:
   application:
     name: appointment-service
@@ -25,3 +26,16 @@ clients:
   notification-service:
     base-url: http://localhost:8083
     appointment-events-path: /appointment-events
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+    register-with-eureka: true
+    fetch-registry: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

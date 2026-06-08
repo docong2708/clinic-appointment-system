@@ -7,6 +7,7 @@ import com.group01.appointment.application.result.AppointmentResult;
 import com.group01.appointment.application.usecase.CreateAppointmentUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,13 +16,18 @@ import org.springframework.web.bind.annotation.RestController;
 import java.net.URI;
 
 @RestController
-@RequestMapping("/appointments")
+@RequestMapping("/api/v1/appointment")
 public class AppointmentController {
 
     private final CreateAppointmentUseCase createAppointmentUseCase;
 
     public AppointmentController(CreateAppointmentUseCase createAppointmentUseCase) {
         this.createAppointmentUseCase = createAppointmentUseCase;
+    }
+
+    @GetMapping
+    public String appointment() {
+        return "Appointment running";
     }
 
     @PostMapping
@@ -37,7 +43,7 @@ public class AppointmentController {
         ));
 
         return ResponseEntity
-                .created(URI.create("/appointments/" + result.id()))
+                .created(URI.create("/api/v1/appointment/" + result.id()))
                 .body(AppointmentResponse.from(result));
     }
 }
