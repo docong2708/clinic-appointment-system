@@ -1,0 +1,2035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Service Communication Flow - Clean Architecture & DDD</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #070b19;
+            --grid-color: rgba(56, 189, 248, 0.03);
+            --card-bg: rgba(15, 23, 42, 0.55);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            
+            /* Query Path - Blue Theme */
+            --query-color: #38bdf8;
+            --query-glow: rgba(56, 189, 248, 0.4);
+            --query-bg: rgba(14, 165, 233, 0.1);
+            
+            /* Command Path - Orange Theme */
+            --command-color: #f97316;
+            --command-glow: rgba(249, 115, 22, 0.4);
+            --command-bg: rgba(249, 115, 22, 0.1);
+            
+            /* Highlight Colors */
+            --accent-green: #10b981;
+            --accent-purple: #a855f7;
+            --accent-yellow: #f59e0b;
+            --active-color: #00ffff;
+            
+            /* Layers colors */
+            --layer-1-color: #14b8a6;
+            --layer-2-color: #8b5cf6;
+            --layer-3-color: #10b981;
+            --layer-4-color: #ec4899;
+            --layer-5-color: #f59e0b;
+        }
+
+        .light-mode {
+            --bg-color: #f8fafc;
+            --grid-color: rgba(15, 23, 42, 0.03);
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --card-border: rgba(15, 23, 42, 0.08);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --query-glow: rgba(14, 165, 233, 0.2);
+            --command-glow: rgba(249, 115, 22, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(30, 41, 59, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 85% 85%, rgba(15, 23, 42, 0.3) 0%, transparent 50%),
+                linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header Style */
+        header {
+            padding: 16px 24px;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .header-title-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-title-container i {
+            font-size: 28px;
+            background: linear-gradient(135deg, var(--query-color), var(--command-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-text h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(90deg, #ffffff, var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .light-mode .header-text h1 {
+            background: none;
+            -webkit-text-fill-color: initial;
+            color: var(--text-main);
+        }
+
+        .header-text p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(4px);
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .btn-query {
+            border-color: var(--query-color);
+            background: var(--query-bg);
+        }
+        .btn-query:hover {
+            background: rgba(56, 189, 248, 0.2);
+            box-shadow: 0 0 12px var(--query-glow);
+        }
+
+        .btn-command {
+            border-color: var(--command-color);
+            background: var(--command-bg);
+        }
+        .btn-command:hover {
+            background: rgba(249, 115, 22, 0.2);
+            box-shadow: 0 0 12px var(--command-glow);
+        }
+
+        .btn-reset {
+            border-color: var(--text-muted);
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            font-size: 12px;
+        }
+
+        .speed-control input {
+            width: 80px;
+            accent-color: var(--query-color);
+            cursor: pointer;
+        }
+
+        /* Layout Structure */
+        .app-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .sidebar-left {
+            width: 320px;
+            border-right: 1px solid var(--card-border);
+            background: rgba(10, 15, 30, 0.4);
+            backdrop-filter: blur(20px);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+            z-index: 5;
+        }
+
+        .diagram-viewport {
+            flex: 1;
+            overflow: auto;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+        }
+
+        .sidebar-right {
+            width: 420px;
+            border-left: 1px solid var(--card-border);
+            background: rgba(10, 15, 30, 0.45);
+            backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 5;
+            transition: width 0.3s ease;
+        }
+
+        .sidebar-right.collapsed {
+            width: 0;
+            border-left: none;
+        }
+
+        /* Left Sidebar: Steps list */
+        .section-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .flow-legend {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.query {
+            background-color: var(--query-color);
+            box-shadow: 0 0 8px var(--query-color);
+        }
+
+        .legend-dot.command {
+            background-color: var(--command-color);
+            box-shadow: 0 0 8px var(--command-color);
+        }
+
+        .steps-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .step-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .step-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateX(2px);
+        }
+
+        .step-card.active {
+            background: rgba(56, 189, 248, 0.05);
+            border-color: var(--active-color);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
+        }
+
+        .step-card.query-active {
+            background: var(--query-bg);
+            border-color: var(--query-color);
+        }
+
+        .step-card.command-active {
+            background: var(--command-bg);
+            border-color: var(--command-color);
+        }
+
+        .step-num {
+            background: rgba(255, 255, 255, 0.08);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-muted);
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .step-card.query-active .step-num {
+            background: var(--query-color);
+            color: #070b19;
+        }
+
+        .step-card.command-active .step-num {
+            background: var(--command-color);
+            color: #070b19;
+        }
+
+        .step-details {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .step-title {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .step-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.3;
+        }
+
+        /* Diagram Canvas & Layers */
+        .diagram-canvas {
+            width: 1400px;
+            height: 1060px;
+            position: relative;
+            flex-shrink: 0;
+            margin: 20px auto;
+        }
+
+        .layers-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            pointer-events: none;
+        }
+
+        .layer-band {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.015);
+            border: 1px dashed rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .layer-band::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            border-top-left-radius: 12px;
+            border-bottom-left-radius: 12px;
+        }
+
+        #layer-band-1::before { background-color: var(--layer-1-color); }
+        #layer-band-2::before { background-color: var(--layer-2-color); }
+        #layer-band-3::before { background-color: var(--layer-3-color); }
+        #layer-band-4::before { background-color: var(--layer-4-color); }
+        #layer-band-5::before { background-color: var(--layer-5-color); }
+
+        .layer-tag {
+            position: absolute;
+            left: -15px;
+            top: 50%;
+            transform: translateY(-50%) rotate(-90deg);
+            font-family: 'Outfit', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.3);
+            white-space: nowrap;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        /* SVG Overlays for arrows */
+        .svg-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .connection-path {
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            opacity: 0.25;
+            transition: opacity 0.3s, stroke-width 0.3s, filter 0.3s;
+        }
+
+        .connection-path.query {
+            stroke: var(--query-color);
+        }
+
+        .connection-path.command {
+            stroke: var(--command-color);
+        }
+
+        .connection-path.active {
+            opacity: 1;
+            stroke-width: 3.5;
+            filter: drop-shadow(0 0 6px var(--active-color));
+        }
+
+        .connection-path.query.active {
+            stroke: var(--active-color);
+            filter: drop-shadow(0 0 6px var(--query-color));
+        }
+
+        .connection-path.command.active {
+            stroke: var(--active-color);
+            filter: drop-shadow(0 0 6px var(--command-color));
+        }
+
+        .path-label {
+            font-size: 10px;
+            font-family: 'Fira Code', monospace;
+            font-weight: 500;
+            fill: var(--text-muted);
+            pointer-events: auto;
+            cursor: pointer;
+            transition: fill 0.2s;
+        }
+
+        .path-label:hover {
+            fill: var(--text-main);
+        }
+
+        .path-label.active {
+            fill: var(--active-color);
+            font-weight: bold;
+            text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+        }
+
+        .path-num-bg {
+            fill: rgba(15, 23, 42, 0.9);
+            stroke-width: 1;
+        }
+        .path-num-bg.query { stroke: var(--query-color); }
+        .path-num-bg.command { stroke: var(--command-color); }
+        .path-num-bg.active {
+            fill: var(--active-color);
+            stroke: var(--active-color);
+        }
+
+        .path-num-text {
+            font-size: 9px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            text-anchor: middle;
+            dominant-baseline: central;
+        }
+        .path-num-text.query { fill: var(--query-color); }
+        .path-num-text.command { fill: var(--command-color); }
+        .path-num-text.active { fill: #070b19; }
+
+        /* Glowing Flow Particle */
+        .flow-particle {
+            fill: var(--active-color);
+            filter: drop-shadow(0 0 8px var(--active-color));
+            display: none;
+        }
+
+        /* Glassmorphic Components */
+        .component-card {
+            position: absolute;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 12px 16px;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .component-card:hover {
+            border-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.6);
+        }
+
+        .component-card.active-glow {
+            transform: scale(1.03) translateY(-2px);
+            z-index: 4;
+        }
+
+        .component-card.query-glow {
+            border-color: var(--query-color);
+            box-shadow: 0 0 20px var(--query-glow);
+        }
+
+        .component-card.command-glow {
+            border-color: var(--command-color);
+            box-shadow: 0 0 20px var(--command-glow);
+        }
+
+        .component-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .component-header i {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .component-card.query-glow .component-header i { color: var(--query-color); }
+        .component-card.command-glow .component-header i { color: var(--command-color); }
+
+        .component-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+        }
+
+        .component-role {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Specialized Component Styles */
+        .gateway-card {
+            background: rgba(20, 184, 166, 0.05);
+            border-color: rgba(20, 184, 166, 0.2);
+        }
+        .db-card {
+            background: rgba(245, 158, 11, 0.03);
+            border-color: rgba(245, 158, 11, 0.2);
+            border-radius: 12px 12px 12px 12px;
+        }
+        .db-cylinder {
+            border-top: 3px solid rgba(255, 255, 255, 0.15);
+            border-bottom: 3px solid rgba(255, 255, 255, 0.15);
+        }
+        .db-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .aggregate-card {
+            background: rgba(249, 115, 22, 0.05);
+            border: 2px dashed rgba(249, 115, 22, 0.3);
+            padding: 16px;
+        }
+        .aggregate-rule-list {
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .aggregate-rule {
+            font-size: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-muted);
+        }
+        .aggregate-rule i {
+            color: var(--accent-green);
+            font-size: 8px;
+        }
+
+        /* Highlight labels on components */
+        .badge {
+            position: absolute;
+            top: -8px;
+            right: 8px;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .badge.readonly { background-color: #0284c7; color: white; }
+        .badge.write { background-color: #ea580c; color: white; }
+        .badge.transactional { background-color: var(--accent-purple); color: white; }
+        .badge.port { background-color: var(--accent-green); color: white; }
+        .badge.version { background-color: var(--accent-yellow); color: #070b19; }
+
+        /* Right Sidebar: Code Inspector & Details */
+        .inspector-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--card-border);
+            background: rgba(15, 23, 42, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .inspector-title-container h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .inspector-title-container p {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .btn-close-inspector {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px;
+        }
+        .btn-close-inspector:hover { color: var(--text-main); }
+
+        .inspector-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .info-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .info-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .info-val {
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .info-pill-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .info-pill {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        
+        .info-pill.blue { border-color: var(--query-color); color: var(--query-color); background: var(--query-bg); }
+        .info-pill.orange { border-color: var(--command-color); color: var(--command-color); background: var(--command-bg); }
+        .info-pill.green { border-color: var(--accent-green); color: var(--accent-green); background: rgba(16, 185, 129, 0.05); }
+
+        /* Interactive Tabs for Code View */
+        .tabs-header {
+            display: flex;
+            border-bottom: 1px solid var(--card-border);
+            margin-bottom: 10px;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover { color: var(--text-main); }
+        .tab-btn.active {
+            color: var(--query-color);
+            border-bottom-color: var(--query-color);
+        }
+        .light-mode .tab-btn.active { color: #0284c7; border-bottom-color: #0284c7; }
+
+        .code-container {
+            background: #030712;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .light-mode .code-container {
+            background: #0f172a; /* Keep dark background for code even in light mode for readability */
+        }
+
+        .code-header {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 6px 12px;
+            font-size: 11px;
+            font-family: 'Fira Code', monospace;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-copy {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+        .btn-copy:hover { color: var(--text-main); }
+
+        pre {
+            padding: 15px;
+            overflow-x: auto;
+            margin: 0;
+        }
+
+        code {
+            font-family: 'Fira Code', monospace;
+            font-size: 11px;
+            line-height: 1.5;
+            color: #38bdf8;
+        }
+
+        /* Syntax Highlighting */
+        .keyword { color: #f472b6; }
+        .type { color: #34d399; }
+        .string { color: #fbbf24; }
+        .comment { color: #6b7280; font-style: italic; }
+        .annotation { color: #c084fc; }
+
+        /* Zoom and Utility widgets */
+        .diagram-toolbar {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 6px;
+            display: flex;
+            gap: 6px;
+            backdrop-filter: blur(12px);
+            z-index: 5;
+        }
+
+        .toolbar-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            background: none;
+            border: none;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .toolbar-btn:hover { background: rgba(255, 255, 255, 0.08); }
+
+        .empty-inspector {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 40px;
+            gap: 15px;
+        }
+
+        .empty-inspector i {
+            font-size: 48px;
+            opacity: 0.3;
+        }
+
+        /* Print Mode Adjustments */
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            .sidebar-left, .sidebar-right, header, .diagram-toolbar {
+                display: none !important;
+            }
+            .diagram-viewport {
+                padding: 0 !important;
+                background: white !important;
+            }
+            .diagram-canvas {
+                margin: 0 !important;
+                transform: scale(0.8);
+                transform-origin: top left;
+            }
+            .component-card {
+                background: white !important;
+                color: black !important;
+                border-color: #ccc !important;
+                box-shadow: none !important;
+            }
+            .connection-path {
+                opacity: 0.8 !important;
+                stroke-width: 2px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Section -->
+    <header>
+        <div class="header-title-container">
+            <i class="fa-solid fa-network-wired"></i>
+            <div class="header-text">
+                <h1>Doctor Service Communication Flow</h1>
+                <p>System Sequence Diagram: Clean Architecture & Domain-Driven Design (DDD)</p>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-query" onclick="startFlow('query')">
+                <i class="fa-solid fa-play"></i> Animate Query Flow (Read)
+            </button>
+            <button class="btn btn-command" onclick="startFlow('command')">
+                <i class="fa-solid fa-play"></i> Animate Command Flow (Write)
+            </button>
+            <button class="btn btn-reset" onclick="resetAll()">
+                <i class="fa-solid fa-rotate-left"></i> Reset
+            </button>
+            
+            <div class="speed-control">
+                <span>Speed:</span>
+                <input type="range" id="speedRange" min="500" max="3000" step="250" value="1500" onchange="updateSpeed(this.value)">
+                <span id="speedVal">1.5s</span>
+            </div>
+
+            <button class="btn" onclick="toggleTheme()" title="Toggle Light/Dark Theme">
+                <i class="fa-solid fa-circle-half-stroke"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- App Main Container -->
+    <div class="app-container">
+        
+        <!-- Left Sidebar: Step descriptions -->
+        <div class="sidebar-left">
+            <div class="section-title">
+                <i class="fa-solid fa-map-signs"></i> Legend & Pathways
+            </div>
+            
+            <div class="flow-legend">
+                <div class="legend-item">
+                    <div class="legend-dot query"></div>
+                    <div><strong>Query Flow (Blue):</strong> Fetch Available Slots (Read Only, optimized path)</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot command"></div>
+                    <div><strong>Command Flow (Orange):</strong> Block/Book Slot (Write operation, transactional)</div>
+                </div>
+            </div>
+
+            <div class="section-title" id="steps-header">
+                <i class="fa-solid fa-list-ol"></i> Sequence Steps
+            </div>
+
+            <div class="steps-container" id="steps-container">
+                <!-- Will be populated dynamically based on running flow -->
+                <div style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 20px 0;">
+                    Click <strong>Animate Query Flow</strong> or <strong>Animate Command Flow</strong> above to see step-by-step actions.
+                </div>
+            </div>
+        </div>
+
+        <!-- Central Diagram Canvas -->
+        <div class="diagram-viewport" id="viewport">
+            <div class="diagram-canvas" id="canvas">
+                
+                <!-- Background Horizontal Layers Grid -->
+                <div class="layers-background">
+                    <div class="layer-band" id="layer-band-1"><div class="layer-tag">1. API Layer</div></div>
+                    <div class="layer-band" id="layer-band-2"><div class="layer-tag">2. Application Layer</div></div>
+                    <div class="layer-band" id="layer-band-3"><div class="layer-tag">3. Domain Layer</div></div>
+                    <div class="layer-band" id="layer-band-4"><div class="layer-tag">4. Infrastructure Layer</div></div>
+                    <div class="layer-band" id="layer-band-5"><div class="layer-tag">5. Doctor Database</div></div>
+                </div>
+
+                <!-- SVG overlay containing arrows -->
+                <svg class="svg-overlay" id="svg-canvas" viewBox="0 0 1400 1060" width="1400" height="1060">
+                    <defs>
+                        <!-- Markers for Arrowheads -->
+                        <marker id="arrow-query" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 1 L 10 5 L 0 9 z" fill="var(--query-color)"/>
+                        </marker>
+                        <marker id="arrow-query-active" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                            <path d="M 0 1 L 10 5 L 0 9 z" fill="var(--active-color)"/>
+                        </marker>
+                        <marker id="arrow-command" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 1 L 10 5 L 0 9 z" fill="var(--command-color)"/>
+                        </marker>
+                        <marker id="arrow-command-active" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                            <path d="M 0 1 L 10 5 L 0 9 z" fill="var(--active-color)"/>
+                        </marker>
+                    </defs>
+
+                    <!-- QUERY PATHWAY PATHS -->
+                    <!-- Q1: Client -> Controller -->
+                    <path id="path-q1" class="connection-path query" d="M 260 120 L 312 120" marker-end="url(#arrow-query)"/>
+                    
+                    <!-- Q2: Controller -> Use Case (Orthogonal) -->
+                    <path id="path-q2" class="connection-path query" d="M 410 160 L 410 235 L 360 235 L 360 262" marker-end="url(#arrow-query)"/>
+                    
+                    <!-- Q3: Use Case -> Read Rep Port -->
+                    <path id="path-q3" class="connection-path query" d="M 350 350 L 350 472" marker-end="url(#arrow-query)"/>
+                    
+                    <!-- Q4: Read Rep Port -> Adapter -->
+                    <path id="path-q4" class="connection-path query" d="M 350 560 L 350 722" marker-end="url(#arrow-query)"/>
+                    
+                    <!-- Q5: Adapter -> DB -->
+                    <path id="path-q5" class="connection-path query" d="M 350 810 L 350 912" marker-end="url(#arrow-query)"/>
+                    
+                    <!-- Q6: DB -> Adapter (Response Return) -->
+                    <path id="path-q6" class="connection-path query" d="M 310 920 L 310 818" marker-end="url(#arrow-query)"/>
+                    
+                    <!-- Q7: Adapter -> Port (Return) -->
+                    <path id="path-q7" class="connection-path query" d="M 310 730 L 310 568" marker-end="url(#arrow-query)"/>
+                    
+                    <!-- Q8: Port -> Use Case (Return) -->
+                    <path id="path-q8" class="connection-path query" d="M 310 480 L 310 358" marker-end="url(#arrow-query)"/>
+                    
+                    <!-- Q9: Use Case -> Client (via controller mapper return) -->
+                    <path id="path-q9" class="connection-path query" d="M 310 270 L 310 215 L 190 215 L 190 168" marker-end="url(#arrow-query)"/>
+
+
+                    <!-- COMMAND PATHWAY PATHS -->
+                    <!-- C1: Client -> Controller -->
+                    <path id="path-c1" class="connection-path command" d="M 960 120 L 1012 120" marker-end="url(#arrow-command)"/>
+                    
+                    <!-- C2: Controller -> Use Case -->
+                    <path id="path-c2" class="connection-path command" d="M 1110 160 L 1110 235 L 1070 235 L 1070 262" marker-end="url(#arrow-command)"/>
+                    
+                    <!-- C3: Use Case -> Repository Port (Load Aggregate) -->
+                    <path id="path-c3" class="connection-path command" d="M 980 350 L 980 452" marker-end="url(#arrow-command)"/>
+                    
+                    <!-- C4: Repository Port -> Adapter -->
+                    <path id="path-c4" class="connection-path command" d="M 920 530 L 920 722" marker-end="url(#arrow-command)"/>
+                    
+                    <!-- C5: Adapter -> DB -->
+                    <path id="path-c5" class="connection-path command" d="M 920 810 L 920 912" marker-end="url(#arrow-command)"/>
+                    
+                    <!-- C6: DB -> Adapter -->
+                    <path id="path-c6" class="connection-path command" d="M 890 920 L 890 818" marker-end="url(#arrow-command)"/>
+                    
+                    <!-- C7: Adapter -> Port -->
+                    <path id="path-c7" class="connection-path command" d="M 890 730 L 890 538" marker-end="url(#arrow-command)"/>
+                    
+                    <!-- C8: Port -> Use Case -->
+                    <path id="path-c8" class="connection-path command" d="M 900 460 L 900 400 L 950 400 L 950 358" marker-end="url(#arrow-command)"/>
+                    
+                    <!-- C9: Use Case -> DoctorSchedule Aggregate (Business validation) -->
+                    <path id="path-c9" class="connection-path command" d="M 1180 310 L 1210 310 L 1210 452" marker-end="url(#arrow-command)"/>
+                    
+                    <!-- C10: Aggregate -> Use Case (Event registered return) -->
+                    <path id="path-c10" class="connection-path command" d="M 1140 460 L 1140 340 L 1172 340" marker-end="url(#arrow-command)"/>
+                    
+                    <!-- C11: Use Case -> Port (Save) -->
+                    <path id="path-c11" class="connection-path command" d="M 1020 350 L 1020 452" marker-end="url(#arrow-command)"/>
+                    
+                    <!-- C12: Port -> Adapter (Save) -->
+                    <path id="path-c12" class="connection-path command" d="M 950 530 L 950 722" marker-end="url(#arrow-command)"/>
+                    
+                    <!-- C13: Adapter -> DB (Update, version checking) -->
+                    <path id="path-c13" class="connection-path command" d="M 950 810 L 950 912" marker-end="url(#arrow-command)"/>
+                    
+                    <!-- C14: Use Case -> Event Bus (Publish) -->
+                    <path id="path-c14" class="connection-path command" d="M 1180 350 L 1260 350 L 1260 722" marker-end="url(#arrow-command)"/>
+                    
+                    <!-- C14a: Event Bus -> Notification Service -->
+                    <path id="path-c14a" class="connection-path command" d="M 1300 765 L 1380 765 L 1380 842" marker-end="url(#arrow-command)"/>
+                    
+                    <!-- C14b: Event Bus -> Calendar Service -->
+                    <path id="path-c14b" class="connection-path command" d="M 1300 765 L 1400 765 L 1400 902" marker-end="url(#arrow-command)"/>
+                    
+                    <!-- C14c: Event Bus -> Appointment Service -->
+                    <path id="path-c14c" class="connection-path command" d="M 1300 765 L 1420 765 L 1420 962" marker-end="url(#arrow-command)"/>
+                    
+                    <!-- C15: Use Case -> Client (Success Return) -->
+                    <path id="path-c15" class="connection-path command" d="M 930 270 L 930 190 L 890 190 L 890 168" marker-end="url(#arrow-command)"/>
+
+                    <!-- Glowing Particle (Will move along paths) -->
+                    <circle id="particle" class="flow-particle" r="6" cx="0" cy="0" />
+                </svg>
+
+                <!-- HTML Visual Component Cards -->
+                
+                <!-- LAYER 1: API LAYER CARDS -->
+                <!-- Query Client -->
+                <div class="component-card gateway-card" id="card-client-q" style="left: 120px; top: 80px; width: 140px; height: 80px;" onclick="inspectComponent('client-q')">
+                    <div class="component-header">
+                        <i class="fa-solid fa-laptop-code"></i>
+                        <span class="component-role">Client</span>
+                    </div>
+                    <div class="component-name">Web Gateway / App</div>
+                </div>
+
+                <!-- Query Controller -->
+                <div class="component-card" id="card-controller-q" style="left: 320px; top: 80px; width: 180px; height: 80px;" onclick="inspectComponent('controller-q')">
+                    <span class="badge readonly">Read Only</span>
+                    <div class="component-header">
+                        <i class="fa-solid fa-gears"></i>
+                        <span class="component-role">API Controller</span>
+                    </div>
+                    <div class="component-name">DoctorController</div>
+                </div>
+
+                <!-- Command Client -->
+                <div class="component-card gateway-card" id="card-client-c" style="left: 820px; top: 80px; width: 140px; height: 80px;" onclick="inspectComponent('client-c')">
+                    <div class="component-header">
+                        <i class="fa-solid fa-server"></i>
+                        <span class="component-role">Client</span>
+                    </div>
+                    <div class="component-name">Appointment Svc</div>
+                </div>
+
+                <!-- Command Controller -->
+                <div class="component-card" id="card-controller-c" style="left: 1020px; top: 80px; width: 180px; height: 80px;" onclick="inspectComponent('controller-c')">
+                    <span class="badge write">Write Side</span>
+                    <div class="component-header">
+                        <i class="fa-solid fa-gears"></i>
+                        <span class="component-role">API Controller</span>
+                    </div>
+                    <div class="component-name">DoctorController</div>
+                </div>
+
+
+                <!-- LAYER 2: APPLICATION LAYER CARDS -->
+                <!-- Query Use Case -->
+                <div class="component-card" id="card-usecase-q" style="left: 220px; top: 270px; width: 240px; height: 80px;" onclick="inspectComponent('usecase-q')">
+                    <div class="component-header">
+                        <i class="fa-solid fa-diagram-successor"></i>
+                        <span class="component-role">Application Use Case</span>
+                    </div>
+                    <div class="component-name">FetchAvailableSlotsUseCase</div>
+                </div>
+
+                <!-- Command Use Case -->
+                <div class="component-card" id="card-usecase-c" style="left: 920px; top: 270px; width: 260px; height: 80px;" onclick="inspectComponent('usecase-c')">
+                    <span class="badge transactional">@Transactional</span>
+                    <div class="component-header">
+                        <i class="fa-solid fa-diagram-successor"></i>
+                        <span class="component-role">Application Use Case</span>
+                    </div>
+                    <div class="component-name">BlockSlotUseCase</div>
+                </div>
+
+
+                <!-- LAYER 3: DOMAIN LAYER CARDS -->
+                <!-- Query Repository Port -->
+                <div class="component-card" id="card-port-q" style="left: 220px; top: 480px; width: 240px; height: 80px;" onclick="inspectComponent('port-q')">
+                    <span class="badge port">Port</span>
+                    <div class="component-header">
+                        <i class="fa-solid fa-door-open"></i>
+                        <span class="component-role">Domain Interface</span>
+                    </div>
+                    <div class="component-name" style="font-size: 11px;">DoctorAvailabilityReadRepository</div>
+                </div>
+
+                <!-- Command Repository Port -->
+                <div class="component-card" id="card-port-c" style="left: 820px; top: 460px; width: 200px; height: 70px;" onclick="inspectComponent('port-c')">
+                    <span class="badge port">Port</span>
+                    <div class="component-header">
+                        <i class="fa-solid fa-door-open"></i>
+                        <span class="component-role">Domain Interface</span>
+                    </div>
+                    <div class="component-name">DoctorRepository</div>
+                </div>
+
+                <!-- Aggregate Root -->
+                <div class="component-card aggregate-card" id="card-aggregate" style="left: 1080px; top: 460px; width: 260px; height: 180px;" onclick="inspectComponent('aggregate')">
+                    <div class="component-header">
+                        <i class="fa-solid fa-users-gear"></i>
+                        <span class="component-role">Aggregate Root</span>
+                    </div>
+                    <div class="component-name">DoctorSchedule</div>
+                    
+                    <div class="aggregate-rule-list">
+                        <div class="aggregate-rule"><i class="fa-solid fa-circle-check"></i> Slot must exist in schedule</div>
+                        <div class="aggregate-rule"><i class="fa-solid fa-circle-check"></i> Slot must not be booked</div>
+                        <div class="aggregate-rule"><i class="fa-solid fa-circle-check"></i> Time range validation</div>
+                        <div class="aggregate-rule"><i class="fa-solid fa-circle-check"></i> Doctor availability checking</div>
+                    </div>
+                    <div style="font-size: 9px; color: var(--command-color); margin-top: 8px; font-weight: bold; text-align: right;">
+                        <i class="fa-solid fa-bolt"></i> Yields: SlotBlockedEvent
+                    </div>
+                </div>
+
+
+                <!-- LAYER 4: INFRASTRUCTURE LAYER CARDS -->
+                <!-- Query Adapter -->
+                <div class="component-card" id="card-adapter-q" style="left: 220px; top: 730px; width: 240px; height: 80px;" onclick="inspectComponent('adapter-q')">
+                    <div class="component-header">
+                        <i class="fa-solid fa-plug"></i>
+                        <span class="component-role">Adapter Implementation</span>
+                    </div>
+                    <div class="component-name">DoctorRepositoryAdapter</div>
+                </div>
+
+                <!-- Command Adapter -->
+                <div class="component-card" id="card-adapter-c" style="left: 820px; top: 730px; width: 200px; height: 80px;" onclick="inspectComponent('adapter-c')">
+                    <div class="component-header">
+                        <i class="fa-solid fa-plug"></i>
+                        <span class="component-role">Adapter Implementation</span>
+                    </div>
+                    <div class="component-name">DoctorRepositoryAdapter</div>
+                </div>
+
+                <!-- Event Publisher -->
+                <div class="component-card" id="card-eventbus" style="left: 1150px; top: 730px; width: 150px; height: 70px;" onclick="inspectComponent('eventbus')">
+                    <div class="component-header">
+                        <i class="fa-solid fa-truck-ramp-box"></i>
+                        <span class="component-role">Infrastructure</span>
+                    </div>
+                    <div class="component-name">EventPublisher</div>
+                </div>
+
+
+                <!-- LAYER 5: PERSISTENCE & EXTERNAL SERVICES CARDS -->
+                <!-- Query DB -->
+                <div class="component-card db-card db-cylinder" id="card-db-q" style="left: 240px; top: 920px; width: 200px; height: 100px;" onclick="inspectComponent('db-q')">
+                    <div class="component-header" style="justify-content: center; margin-top: 8px;">
+                        <i class="fa-solid fa-database" style="color: var(--accent-yellow)"></i>
+                        <span class="component-role" style="color: var(--accent-yellow)">PostgreSQL</span>
+                    </div>
+                    <div class="component-name" style="text-align: center;">Doctor_DB (Read)</div>
+                    <div style="font-size: 9px; text-align: center; color: var(--text-muted); margin-top: 4px;">Optimized Read Path</div>
+                </div>
+
+                <!-- Command DB -->
+                <div class="component-card db-card db-cylinder" id="card-db-c" style="left: 820px; top: 920px; width: 200px; height: 100px;" onclick="inspectComponent('db-c')">
+                    <span class="badge version">@Version</span>
+                    <div class="component-header" style="justify-content: center; margin-top: 8px;">
+                        <i class="fa-solid fa-database" style="color: var(--accent-yellow)"></i>
+                        <span class="component-role" style="color: var(--accent-yellow)">PostgreSQL</span>
+                    </div>
+                    <div class="component-name" style="text-align: center;">Doctor_DB (Write)</div>
+                    <div style="font-size: 9px; text-align: center; color: var(--text-muted); margin-top: 4px;">Optimistic Locking</div>
+                </div>
+
+                <!-- External Services (Command side notifications) -->
+                <!-- Notification Service -->
+                <div class="component-card gateway-card" id="card-svc-notification" style="left: 1200px; top: 842px; width: 160px; height: 45px;" onclick="inspectComponent('svc-notification')">
+                    <div class="component-name" style="font-size: 11px;"><i class="fa-regular fa-bell"></i> Notification Service</div>
+                </div>
+                <!-- Calendar Service -->
+                <div class="component-card gateway-card" id="card-svc-calendar" style="left: 1200px; top: 902px; width: 160px; height: 45px;" onclick="inspectComponent('svc-calendar')">
+                    <div class="component-name" style="font-size: 11px;"><i class="fa-regular fa-calendar-days"></i> Calendar Service</div>
+                </div>
+                <!-- Appointment Service -->
+                <div class="component-card gateway-card" id="card-svc-appointment" style="left: 1200px; top: 962px; width: 160px; height: 45px;" onclick="inspectComponent('svc-appointment')">
+                    <div class="component-name" style="font-size: 11px;"><i class="fa-solid fa-file-invoice"></i> Appointment Service</div>
+                </div>
+
+            </div>
+
+            <!-- Toolbar widgets -->
+            <div class="diagram-toolbar">
+                <button class="toolbar-btn" onclick="zoomDiagram(1.1)" title="Zoom In"><i class="fa-solid fa-plus"></i></button>
+                <button class="toolbar-btn" onclick="zoomDiagram(0.9)" title="Zoom Out"><i class="fa-solid fa-minus"></i></button>
+                <button class="toolbar-btn" onclick="resetZoom()" title="Reset Zoom"><i class="fa-solid fa-expand"></i></button>
+                <button class="toolbar-btn" onclick="toggleRightSidebar()" title="Toggle Side Inspector"><i class="fa-solid fa-sidebar"></i></button>
+                <button class="toolbar-btn" onclick="window.print()" title="Print Blueprint"><i class="fa-solid fa-print"></i></button>
+            </div>
+        </div>
+
+        <!-- Right Sidebar: Interactive Component Inspector -->
+        <div class="sidebar-right" id="right-sidebar">
+            <div class="inspector-header">
+                <div class="inspector-title-container">
+                    <h2 id="inspector-name">Architecture Inspector</h2>
+                    <p id="inspector-type">Select an element to view details</p>
+                </div>
+                <button class="btn-close-inspector" onclick="toggleRightSidebar()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="inspector-body" id="inspector-body">
+                <!-- Fallback content when no card selected -->
+                <div class="empty-inspector">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <p>Click on any component card or message arrow in the sequence to inspect its architectural role, DDD pattern, and sample Java implementation code.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Data Definitions for Interactive Components -->
+    <script>
+        const componentData = {
+            'client-q': {
+                name: 'Client (Web Gateway / App)',
+                role: 'API Entrypoint',
+                ddd: 'Infrastructure / Client Layer',
+                desc: 'Represents the frontend application or a web API gateway that sends queries to fetch doctor availability. This is a read-only request that requires low latency and optimal database mapping.',
+                concepts: ['CQRS Read Side', 'Request DTO Binding', 'Low Latency Read'],
+                code: `// Fetch available slots from Gateway
+fetch('/api/doctors/' + doctorId + '/available-slots?date=' + selectedDate)
+  .then(response => response.json())
+  .then(slots => {
+      renderCalendar(slots);
+  });`
+            },
+            'controller-q': {
+                name: 'DoctorController (Query Side)',
+                role: 'API Layer',
+                ddd: 'Adapter (Primary)',
+                desc: 'Receives HTTP GET requests and maps them into a Query DTO. It acts as the boundary interface between the external HTTP clients and the internal Application Layer. It bypasses transaction management because queries are read-only.',
+                concepts: ['REST Controller mapping', 'Query DTO pattern', 'No transaction overhead'],
+                code: `@RestController
+@RequestMapping("/api/doctors")
+@RequiredArgsConstructor
+public class DoctorController {
+    
+    private final FetchAvailableSlotsUseCase fetchAvailableSlotsUseCase;
+
+    @GetMapping("/{id}/available-slots")
+    public ResponseEntity<List<AvailableSlotResponse>> getAvailableSlots(
+            @PathVariable UUID id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        
+        // 1. Map request parameters to read-only Query DTO
+        var query = new FetchAvailableSlotsQuery(id, date);
+        
+        // 2. Dispatch to usecase
+        var result = fetchAvailableSlotsUseCase.execute(query);
+        
+        return ResponseEntity.ok(result);
+    }
+}`
+            },
+            'usecase-q': {
+                name: 'FetchAvailableSlotsUseCase',
+                role: 'Application Layer',
+                ddd: 'Application Service / Use Case',
+                desc: 'Implements the application logic to retrieve available slots. Following CQRS, the query use case does not need to load aggregate roots, lock entities, or open write transactions. It communicates via raw DTOs / simple read entities directly from the read repository port.',
+                concepts: ['CQRS Query Handler', 'Transaction-free execution', 'DTO mapping'],
+                code: `@Service
+@RequiredArgsConstructor
+public class FetchAvailableSlotsUseCase {
+    
+    // Dependent on Port interface, not Adapter implementation
+    private final DoctorAvailabilityReadRepository readRepository;
+
+    public List<AvailableSlotResponse> execute(FetchAvailableSlotsQuery query) {
+        // Direct, optimized query path. Bypasses aggregate root loading.
+        return readRepository.findAvailableSlots(query.doctorId(), query.date())
+                .stream()
+                .map(AvailableSlotResponse::fromEntity)
+                .toList();
+    }
+}`
+            },
+            'port-q': {
+                name: 'DoctorAvailabilityReadRepository',
+                role: 'Domain Layer (Port)',
+                ddd: 'Port / Repository Interface',
+                desc: 'A read-only interface defined in the Domain layer. It acts as a Port for retrieving slots. In Clean Architecture, ports are placed in the domain or application layer, ensuring the core business layer remains completely decoupled from persistence details.',
+                concepts: ['Dependency Inversion Principle', 'Port Pattern', 'Read-Optimized interface'],
+                code: `public interface DoctorAvailabilityReadRepository {
+    /**
+     * Fetch available slots for a specific doctor.
+     * Returs simple Read-Models, not complex domain aggregates.
+     */
+    List<AvailableSlot> findAvailableSlots(UUID doctorId, LocalDate date);
+}`
+            },
+            'adapter-q': {
+                name: 'DoctorRepositoryAdapter (Query)',
+                role: 'Infrastructure Layer',
+                ddd: 'Adapter (Secondary)',
+                desc: 'Implements the DoctorAvailabilityReadRepository port. It translates the domain request into infrastructure calls (using Spring Data JPA, raw JDBC, or MyBATIS). It optimizes queries specifically for read performance (e.g. bypassing Hibernate L1/L2 caches if necessary).',
+                concepts: ['Adapter Pattern', 'Spring Data JPA implementation', 'Optimized Read Query'],
+                code: `@Component
+@RequiredArgsConstructor
+public class DoctorRepositoryAdapter implements DoctorAvailabilityReadRepository {
+    
+    private final JpaDoctorRepository jpaRepository;
+
+    @Override
+    public List<AvailableSlot> findAvailableSlots(UUID doctorId, LocalDate date) {
+        // Query flat data direct from DB, bypassing aggregate generation overhead
+        return jpaRepository.findSlotsByDoctorIdAndDate(doctorId, date)
+                .stream()
+                .map(SlotEntity::toDomainReadModel)
+                .toList();
+    }
+}`
+            },
+            'db-q': {
+                name: 'Doctor_DB (Read Database)',
+                role: 'Doctor Database',
+                ddd: 'Infrastructure Database',
+                desc: 'Relational or read-replica database storing doctor schedules. For query operations, the DB executes quick SELECT queries on indexed columns (like doctor_id and slot_date) to return raw slot details instantly.',
+                concepts: ['Read-replica query', 'Index optimization', 'No table locking'],
+                code: `-- Database Schema & Index
+CREATE INDEX idx_slots_doctor_date ON availability_slots (doctor_id, slot_date);
+
+-- Optimized Query run by Adapter
+SELECT slot_id, doctor_id, slot_start, slot_end, is_booked 
+FROM availability_slots 
+WHERE doctor_id = 'c38b3cf1-...' AND slot_date = '2026-06-10' 
+  AND is_booked = false;`
+            },
+            'client-c': {
+                name: 'Client (Appointment Service)',
+                role: 'API Entrypoint',
+                ddd: 'Infrastructure / Client Layer',
+                desc: 'An upstream microservice (e.g. Appointment Booking Service) sending a Command to book/block a slot. This write operation must succeed atomically and handle concurrency safely.',
+                concepts: ['Command execution trigger', 'Transactional client endpoint'],
+                code: `// POST request from Appointment service to Block slot
+HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("http://doctor-service/api/appointments"))
+    .header("Content-Type", "application/json")
+    .POST(BodyPublishers.ofString(appointmentJson))
+    .build();`
+            },
+            'controller-c': {
+                name: 'DoctorController (Command Side)',
+                role: 'API Layer',
+                ddd: 'Adapter (Primary)',
+                desc: 'Processes HTTP POST requests for booking slots. It binds the request body to a BlockSlotCommand DTO containing all necessary attributes and dispatches it to the application usecase.',
+                concepts: ['Command binding', 'Input validation', 'REST compliance'],
+                code: `@RestController
+@RequestMapping("/api/appointments")
+@RequiredArgsConstructor
+public class DoctorController {
+
+    private final BlockSlotUseCase blockSlotUseCase;
+
+    @PostMapping
+    public ResponseEntity<Void> blockSlot(@Valid @RequestBody BlockSlotRequest request) {
+        // Map request payload to write-operation Command DTO
+        var command = new BlockSlotCommand(
+            request.doctorId(), 
+            new TimeRange(request.startTime(), request.endTime()),
+            request.appointmentId()
+        );
+        
+        blockSlotUseCase.execute(command);
+        
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+}`
+            },
+            'usecase-c': {
+                name: 'BlockSlotUseCase',
+                role: 'Application Layer',
+                ddd: 'Application Service / Command Handler',
+                desc: 'Coordinates the execution of the slot booking flow. It establishes the transactional boundary using @Transactional. Its steps are: 1) Load aggregate root, 2) Delegate business rules checks and actions to the Aggregate Root, 3) Persist changes, and 4) Dispatch generated domain events.',
+                concepts: ['@Transactional Boundary', 'Application Coordinator', 'Event dispatching'],
+                code: `@Service
+@RequiredArgsConstructor
+public class BlockSlotUseCase {
+
+    private final DoctorRepository doctorRepository;
+    private final DomainEventPublisher eventPublisher;
+
+    @Transactional // Transaction boundary starts here
+    public void execute(BlockSlotCommand command) {
+        
+        // 1. Fetch the aggregate root through the Port
+        DoctorSchedule schedule = doctorRepository.findById(command.doctorId())
+            .orElseThrow(() -> new DoctorNotFoundException(command.doctorId()));
+            
+        // 2. Delegate business logic to the Aggregate Root
+        schedule.blockSlot(command.timeRange(), command.appointmentId());
+        
+        // 3. Save modified aggregate (optimistic lock checked @Version)
+        doctorRepository.save(schedule);
+        
+        // 4. Publish generated domain events
+        schedule.pullDomainEvents().forEach(eventPublisher::publish);
+    } // Transaction commits here
+}`
+            },
+            'port-c': {
+                name: 'DoctorRepository',
+                role: 'Domain Layer (Port)',
+                ddd: 'Port / Repository Interface',
+                desc: 'A Domain layer port for saving and loading the DoctorSchedule Aggregate Root. The port operates purely on Domain objects, protecting the domain core from dependencies on persistence libraries like Hibernate or JDBC.',
+                concepts: ['Domain Driven Design Repository', 'Decoupled Persistence', 'Entity Persistence Boundary'],
+                code: `public interface DoctorRepository {
+    /**
+     * Loads the complete DoctorSchedule Aggregate Root.
+     */
+    Optional<DoctorSchedule> findById(UUID doctorId);
+
+    /**
+     * Persists the Aggregate Root and updates DB state.
+     */
+    void save(DoctorSchedule schedule);
+}`
+            },
+            'aggregate': {
+                name: 'DoctorSchedule Aggregate Root',
+                role: 'Domain Layer (Core)',
+                ddd: 'Aggregate Root',
+                desc: 'The central business component of the system. It encapsulates a Doctor\'s schedule and list of slots, enforcing all integrity constraints and business rules in-memory. The aggregate ensures that data is mutated strictly according to domain invariants.',
+                concepts: ['Invariant protection', 'Encapsulated business rules', 'Domain Event generation'],
+                code: `public class DoctorSchedule extends AggregateRoot {
+    private UUID doctorId;
+    private List<Slot> slots;
+    private Long version; // Optimistic locking field
+
+    public void blockSlot(TimeRange timeRange, UUID appointmentId) {
+        // Business Rule 1: Slot must exist in schedule
+        Slot slot = findSlot(timeRange)
+            .orElseThrow(() -> new SlotNotFoundException(timeRange));
+
+        // Business Rule 2: Slot must not be already booked
+        if (slot.isBooked()) {
+            throw new SlotAlreadyBookedException(timeRange);
+        }
+
+        // Business Rule 3: Time range validity check
+        timeRange.validate();
+
+        // Business Rule 4: Doctor availability check
+        if (!isDoctorAvailableAt(timeRange)) {
+            throw new DoctorNotAvailableException("Doctor not scheduled for shifts");
+        }
+
+        // Apply state mutation
+        slot.book(appointmentId);
+
+        // Generate and record domain event
+        registerEvent(new SlotBlockedEvent(
+            this.doctorId, 
+            slot.getId(), 
+            appointmentId, 
+            timeRange
+        ));
+    }
+}`
+            },
+            'adapter-c': {
+                name: 'DoctorRepositoryAdapter (Command)',
+                role: 'Infrastructure Layer',
+                ddd: 'Adapter (Secondary)',
+                desc: 'Implements the DoctorRepository command port. It translates the domain entity updates into a persistent state, mapping the DoctorSchedule Aggregate Root to the database-compatible JpaDoctorEntity, and committing the transaction.',
+                concepts: ['Entity Translation', 'Transaction persistence Adapter', 'Repository Implementation'],
+                code: `@Component
+@RequiredArgsConstructor
+public class DoctorRepositoryAdapter implements DoctorRepository {
+
+    private final JpaDoctorRepository jpaRepository;
+
+    @Override
+    public Optional<DoctorSchedule> findById(UUID doctorId) {
+        return jpaRepository.findById(doctorId)
+                .map(DoctorEntity::toDomainAggregate);
+    }
+
+    @Override
+    public void save(DoctorSchedule schedule) {
+        DoctorEntity entity = DoctorEntity.fromDomain(schedule);
+        // Save to DB. Spring JPA handles mapping and SQL updates.
+        jpaRepository.save(entity);
+    }
+}`
+            },
+            'db-c': {
+                name: 'Doctor_DB (Write Database)',
+                role: 'Doctor Database',
+                ddd: 'Infrastructure Database',
+                desc: 'Stores the state of schedules and slots. It uses Optimistic Locking via a version column (@Version) to safeguard against write-skew or concurrent slot booking, throwing an ObjectOptimisticLockingFailureException if two bookings occur simultaneously.',
+                concepts: ['Optimistic locking (@Version)', 'Acid transaction safety', 'Concurrency protection'],
+                code: `@Entity
+@Table(name = "doctors")
+public class DoctorEntity {
+    @Id
+    private UUID id;
+    
+    @Version // Optimistic lock column
+    private Long version;
+    
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SlotEntity> slots;
+}
+
+// SQL Executed under the hood by JPA
+UPDATE doctors 
+SET version = version + 1 
+WHERE id = 'c38b3cf1-...' AND version = 2; -- Fails if version has changed!`
+            },
+            'eventbus': {
+                name: 'EventPublisher (Infrastructure)',
+                role: 'Infrastructure Layer',
+                ddd: 'Domain Event Dispatcher',
+                desc: 'A component responsible for broadcasting Domain Events (like SlotBlockedEvent) to local listeners or message brokers (Kafka, RabbitMQ, Spring Event Bus). This allows external services to respond asynchronously to system state changes.',
+                concepts: ['Publish-Subscribe Pattern', 'Asynchronous event propagation', 'Decoupled services'],
+                code: `@Component
+@RequiredArgsConstructor
+public class SpringEventPublisher implements DomainEventPublisher {
+    
+    private final ApplicationEventPublisher publisher;
+
+    @Override
+    public void publish(DomainEvent event) {
+        // Dispatches event asynchronously via Spring Framework
+        publisher.publishEvent(event);
+    }
+}`
+            },
+            'svc-notification': {
+                name: 'Notification Service',
+                role: 'External System',
+                ddd: 'Subsystem Boundary',
+                desc: 'Asynchronously consumes the SlotBlockedEvent to send SMS/Email confirmations to the patient and the doctor regarding the booked appointment slot.',
+                concepts: ['Event-driven integration', 'Notification dispatch'],
+                code: `@Component
+public class NotificationEventListener {
+
+    @EventListener
+    public void onSlotBlocked(SlotBlockedEvent event) {
+        // Trigger notification engine
+        notificationService.sendBookingEmail(
+            event.doctorId(), 
+            event.timeRange()
+        );
+    }
+}`
+            },
+            'svc-calendar': {
+                name: 'Calendar Service',
+                role: 'External System',
+                ddd: 'Subsystem Boundary',
+                desc: 'Subscribes to SlotBlockedEvent to automatically block the slot inside the doctor\'s external calendars (Google Calendar, Outlook) to sync scheduling availability.',
+                concepts: ['Calendar synchronization', 'External api synchronization'],
+                code: `@Component
+public class CalendarSyncEventListener {
+
+    @EventListener
+    public void onSlotBlocked(SlotBlockedEvent event) {
+        // Sync with Google Calendar API / Outlook API
+        googleCalendarClient.createBlockEvent(
+            event.doctorId(),
+            event.timeRange()
+        );
+    }
+}`
+            },
+            'svc-appointment': {
+                name: 'Appointment Service',
+                role: 'External System',
+                ddd: 'Subsystem Boundary',
+                desc: 'Listens to SlotBlockedEvent to transition the corresponding Appointment status from "PENDING" or "REQUESTED" to "CONFIRMED".',
+                concepts: ['Saga Pattern step', 'State transition automation'],
+                code: `@Component
+public class AppointmentEventListener {
+
+    @EventListener
+    public void onSlotBlocked(SlotBlockedEvent event) {
+        // Confirm the appointment status
+        appointmentService.confirmAppointment(event.appointmentId());
+    }
+}`
+            }
+        };
+
+        const flowSteps = {
+            query: [
+                { id: 'path-q1', card: 'card-client-q', title: 'Q1: GET /doctors/...', desc: 'Client sends an HTTP GET request to request the available slots of a doctor.' },
+                { id: 'path-q2', card: 'card-controller-q', title: 'Q2: Map to Query DTO', desc: 'DoctorController binds HTTP request parameters to a read-only FetchAvailableSlotsQuery.' },
+                { id: 'path-q3', card: 'card-usecase-q', title: 'Q3: execute(query)', desc: 'Controller invokes the Application Use Case, dispatching the Query object.' },
+                { id: 'path-q4', card: 'card-port-q', title: 'Q4: Interface Call', desc: 'The Use Case calls the DoctorAvailabilityReadRepository Port, decoupling it from DB details.' },
+                { id: 'path-q5', card: 'card-adapter-q', title: 'Q5: SELECT slots', desc: 'The Adapter (Infrastructure) queries the DB directly via optimized Read-model paths.' },
+                { id: 'path-q6', card: 'card-db-q', title: 'Q6: SQL Result', desc: 'The database (PostgreSQL) returns flat slot records (Read only, fast path).' },
+                { id: 'path-q7', card: 'card-adapter-q', title: 'Q7: Map to Read Model', desc: 'Adapter maps DB rows to simple Read Model entities and returns them to the Port.' },
+                { id: 'path-q8', card: 'card-port-q', title: 'Q8: Return Entities', desc: 'The Port returns the domain structures up to the Application Use Case layer.' },
+                { id: 'path-q9', card: 'card-usecase-q', title: 'Q9: DTO Map & Return', desc: 'The Use Case converts the Domain Entities to Response DTOs and returns the list to the client.' }
+            ],
+            command: [
+                { id: 'path-c1', card: 'card-client-c', title: 'C1: POST /appointments', desc: 'Appointment Service sends a command payload to block a specific doctor\'s slot.' },
+                { id: 'path-c2', card: 'card-controller-c', title: 'C2: Map Command DTO', desc: 'DoctorController maps HTTP payload into a write-operation BlockSlotCommand DTO.' },
+                { id: 'path-c3', card: 'card-usecase-c', title: 'C3: execute(command)', desc: 'Controller dispatches Command to BlockSlotUseCase (opening a Transaction boundary).' },
+                { id: 'path-c4', card: 'card-port-c', title: 'C4: findById()', desc: 'Use Case calls the DoctorRepository Port to request the DoctorSchedule Aggregate.' },
+                { id: 'path-c5', card: 'card-adapter-c', title: 'C5: SELECT Aggregate', desc: 'Infrastructure Adapter issues SELECT query to load schedule data and current Version.' },
+                { id: 'path-c6', card: 'card-db-c', title: 'C6: Aggregate State', desc: 'PostgreSQL returns the database records including the @Version field.' },
+                { id: 'path-c7', card: 'card-adapter-c', title: 'C7: Reconstruct Aggregate', desc: 'Adapter maps the database records back into the DoctorSchedule Aggregate Root object.' },
+                { id: 'path-c8', card: 'card-port-c', title: 'C8: Return Aggregate', desc: 'The Repository Port returns the reconstructed Aggregate Root back to the Use Case.' },
+                { id: 'path-c9', card: 'card-aggregate', title: 'C9: blockSlot(timeRange)', desc: 'Use Case invokes the blockSlot business logic on the Aggregate Root.' },
+                { id: 'path-c10', card: 'card-aggregate', title: 'C10: Register Domain Event', desc: 'Aggregate validates business rules (slot existence, booking states) and registers SlotBlockedEvent.' },
+                { id: 'path-c11', card: 'card-usecase-c', title: 'C11: save(schedule)', desc: 'The Use Case passes the mutated Aggregate to the DoctorRepository Port to save.' },
+                { id: 'path-c12', card: 'card-port-c', title: 'C12: Interface Call', desc: 'Port delegates persistence task to the Infrastructure Adapter.' },
+                { id: 'path-c13', card: 'card-adapter-c', title: 'C13: UPDATE query', desc: 'Adapter translates Aggregate to JpaEntity. JPA issues UPDATE checking @Version to prevent concurrent writes.' },
+                { id: 'path-c14', card: 'card-eventbus', title: 'C14: Publish Domain Event', desc: 'Transaction commits successfully, and Use Case dispatches SlotBlockedEvent to EventPublisher.' },
+                { id: 'path-c14a', card: 'card-svc-notification', title: 'C14a: Event Broadcast', desc: 'Event is sent to the Notification Service to trigger confirmation Emails/SMS.' },
+                { id: 'path-c14b', card: 'card-svc-calendar', title: 'C14b: External Sync', desc: 'Event is sent to the Calendar Service to sync availability with Google Calendar.' },
+                { id: 'path-c14c', card: 'card-svc-appointment', title: 'C14c: Status Transition', desc: 'Event is sent to the Appointment Service to confirm appointment status.' },
+                { id: 'path-c15', card: 'card-usecase-c', title: 'C15: Success Response', desc: 'Transaction finishes and HTTP Controller returns 201 Created confirmation to the client.' }
+            ]
+        };
+
+        let activeTimer = null;
+        let animationSpeed = 1500; // ms per step
+        let currentFlow = null;
+        let currentStepIndex = -1;
+        let scale = 1;
+
+        // Start playing the sequence flow
+        function startFlow(flowType) {
+            resetAll();
+            currentFlow = flowType;
+            currentStepIndex = 0;
+            
+            // Build the Steps list on the left side
+            const stepsContainer = document.getElementById('steps-container');
+            stepsContainer.innerHTML = '';
+            
+            flowSteps[currentFlow].forEach((step, idx) => {
+                const stepCard = document.createElement('div');
+                stepCard.className = `step-card`;
+                stepCard.id = `step-list-card-${idx}`;
+                stepCard.setAttribute('onclick', `jumpToStep(${idx})`);
+                
+                stepCard.innerHTML = `
+                    <div class="step-num">${idx + 1}</div>
+                    <div class="step-details">
+                        <div class="step-title">${step.title}</div>
+                        <div class="step-desc">${step.desc}</div>
+                    </div>
+                `;
+                stepsContainer.appendChild(stepCard);
+            });
+            
+            playNextStep();
+        }
+
+        // Play the next step in the animation queue
+        function playNextStep() {
+            if (!currentFlow) return;
+            const steps = flowSteps[currentFlow];
+            
+            if (currentStepIndex >= steps.length) {
+                // Flow finished
+                clearTimeout(activeTimer);
+                document.getElementById('particle').style.display = 'none';
+                return;
+            }
+
+            const step = steps[currentStepIndex];
+            
+            // 1. Highlight the Step Card on the left sidebar
+            document.querySelectorAll('.step-card').forEach(c => {
+                c.classList.remove('query-active', 'command-active');
+            });
+            const stepListCard = document.getElementById(`step-list-card-${currentStepIndex}`);
+            if (stepListCard) {
+                stepListCard.classList.add(currentFlow === 'query' ? 'query-active' : 'command-active');
+                stepListCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            // 2. Highlight Component Card in Canvas
+            document.querySelectorAll('.component-card').forEach(c => {
+                c.classList.remove('query-glow', 'command-glow', 'active-glow');
+            });
+            const compCard = document.getElementById(step.card);
+            if (compCard) {
+                compCard.classList.add(currentFlow === 'query' ? 'query-glow' : 'command-glow');
+                compCard.classList.add('active-glow');
+            }
+
+            // 3. Highlight SVG connection path
+            document.querySelectorAll('.connection-path').forEach(p => {
+                p.classList.remove('active');
+            });
+            const connPath = document.getElementById(step.id);
+            if (connPath) {
+                connPath.classList.add('active');
+                
+                // Animate Particle along path
+                animateParticle(step.id);
+            }
+
+            // Auto inspect the active component
+            let inspectKey = step.card.replace('card-', '');
+            if (inspectKey === 'svc-notification' || inspectKey === 'svc-calendar' || inspectKey === 'svc-appointment') {
+                inspectKey = inspectKey;
+            }
+            inspectComponentSilent(inspectKey);
+
+            currentStepIndex++;
+            activeTimer = setTimeout(playNextStep, animationSpeed);
+        }
+
+        // Animate a glowing dot traveling along the SVG path
+        function animateParticle(pathId) {
+            const path = document.getElementById(pathId);
+            if (!path) return;
+            const length = path.getTotalLength();
+            const particle = document.getElementById('particle');
+            
+            // Set particle color based on flow
+            particle.setAttribute('fill', currentFlow === 'query' ? 'var(--query-color)' : 'var(--command-color)');
+            particle.style.display = 'block';
+            
+            let start = null;
+            const duration = animationSpeed * 0.7; // particle finishes before step ends
+
+            function step(timestamp) {
+                if (!start) start = timestamp;
+                let progress = (timestamp - start) / duration;
+                if (progress > 1) progress = 1;
+                
+                try {
+                    const point = path.getPointAtLength(progress * length);
+                    particle.setAttribute('cx', point.x);
+                    particle.setAttribute('cy', point.y);
+                } catch(e) {
+                    // Fail-safe if path is corrupted
+                }
+                
+                if (progress < 1 && currentFlow) {
+                    requestAnimationFrame(step);
+                } else if (progress >= 1) {
+                    // Keep particle at the end node or hide it
+                }
+            }
+            requestAnimationFrame(step);
+        }
+
+        // Jump to a specific step in the sequence
+        function jumpToStep(index) {
+            clearTimeout(activeTimer);
+            currentStepIndex = index;
+            playNextStep();
+        }
+
+        // Reset everything
+        function resetAll() {
+            clearTimeout(activeTimer);
+            currentFlow = null;
+            currentStepIndex = -1;
+            
+            // Hide particle
+            document.getElementById('particle').style.display = 'none';
+            
+            // Remove component glows
+            document.querySelectorAll('.component-card').forEach(c => {
+                c.classList.remove('query-glow', 'command-glow', 'active-glow');
+            });
+            
+            // Remove connection path highlights
+            document.querySelectorAll('.connection-path').forEach(p => {
+                p.classList.remove('active');
+            });
+
+            // Reset left sidebar steps list
+            const stepsContainer = document.getElementById('steps-container');
+            stepsContainer.innerHTML = `
+                <div style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 20px 0;">
+                    Click <strong>Animate Query Flow</strong> or <strong>Animate Command Flow</strong> above to see step-by-step actions.
+                </div>
+            `;
+
+            // Reset inspector
+            resetInspector();
+        }
+
+        // Theme Toggle (Dark/Light mode)
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+        }
+
+        // Speed adjustment
+        function updateSpeed(val) {
+            animationSpeed = parseInt(val);
+            document.getElementById('speedVal').innerText = (animationSpeed / 1000).toFixed(2) + 's';
+        }
+
+        // Zoom utilities
+        function zoomDiagram(factor) {
+            scale *= factor;
+            scale = Math.max(0.5, Math.min(scale, 1.8)); // restrict between 50% and 180%
+            document.getElementById('canvas').style.transform = `scale(${scale})`;
+            document.getElementById('canvas').style.transformOrigin = 'top center';
+        }
+
+        function resetZoom() {
+            scale = 1;
+            document.getElementById('canvas').style.transform = `scale(${scale})`;
+        }
+
+        // Collapsible sidebar inspector
+        function toggleRightSidebar() {
+            document.getElementById('right-sidebar').classList.toggle('collapsed');
+        }
+
+        // Show component explanation and code on card click
+        function inspectComponent(key) {
+            // Stop any running animations to let user investigate
+            clearTimeout(activeTimer);
+            
+            // Glow the clicked card
+            document.querySelectorAll('.component-card').forEach(c => {
+                c.classList.remove('active-glow', 'query-glow', 'command-glow');
+            });
+            
+            const card = document.getElementById('card-' + key);
+            if (card) {
+                card.classList.add('active-glow');
+                if (key.endsWith('-q') || key === 'db-q' || key === 'port-q' || key === 'adapter-q') {
+                    card.classList.add('query-glow');
+                } else {
+                    card.classList.add('command-glow');
+                }
+            }
+
+            // Display details in inspector
+            inspectComponentSilent(key);
+            
+            // Expand sidebar if it was collapsed
+            document.getElementById('right-sidebar').classList.remove('collapsed');
+        }
+
+        function inspectComponentSilent(key) {
+            const data = componentData[key];
+            if (!data) return;
+
+            document.getElementById('inspector-name').innerText = data.name;
+            document.getElementById('inspector-type').innerText = data.role + ' • ' + data.ddd;
+
+            // Generate concepts HTML
+            let pillsHtml = '';
+            data.concepts.forEach(c => {
+                let colorClass = 'green';
+                if (key.endsWith('-q') || key === 'db-q' || key === 'port-q' || key === 'adapter-q') colorClass = 'blue';
+                else if (key.endsWith('-c') || key === 'db-c' || key === 'port-c' || key === 'adapter-c' || key === 'aggregate') colorClass = 'orange';
+                
+                pillsHtml += `<span class="info-pill ${colorClass}">${c}</span>`;
+            });
+
+            // Escape HTML chars in code snippet for rendering
+            const escapedCode = data.code
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+
+            // Syntax highlighting parsing (basic replacement)
+            const highlightedCode = highlightSyntax(escapedCode);
+
+            const inspectorBody = document.getElementById('inspector-body');
+            inspectorBody.innerHTML = `
+                <div class="info-section">
+                    <span class="info-label">Domain Layer Classification</span>
+                    <div class="info-pill-container">
+                        ${pillsHtml}
+                    </div>
+                </div>
+                
+                <div class="info-section">
+                    <span class="info-label">Architectural Role</span>
+                    <div class="info-val">${data.desc}</div>
+                </div>
+                
+                <div class="info-section">
+                    <span class="info-label">Clean Code / Implementation Pattern</span>
+                    <div class="code-container">
+                        <div class="code-header">
+                            <span>Java Source Code</span>
+                            <button class="btn-copy" onclick="copyCodeText()"><i class="fa-regular fa-copy"></i> Copy</button>
+                        </div>
+                        <pre><code id="code-snippet">${highlightedCode}</code></pre>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Basic Java Syntax Highlighter
+        function highlightSyntax(code) {
+            // keywords
+            const keywords = ['public', 'private', 'class', 'interface', 'record', 'return', 'new', 'final', 'extends', 'implements', 'import', 'package', 'void'];
+            const annotations = ['@RestController', '@RequestMapping', '@GetMapping', '@PostMapping', '@Service', '@RequiredArgsConstructor', '@PathVariable', '@RequestParam', '@DateTimeFormat', '@Transactional', '@Component', '@Override', '@Entity', '@Table', '@Id', '@Version', '@OneToMany', '@Valid', '@RequestBody', '@EventListener'];
+            const types = ['ResponseEntity', 'List', 'UUID', 'LocalDate', 'AvailableSlotResponse', 'FetchAvailableSlotsQuery', 'FetchAvailableSlotsUseCase', 'DoctorAvailabilityReadRepository', 'AvailableSlot', 'DoctorRepositoryAdapter', 'JpaDoctorRepository', 'BlockSlotRequest', 'BlockSlotCommand', 'BlockSlotUseCase', 'DoctorRepository', 'DoctorSchedule', 'DomainEventPublisher', 'TimeRange', 'Void', 'HttpStatus', 'Optional', 'DomainEvent', 'String', 'HttpRequest', 'URI', 'BodyPublishers'];
+
+            let highlighted = code;
+
+            // Annotations
+            annotations.forEach(anno => {
+                const regex = new RegExp(`(${anno})`, 'g');
+                highlighted = highlighted.replace(regex, '<span class="annotation">$1</span>');
+            });
+
+            // Keywords
+            keywords.forEach(kw => {
+                const regex = new RegExp(`\\b(${kw})\\b`, 'g');
+                highlighted = highlighted.replace(regex, '<span class="keyword">$1</span>');
+            });
+
+            // Types
+            types.forEach(t => {
+                const regex = new RegExp(`\\b(${t})\\b`, 'g');
+                highlighted = highlighted.replace(regex, '<span class="type">$1</span>');
+            });
+
+            // Comments
+            highlighted = highlighted.replace(/(\/\/.*)/g, '<span class="comment">$1</span>');
+            highlighted = highlighted.replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="comment">$1</span>');
+
+            // Strings
+            highlighted = highlighted.replace(/(".*?")/g, '<span class="string">$1</span>');
+
+            return highlighted;
+        }
+
+        function resetInspector() {
+            document.getElementById('inspector-name').innerText = 'Architecture Inspector';
+            document.getElementById('inspector-type').innerText = 'Select an element to view details';
+            document.getElementById('inspector-body').innerHTML = `
+                <div class="empty-inspector">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <p>Click on any component card or message arrow in the sequence to inspect its architectural role, DDD pattern, and sample Java implementation code.</p>
+                </div>
+            `;
+        }
+
+        function copyCodeText() {
+            const codeEl = document.getElementById('code-snippet');
+            if (!codeEl) return;
+            const text = codeEl.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Code copied to clipboard!');
+            });
+        }
+    </script>
+</body>
+</html>
