@@ -29,7 +29,7 @@ public class DoctorClientAdapter implements DoctorClientPort {
     public boolean existsById(UUID doctorId) {
         try {
             ResponseEntity<Void> response = restTemplate.getForEntity(
-                    doctorServiceBaseUrl + "/doctors/{doctorId}",
+                    doctorServiceBaseUrl + "/api/doctors/{doctorId}",
                     Void.class,
                     doctorId
             );

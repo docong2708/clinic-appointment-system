@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.net.URI;
 
 @RestController
-@RequestMapping("/api/v1/appointment")
+@RequestMapping("/api/appointments")
 public class AppointmentController {
 
     private final CreateAppointmentUseCase createAppointmentUseCase;
@@ -47,7 +47,7 @@ public class AppointmentController {
         ));
 
         return ResponseEntity
-                .created(URI.create("/api/v1/appointment/" + result.id()))
+                .created(URI.create("/api/appointments/" + result.id()))
                 .body(AppointmentResponse.from(result));
     }
 }
