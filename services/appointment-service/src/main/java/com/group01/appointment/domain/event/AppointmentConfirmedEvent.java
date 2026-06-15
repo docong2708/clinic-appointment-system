@@ -27,7 +27,7 @@ public record AppointmentConfirmedEvent(
                 appointment.getPaymentStatus() == null
                         ? null
                         : appointment.getPaymentStatus().name(),
-                appointment.getUpdatedAt()
+                appointment.getConfirmedAt()
         );
     }
 }

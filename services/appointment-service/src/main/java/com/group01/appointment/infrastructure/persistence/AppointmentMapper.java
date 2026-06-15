@@ -1,7 +1,6 @@
 package com.group01.appointment.infrastructure.persistence;
 
 import com.group01.appointment.domain.aggregate.AppointmentAggregate;
-import com.group01.appointment.domain.vo.ActorRole;
 import com.group01.appointment.domain.vo.AppointmentId;
 import com.group01.appointment.domain.vo.AppointmentReason;
 import com.group01.appointment.domain.vo.AppointmentStatus;
@@ -12,6 +11,10 @@ import com.group01.appointment.domain.vo.PatientId;
 import com.group01.appointment.domain.vo.PaymentStatus;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+
 @Component
 public class AppointmentMapper {
 
@@ -20,8 +23,10 @@ public class AppointmentMapper {
                 .id(aggregate.getAppointmentId().value())
                 .patientId(aggregate.getPatientId().value())
                 .doctorId(aggregate.getDoctorId().value())
-                .startTime(aggregate.getAppointmentTime().startTime())
-                .endTime(aggregate.getAppointmentTime().endTime())
+                .slotId(aggregate.getSlotId())
+                .rescheduledFromAppointmentId(aggregate.getRescheduledFromAppointmentId())
+                .startTime(toOffsetDateTime(aggregate.getAppointmentTime().startTime()))
+                .endTime(toOffsetDateTime(aggregate.getAppointmentTime().endTime()))
                 .reason(aggregate.getAppointmentReason() == null
                         ? null
                         : aggregate.getAppointmentReason().value())
@@ -33,12 +38,15 @@ public class AppointmentMapper {
                         ? null
                         : aggregate.getPaymentStatus().name())
                 .cancelledBy(aggregate.getCancelledBy())
-                .cancelledByRole(aggregate.getCancelledByRole() == null
-                        ? null
-                        : aggregate.getCancelledByRole().name())
-                .cancelledAt(aggregate.getCancelledAt())
-                .createdAt(aggregate.getCreatedAt())
-                .updatedAt(aggregate.getUpdatedAt())
+                .cancelledAt(toOffsetDateTime(aggregate.getCancelledAt()))
+                .bookingSource(aggregate.getBookingSource())
+                .createdBy(aggregate.getCreatedBy())
+                .updatedBy(aggregate.getUpdatedBy())
+                .confirmedAt(toOffsetDateTime(aggregate.getConfirmedAt()))
+                .completedAt(toOffsetDateTime(aggregate.getCompletedAt()))
+                .version(aggregate.getVersion())
+                .createdAt(toOffsetDateTime(aggregate.getCreatedAt()))
+                .updatedAt(toOffsetDateTime(aggregate.getUpdatedAt()))
                 .build();
     }
 
@@ -47,7 +55,9 @@ public class AppointmentMapper {
                 AppointmentId.of(entity.getId()),
                 PatientId.of(entity.getPatientId()),
                 DoctorId.of(entity.getDoctorId()),
-                AppointmentTime.of(entity.getStartTime(), entity.getEndTime()),
+                entity.getSlotId(),
+                entity.getRescheduledFromAppointmentId(),
+                AppointmentTime.of(toLocalDateTime(entity.getStartTime()), toLocalDateTime(entity.getEndTime())),
                 entity.getReason() == null
                         ? null
                         : AppointmentReason.of(entity.getReason()),
@@ -59,12 +69,24 @@ public class AppointmentMapper {
                         ? PaymentStatus.NOT_REQUIRED
                         : PaymentStatus.valueOf(entity.getPaymentStatus()),
                 entity.getCancelledBy(),
-                entity.getCancelledByRole() == null
-                        ? null
-                        : ActorRole.valueOf(entity.getCancelledByRole()),
-                entity.getCancelledAt(),
-                entity.getCreatedAt(),
-                entity.getUpdatedAt()
+                null,
+                toLocalDateTime(entity.getCancelledAt()),
+                entity.getBookingSource(),
+                entity.getCreatedBy(),
+                entity.getUpdatedBy(),
+                toLocalDateTime(entity.getConfirmedAt()),
+                toLocalDateTime(entity.getCompletedAt()),
+                entity.getVersion(),
+                toLocalDateTime(entity.getCreatedAt()),
+                toLocalDateTime(entity.getUpdatedAt())
         );
+    }
+
+    private static OffsetDateTime toOffsetDateTime(LocalDateTime value) {
+        return value == null ? null : value.atOffset(ZoneOffset.UTC);
+    }
+
+    private static LocalDateTime toLocalDateTime(OffsetDateTime value) {
+        return value == null ? null : value.withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime();
     }
 }

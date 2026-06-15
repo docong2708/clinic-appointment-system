@@ -9,11 +9,15 @@ public record AppointmentCreatedEvent(
         UUID appointmentId,
         UUID patientId,
         UUID doctorId,
+        UUID slotId,
+        UUID rescheduledFromAppointmentId,
         LocalDateTime startTime,
         LocalDateTime endTime,
         String reason,
         String status,
         String paymentStatus,
+        String bookingSource,
+        UUID createdBy,
         LocalDateTime createdAt
 ) {
 
@@ -22,6 +26,8 @@ public record AppointmentCreatedEvent(
                 appointment.getAppointmentId().value(),
                 appointment.getPatientId().value(),
                 appointment.getDoctorId().value(),
+                appointment.getSlotId(),
+                appointment.getRescheduledFromAppointmentId(),
                 appointment.getAppointmentTime().startTime(),
                 appointment.getAppointmentTime().endTime(),
                 appointment.getAppointmentReason() == null
@@ -31,6 +37,8 @@ public record AppointmentCreatedEvent(
                 appointment.getPaymentStatus() == null
                         ? null
                         : appointment.getPaymentStatus().name(),
+                appointment.getBookingSource(),
+                appointment.getCreatedBy(),
                 appointment.getCreatedAt()
         );
     }

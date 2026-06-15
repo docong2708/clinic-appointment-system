@@ -12,6 +12,8 @@ public class AppointmentResultMapper {
                 appointment.getAppointmentId().value(),
                 appointment.getPatientId().value(),
                 appointment.getDoctorId().value(),
+                appointment.getSlotId(),
+                appointment.getRescheduledFromAppointmentId(),
                 appointment.getAppointmentTime().startTime(),
                 appointment.getAppointmentTime().endTime(),
                 appointment.getAppointmentReason() == null ? null : appointment.getAppointmentReason().value(),
@@ -21,6 +23,12 @@ public class AppointmentResultMapper {
                 appointment.getCancelledBy(),
                 appointment.getCancelledByRole() == null ? null : appointment.getCancelledByRole().name(),
                 appointment.getCancelledAt(),
+                appointment.getBookingSource(),
+                appointment.getCreatedBy(),
+                appointment.getUpdatedBy(),
+                appointment.getConfirmedAt(),
+                appointment.getCompletedAt(),
+                appointment.getVersion(),
                 appointment.getCreatedAt(),
                 appointment.getUpdatedAt()
         );
