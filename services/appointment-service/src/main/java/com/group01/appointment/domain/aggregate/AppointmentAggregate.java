@@ -13,6 +13,8 @@ public class AppointmentAggregate {
     private final AppointmentId appointmentId;
     private final PatientId patientId;
     private final DoctorId doctorId;
+    private final UUID slotId;
+    private final UUID rescheduledFromAppointmentId;
 
     private AppointmentTime appointmentTime;
     private AppointmentReason appointmentReason;
@@ -24,6 +26,12 @@ public class AppointmentAggregate {
     private UUID cancelledBy;
     private ActorRole cancelledByRole;
     private LocalDateTime cancelledAt;
+    private String bookingSource;
+    private UUID createdBy;
+    private UUID updatedBy;
+    private LocalDateTime confirmedAt;
+    private LocalDateTime completedAt;
+    private Integer version;
 
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -34,6 +42,8 @@ public class AppointmentAggregate {
             AppointmentId appointmentId,
             PatientId patientId,
             DoctorId doctorId,
+            UUID slotId,
+            UUID rescheduledFromAppointmentId,
             AppointmentTime appointmentTime,
             AppointmentReason appointmentReason,
             CancelReason cancelReason,
@@ -42,12 +52,20 @@ public class AppointmentAggregate {
             UUID cancelledBy,
             ActorRole cancelledByRole,
             LocalDateTime cancelledAt,
+            String bookingSource,
+            UUID createdBy,
+            UUID updatedBy,
+            LocalDateTime confirmedAt,
+            LocalDateTime completedAt,
+            Integer version,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {
         this.appointmentId = appointmentId;
         this.patientId = patientId;
         this.doctorId = doctorId;
+        this.slotId = slotId;
+        this.rescheduledFromAppointmentId = rescheduledFromAppointmentId;
         this.appointmentTime = appointmentTime;
         this.appointmentReason = appointmentReason;
         this.cancelReason = cancelReason;
@@ -56,6 +74,12 @@ public class AppointmentAggregate {
         this.cancelledBy = cancelledBy;
         this.cancelledByRole = cancelledByRole;
         this.cancelledAt = cancelledAt;
+        this.bookingSource = bookingSource;
+        this.createdBy = createdBy;
+        this.updatedBy = updatedBy;
+        this.confirmedAt = confirmedAt;
+        this.completedAt = completedAt;
+        this.version = version;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -63,20 +87,33 @@ public class AppointmentAggregate {
     public static AppointmentAggregate create(
             PatientId patientId,
             DoctorId doctorId,
+            UUID slotId,
+            UUID rescheduledFromAppointmentId,
             AppointmentTime appointmentTime,
-            AppointmentReason appointmentReason
+            AppointmentReason appointmentReason,
+            String bookingSource,
+            UUID createdBy
     ) {
         LocalDateTime now = LocalDateTime.now();
+        UUID actorId = createdBy == null ? patientId.value() : createdBy;
 
         AppointmentAggregate aggregate = new AppointmentAggregate(
                 AppointmentId.newId(),
                 patientId,
                 doctorId,
+                slotId,
+                rescheduledFromAppointmentId,
                 appointmentTime,
                 appointmentReason,
                 null,
                 AppointmentStatus.PENDING_PAYMENT,
                 PaymentStatus.PENDING,
+                null,
+                null,
+                null,
+                bookingSource,
+                actorId,
+                actorId,
                 null,
                 null,
                 null,
@@ -89,7 +126,7 @@ public class AppointmentAggregate {
                 null,
                 AppointmentStatus.PENDING_PAYMENT,
                 "Create appointment",
-                patientId.value(),
+                actorId,
                 ActorRole.PATIENT
         );
 
@@ -100,6 +137,8 @@ public class AppointmentAggregate {
             AppointmentId appointmentId,
             PatientId patientId,
             DoctorId doctorId,
+            UUID slotId,
+            UUID rescheduledFromAppointmentId,
             AppointmentTime appointmentTime,
             AppointmentReason appointmentReason,
             CancelReason cancelReason,
@@ -108,6 +147,12 @@ public class AppointmentAggregate {
             UUID cancelledBy,
             ActorRole cancelledByRole,
             LocalDateTime cancelledAt,
+            String bookingSource,
+            UUID createdBy,
+            UUID updatedBy,
+            LocalDateTime confirmedAt,
+            LocalDateTime completedAt,
+            Integer version,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {
@@ -115,6 +160,8 @@ public class AppointmentAggregate {
                 appointmentId,
                 patientId,
                 doctorId,
+                slotId,
+                rescheduledFromAppointmentId,
                 appointmentTime,
                 appointmentReason,
                 cancelReason,
@@ -123,6 +170,12 @@ public class AppointmentAggregate {
                 cancelledBy,
                 cancelledByRole,
                 cancelledAt,
+                bookingSource,
+                createdBy,
+                updatedBy,
+                confirmedAt,
+                completedAt,
+                version,
                 createdAt,
                 updatedAt
         );
@@ -160,6 +213,7 @@ public class AppointmentAggregate {
         this.cancelledBy = cancelledBy;
         this.cancelledByRole = cancelledByRole;
         this.cancelledAt = LocalDateTime.now();
+        this.updatedBy = cancelledBy;
         this.updatedAt = LocalDateTime.now();
 
         addLog(
@@ -181,6 +235,8 @@ public class AppointmentAggregate {
 
         this.paymentStatus = PaymentStatus.PAID;
         this.status = AppointmentStatus.CONFIRMED;
+        this.confirmedAt = LocalDateTime.now();
+        this.updatedBy = performedBy;
         this.updatedAt = LocalDateTime.now();
 
         addLog(
@@ -199,6 +255,7 @@ public class AppointmentAggregate {
         }
 
         this.paymentStatus = PaymentStatus.FAILED;
+        this.updatedBy = performedBy;
         this.updatedAt = LocalDateTime.now();
 
         addLog(
@@ -223,6 +280,8 @@ public class AppointmentAggregate {
         AppointmentStatus oldStatus = this.status;
 
         this.status = AppointmentStatus.COMPLETED;
+        this.completedAt = LocalDateTime.now();
+        this.updatedBy = performedBy;
         this.updatedAt = LocalDateTime.now();
 
         addLog(
@@ -268,6 +327,14 @@ public class AppointmentAggregate {
         return doctorId;
     }
 
+    public UUID getSlotId() {
+        return slotId;
+    }
+
+    public UUID getRescheduledFromAppointmentId() {
+        return rescheduledFromAppointmentId;
+    }
+
     public AppointmentTime getAppointmentTime() {
         return appointmentTime;
     }
@@ -298,6 +365,30 @@ public class AppointmentAggregate {
 
     public LocalDateTime getCancelledAt() {
         return cancelledAt;
+    }
+
+    public String getBookingSource() {
+        return bookingSource;
+    }
+
+    public UUID getCreatedBy() {
+        return createdBy;
+    }
+
+    public UUID getUpdatedBy() {
+        return updatedBy;
+    }
+
+    public LocalDateTime getConfirmedAt() {
+        return confirmedAt;
+    }
+
+    public LocalDateTime getCompletedAt() {
+        return completedAt;
+    }
+
+    public Integer getVersion() {
+        return version;
     }
 
     public LocalDateTime getCreatedAt() {

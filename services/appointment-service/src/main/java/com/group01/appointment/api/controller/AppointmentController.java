@@ -37,9 +37,13 @@ public class AppointmentController {
         AppointmentResult result = createAppointmentUseCase.execute(new CreateAppointmentCommand(
                 request.patientId(),
                 request.doctorId(),
+                request.slotId(),
+                request.rescheduledFromAppointmentId(),
                 request.startTime(),
                 request.endTime(),
-                request.reason()
+                request.reason(),
+                request.bookingSource(),
+                request.createdBy()
         ));
 
         return ResponseEntity

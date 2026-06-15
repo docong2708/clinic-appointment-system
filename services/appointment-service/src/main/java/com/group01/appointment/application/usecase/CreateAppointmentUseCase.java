@@ -55,8 +55,12 @@ public class CreateAppointmentUseCase {
         AppointmentAggregate appointment = AppointmentAggregate.create(
                 PatientId.of(command.patientId()),
                 DoctorId.of(command.doctorId()),
+                command.slotId(),
+                command.rescheduledFromAppointmentId(),
                 AppointmentTime.of(command.startTime(), command.endTime()),
-                AppointmentReason.of(command.reason())
+                AppointmentReason.of(command.reason()),
+                command.bookingSource(),
+                command.createdBy()
         );
 
         AppointmentAggregate savedAppointment = appointmentRepository.save(appointment);

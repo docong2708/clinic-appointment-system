@@ -42,11 +42,11 @@ public class PatientClientAdapter implements PatientClientPort {
         }
     }
 
+    // xóa dấu '/' ở cuối nếu có
     private String trimTrailingSlash(String value) {
         if (value.endsWith("/")) {
             return value.substring(0, value.length() - 1);
         }
-
         return value;
     }
 }

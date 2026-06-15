@@ -10,7 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Getter
@@ -48,5 +48,5 @@ public class AppointmentLogJpaEntity {
     private String performedByRole;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
 }

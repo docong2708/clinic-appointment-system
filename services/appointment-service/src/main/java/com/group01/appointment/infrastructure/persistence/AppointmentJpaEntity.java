@@ -4,13 +4,14 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Getter
@@ -32,11 +33,17 @@ public class AppointmentJpaEntity {
     @Column(name = "doctor_id", nullable = false)
     private UUID doctorId;
 
+    @Column(name = "slot_id")
+    private UUID slotId;
+
+    @Column(name = "rescheduled_from_appointment_id")
+    private UUID rescheduledFromAppointmentId;
+
     @Column(name = "start_time", nullable = false)
-    private LocalDateTime startTime;
+    private OffsetDateTime startTime;
 
     @Column(name = "end_time", nullable = false)
-    private LocalDateTime endTime;
+    private OffsetDateTime endTime;
 
     @Column(name = "reason", length = 500)
     private String reason;
@@ -53,15 +60,31 @@ public class AppointmentJpaEntity {
     @Column(name = "cancelled_by")
     private UUID cancelledBy;
 
-    @Column(name = "cancelled_by_role", length = 50)
-    private String cancelledByRole;
-
     @Column(name = "cancelled_at")
-    private LocalDateTime cancelledAt;
+    private OffsetDateTime cancelledAt;
+
+    @Column(name = "booking_source", length = 50)
+    private String bookingSource;
+
+    @Column(name = "created_by")
+    private UUID createdBy;
+
+    @Column(name = "updated_by")
+    private UUID updatedBy;
+
+    @Column(name = "confirmed_at")
+    private OffsetDateTime confirmedAt;
+
+    @Column(name = "completed_at")
+    private OffsetDateTime completedAt;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private Integer version;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    private OffsetDateTime updatedAt;
 }

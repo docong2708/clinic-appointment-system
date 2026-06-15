@@ -7,6 +7,8 @@ public record AppointmentResult(
         UUID id,
         UUID patientId,
         UUID doctorId,
+        UUID slotId,
+        UUID rescheduledFromAppointmentId,
         LocalDateTime startTime,
         LocalDateTime endTime,
         String reason,
@@ -16,6 +18,12 @@ public record AppointmentResult(
         UUID cancelledBy,
         String cancelledByRole,
         LocalDateTime cancelledAt,
+        String bookingSource,
+        UUID createdBy,
+        UUID updatedBy,
+        LocalDateTime confirmedAt,
+        LocalDateTime completedAt,
+        Integer version,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
