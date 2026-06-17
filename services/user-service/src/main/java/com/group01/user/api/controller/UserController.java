@@ -3,12 +3,14 @@ package com.group01.user.api.controller;
 import com.group01.user.api.dto.request.AssignRoleRequest;
 import com.group01.user.api.dto.request.ChangeUserStatusRequest;
 import com.group01.user.api.dto.request.CreateUserRequest;
+import com.group01.user.api.dto.request.RegisterRequest;
 import com.group01.user.api.dto.request.UpdateUserRequest;
 import com.group01.user.api.dto.response.RoleResponse;
 import com.group01.user.api.dto.response.UserResponse;
 import com.group01.user.application.command.AssignRoleCommand;
 import com.group01.user.application.command.ChangeUserStatusCommand;
 import com.group01.user.application.command.CreateUserCommand;
+import com.group01.user.application.command.RegisterCommand;
 import com.group01.user.application.command.UpdateUserCommand;
 import com.group01.user.application.usecase.AssignRoleUseCase;
 import com.group01.user.application.usecase.ChangeUserStatusUseCase;
@@ -17,6 +19,7 @@ import com.group01.user.application.usecase.DeleteUserUseCase;
 import com.group01.user.application.usecase.GetAllUsersUseCase;
 import com.group01.user.application.usecase.GetMyProfileUseCase;
 import com.group01.user.application.usecase.GetUserByIdUseCase;
+import com.group01.user.application.usecase.RegisterUseCase;
 import com.group01.user.application.usecase.UpdateUserUseCase;
 import com.group01.user.domain.aggregate.Role;
 import com.group01.user.domain.aggregate.User;
@@ -42,6 +45,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
+    private final RegisterUseCase registerUseCase;
     private final CreateUserUseCase createUserUseCase;
     private final GetMyProfileUseCase getMyProfileUseCase;
     private final GetUserByIdUseCase getUserByIdUseCase;
@@ -51,11 +55,18 @@ public class UserController {
     private final ChangeUserStatusUseCase changeUserStatusUseCase;
     private final DeleteUserUseCase deleteUserUseCase;
 
+    @PostMapping("/register")
+    @ResponseStatus(HttpStatus.CREATED)
+    public UserResponse register(@Valid @RequestBody RegisterRequest request) {
+        return toResponse(registerUseCase.execute(new RegisterCommand(
+                request.email(), request.password(), request.fullName(), request.phoneNumber(), request.role())));
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponse createUser(@Valid @RequestBody CreateUserRequest request) {
         return toResponse(createUserUseCase.execute(new CreateUserCommand(
-                request.email(), request.fullName(), request.phoneNumber(), request.password(), request.roles())));
+                request.keycloakUserId(), request.email(), request.fullName(), request.phoneNumber(), request.roles())));
     }
 
     @GetMapping("/me")
@@ -96,6 +107,7 @@ public class UserController {
     private UserResponse toResponse(User user) {
         return new UserResponse(
                 user.getId(),
+                user.getKeycloakUserId(),
                 user.getEmail().value(),
                 user.getFullName(),
                 user.getPhoneNumber() == null ? null : user.getPhoneNumber().value(),

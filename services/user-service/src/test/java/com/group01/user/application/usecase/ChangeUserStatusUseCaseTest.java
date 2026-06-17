@@ -30,9 +30,9 @@ class ChangeUserStatusUseCaseTest {
         UUID userId = UUID.randomUUID();
         User user = User.builder()
                 .id(userId)
+                .keycloakUserId("kc-user-id")
                 .email(new Email("user@example.com"))
                 .fullName("User One")
-                .passwordHash("hash")
                 .status(UserStatus.ACTIVE)
                 .build();
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));

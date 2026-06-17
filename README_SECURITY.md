@@ -1,150 +1,155 @@
-# Security Architecture
+# Security Architecture - Keycloak
 
 ## Responsibilities
 
-`services/user-service`
+`Keycloak`
 
-- Owns register, login, refresh token, and logout.
-- Hashes passwords with BCrypt.
-- Issues HS256 JWT access tokens.
-- Stores refresh tokens in PostgreSQL table `refresh_tokens`.
-- Owns `users`, `roles`, `user_roles`, and `refresh_tokens`.
-
-`shared/common-security`
-
-- Provides shared JWT parsing and validation.
-- Provides `JwtProperties`, `JwtClaims`, and `JwtTokenValidator`.
-- Provides `CurrentUser`, `CurrentUserHolder`, and a servlet filter that reads `X-User-*` headers.
-- Does not login users, issue tokens, or access any database.
+- Single Identity Provider for the system.
+- Issues access tokens.
+- Owns credentials, login, password policy, and refresh token lifecycle.
+- Defines realm roles: `ADMIN`, `DOCTOR`, `PATIENT`.
 
 `infra/api-gateway`
 
-- Validates JWT for private endpoints.
-- Skips validation for public auth endpoints and actuator endpoints.
-- Extracts JWT claims and forwards downstream headers:
+- Validates Keycloak JWT using Spring Security OAuth2 Resource Server.
+- Extracts claims from the validated token.
+- Injects downstream identity headers:
   - `X-User-Id`
   - `X-User-Email`
   - `X-User-Roles`
-- Does not access `user_db` and does not create JWT.
+- Performs coarse role authorization.
+- Does not create JWT and does not access `user_db`.
+
+`shared/common-security`
+
+- Provides `CurrentUser`, `CurrentUserHolder`, and `CurrentUserHeaderFilter`.
+- Downstream services use it to read `X-User-*` headers.
+- Does not parse JWT, create JWT, or access any database.
+
+`services/user-service`
+
+- Does not create JWT.
+- Does not login users.
+- Manages local user profile data and maps each profile to `keycloak_user_id`.
+- Optional public registration endpoint can create a Keycloak user through Keycloak Admin API, then persist the local profile mapping.
 
 Downstream services
 
-- `patient-service`, `doctor-service`, `appointment-service`, and `notification-service` do not login or create JWT.
-- They read `X-User-*` headers through `CurrentUserHolder`.
-- Business ownership checks remain inside each service.
+- Do not parse JWT.
+- Do not create JWT.
+- Do not query `user_db`.
+- Read current user from `CurrentUserHolder` and enforce business ownership rules locally.
 
-## JWT
+## Local Keycloak
 
-Access token:
-
-- Algorithm: HS256
-- Expiration: 15 minutes
-- Claims:
-  - `sub`: user ID
-  - `email`
-  - `roles`
-  - `iat`
-  - `exp`
-
-Refresh token:
-
-- Secure random URL-safe token
-- Expiration: 7 days
-- Stored in `refresh_tokens`
-- Rotated on refresh
-- Revoked on logout
-
-Use the same secret in `user-service` and `api-gateway`:
+Start Keycloak:
 
 ```powershell
-$env:JWT_SECRET="replace-with-a-strong-at-least-32-byte-secret-value"
+cd infra/keycloak
+docker compose up -d
 ```
 
-## Curl Examples
+Admin console:
 
-Register:
-
-```bash
-curl -X POST http://localhost:8080/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "patient1@example.com",
-    "password": "password123",
-    "fullName": "Patient One",
-    "phoneNumber": "0900000001",
-    "role": "PATIENT"
-  }'
+```text
+http://localhost:9080
+admin / admin
 ```
 
-Login:
+Realm:
 
-```bash
-curl -X POST http://localhost:8080/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "patient1@example.com",
-    "password": "password123"
-  }'
+```text
+clinic-appointment
 ```
 
-Refresh token:
+Issuer used by API Gateway:
 
-```bash
-curl -X POST http://localhost:8080/api/auth/refresh-token \
-  -H "Content-Type: application/json" \
-  -d '{
-    "refreshToken": "<refresh-token>"
-  }'
+```text
+http://localhost:9080/realms/clinic-appointment
 ```
 
-Logout:
+Gateway config:
 
-```bash
-curl -X POST http://localhost:8080/api/auth/logout \
-  -H "Content-Type: application/json" \
-  -d '{
-    "refreshToken": "<refresh-token>"
-  }'
+```yaml
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:9080/realms/clinic-appointment}
 ```
 
-Get current user profile:
+## Token Example
 
-```bash
-curl http://localhost:8080/api/users/me \
-  -H "Authorization: Bearer <access-token>"
+```powershell
+curl.exe -X POST http://localhost:9080/realms/clinic-appointment/protocol/openid-connect/token `
+  -H "Content-Type: application/x-www-form-urlencoded" `
+  -d "grant_type=password" `
+  -d "client_id=clinic-web" `
+  -d "username=admin@clinic.local" `
+  -d "password=admin123"
 ```
 
-Admin get all users:
+Call gateway:
 
-```bash
-curl http://localhost:8080/api/users \
-  -H "Authorization: Bearer <admin-access-token>"
+```powershell
+curl.exe http://localhost:8080/api/users/me `
+  -H "Authorization: Bearer <access_token>"
 ```
 
-Patient create appointment:
+## Optional Registration Through user-service
 
-```bash
-curl -X POST http://localhost:8080/api/appointments \
-  -H "Authorization: Bearer <patient-access-token>" \
-  -H "Content-Type: application/json" \
-  -d '{"doctorId":"<doctor-id>","appointmentTime":"2026-06-06T09:00:00"}'
+Endpoint:
+
+```text
+POST /api/users/register
 ```
 
-## Gateway Authorization Summary
+This endpoint creates a Keycloak user and then creates the local profile mapping.
 
-Public:
+```powershell
+curl.exe -X POST http://localhost:8080/api/users/register `
+  -H "Content-Type: application/json" `
+  -d "{\"email\":\"patient1@example.com\",\"password\":\"password123\",\"fullName\":\"Patient One\",\"phoneNumber\":\"0900000001\",\"role\":\"PATIENT\"}"
+```
 
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `POST /api/auth/refresh-token`
-- `/actuator/**`
+For this to work, the Keycloak client `clinic-user-service` must have service-account permissions to manage users:
 
-Gateway role checks:
+- `realm-management` client role `manage-users`
+- `realm-management` client role `view-users`
+- `realm-management` client role `view-realm`
 
-- `ADMIN`: `/api/users/**`
-- `PATIENT`: `POST /api/appointments`, `GET /api/appointments/my`
-- `DOCTOR`: `GET /api/doctors/me/**`, `GET /api/appointments/doctor/**`
-- `ADMIN` or `DOCTOR`: schedule paths
-- `ADMIN` or `PATIENT`: patient profile paths
+## Header Contract
 
-Detailed ownership rules, such as a patient only reading their own appointment, must be enforced inside the downstream service using `CurrentUserHolder`.
+API Gateway injects:
+
+```text
+X-User-Id: <keycloak subject>
+X-User-Email: <email or preferred_username>
+X-User-Roles: ADMIN,DOCTOR,PATIENT
+```
+
+Downstream services use:
+
+```java
+CurrentUser currentUser = CurrentUserHolder.require();
+```
+
+## Important Boundary
+
+Correct flow:
+
+```text
+Keycloak issues token
+API Gateway validates token
+API Gateway forwards X-User-* headers
+Services read CurrentUserHolder
+```
+
+Incorrect flow:
+
+```text
+user-service creates JWT
+services parse JWT directly
+services query user_db for authentication
+```

@@ -13,7 +13,7 @@ import com.group01.user.domain.vo.PhoneNumber;
 import com.group01.user.domain.vo.RoleName;
 import com.group01.user.domain.vo.UserStatus;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,31 +23,41 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CreateUserUseCase {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public User execute(CreateUserCommand command) {
+        log.info("Create local user requested keycloakUserId={} email={} roles={}",
+                command.keycloakUserId(), command.email(), command.roles());
         Email email = new Email(command.email());
         PhoneNumber phoneNumber = new PhoneNumber(command.phoneNumber());
+        if (command.keycloakUserId() == null || command.keycloakUserId().isBlank()) {
+            throw new IllegalArgumentException("Keycloak user id is required");
+        }
+        if (userRepository.existsByKeycloakUserId(command.keycloakUserId())) {
+            throw new EmailAlreadyExistsException("Keycloak user already mapped: " + command.keycloakUserId());
+        }
         if (userRepository.existsByEmail(email.value())) {
             throw new EmailAlreadyExistsException("Email already exists: " + email.value());
         }
         if (phoneNumber.value() != null && userRepository.existsByPhoneNumber(phoneNumber.value())) {
             throw new PhoneAlreadyExistsException("Phone number already exists: " + phoneNumber.value());
         }
-        Set<Role> roles = resolveRoles(command.roles());
         User user = User.builder()
+                .keycloakUserId(command.keycloakUserId())
                 .email(email)
                 .fullName(requireFullName(command.fullName()))
                 .phoneNumber(phoneNumber)
-                .passwordHash(passwordEncoder.encode(command.password()))
-                .status(UserStatus.PENDING_VERIFY)
-                .roles(roles)
+                .status(UserStatus.ACTIVE)
+                .roles(resolveRoles(command.roles()))
                 .build();
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        log.info("Create local user completed userId={} keycloakUserId={} email={} status={}",
+                savedUser.getId(), savedUser.getKeycloakUserId(), savedUser.getEmail().value(), savedUser.getStatus());
+        return savedUser;
     }
 
     private Set<Role> resolveRoles(Set<String> requestedRoles) {
