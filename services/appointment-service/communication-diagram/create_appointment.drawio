@@ -1,0 +1,160 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" version="29.6.3" pages="2">
+  <diagram id="7f118e33dcf342a2bc0b28ec9e9f9d81" name="Create Appointment">
+    <mxGraphModel dx="2037" dy="1061" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1500" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="client" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=2;fillColor=#ffffff;strokeColor=#1f4eaa;fontSize=12;" value="&lt;b&gt;CLIENTS&lt;/b&gt;&lt;br&gt;&lt;br&gt;Web&lt;br&gt;&lt;br&gt;Patient" vertex="1">
+          <mxGeometry height="300" width="130" x="30" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="gateway" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=2;fillColor=#eaf3ff;strokeColor=#1f4eaa;fontSize=12;" value="&lt;b&gt;API GATEWAY&lt;/b&gt;&lt;br&gt;:8080&lt;br&gt;&lt;br&gt;&lt;b&gt;Responsibilities:&lt;/b&gt;&lt;br&gt;- Routing&lt;br&gt;- Authentication&lt;br&gt;- Rate limiting&lt;br&gt;- Request validation&lt;br&gt;- Extract patient identity from token" vertex="1">
+          <mxGeometry height="260" width="180" x="310" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="appt" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=2;fillColor=#f1e7ff;strokeColor=#8e44ad;fontSize=12;" value="&lt;b&gt;APPOINTMENT SERVICE&lt;/b&gt;&lt;br&gt;:8082&lt;br&gt;&lt;br&gt;&lt;b&gt;Responsibilities:&lt;/b&gt;&lt;br&gt;- Validate request&lt;br&gt;- Validate patient&lt;br&gt;- Check doctor availability&lt;br&gt;- Create appointment&lt;br&gt;- Publish event&lt;br&gt;&lt;br&gt;VG: validateAppointment()&lt;br&gt;VD: Appointments" vertex="1">
+          <mxGeometry height="300" width="250" x="640" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="patient" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=2;fillColor=#eaffea;strokeColor=#2e8b57;fontSize=12;" value="&lt;b&gt;PATIENT SERVICE&lt;/b&gt;&lt;br&gt;:8081&lt;br&gt;&lt;br&gt;&lt;b&gt;Responsibilities:&lt;/b&gt;&lt;br&gt;- Validate patient&lt;br&gt;- Get patient profile&lt;br&gt;&lt;br&gt;VG: validatePatient()&lt;br&gt;VD: Patients" vertex="1">
+          <mxGeometry height="210" width="210" x="995" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="doctor" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=2;fillColor=#fff2df;strokeColor=#f39c12;fontSize=12;" value="&lt;b&gt;DOCTOR SERVICE&lt;/b&gt;&lt;br&gt;:8083&lt;br&gt;&lt;br&gt;&lt;b&gt;Responsibilities:&lt;/b&gt;&lt;br&gt;- Check doctor schedule&lt;br&gt;- Get doctor info&lt;br&gt;&lt;br&gt;VG: checkAvailability()&lt;br&gt;VD: Doctors, Schedules" vertex="1">
+          <mxGeometry height="210" width="210" x="1000" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="broker" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=2;fillColor=#ffecec;strokeColor=#e74c3c;fontSize=12;" value="&lt;b&gt;MESSAGE BROKER / EVENT STREAM&lt;/b&gt;&lt;br&gt;Apache Kafka :9092&lt;br&gt;&lt;br&gt;Topic: clinic.appointment.events&lt;br&gt;- appointment.created&lt;br&gt;- appointment.cancelled&lt;br&gt;- appointment.rescheduled" vertex="1">
+          <mxGeometry height="180" width="300" x="615" y="510" as="geometry" />
+        </mxCell>
+        <mxCell id="noti" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=2;fillColor=#ffecec;strokeColor=#e74c3c;fontSize=12;" value="&lt;b&gt;NOTIFICATION SERVICE&lt;/b&gt;&lt;br&gt;:8084&lt;br&gt;&lt;br&gt;&lt;b&gt;Responsibilities:&lt;/b&gt;&lt;br&gt;- Send email&lt;br&gt;- Send SMS / Push&lt;br&gt;- Template rendering&lt;br&gt;&lt;br&gt;VG: validateNotification()" vertex="1">
+          <mxGeometry height="190" width="240" x="1080" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="payment" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=2;fillColor=#ffecec;strokeColor=#e74c3c;fontSize=12;" value="&lt;b&gt;PAYMENT SERVICE&lt;/b&gt;&lt;br&gt;:8085&lt;br&gt;&lt;br&gt;&lt;b&gt;Responsibilities:&lt;/b&gt;&lt;br&gt;- Create payment (if required)&lt;br&gt;- Process payment&lt;br&gt;- Update payment status&lt;br&gt;&lt;br&gt;VG: validatePayment()&lt;br&gt;VD: Payments" vertex="1">
+          <mxGeometry height="190" width="230" x="600" y="760" as="geometry" />
+        </mxCell>
+        <mxCell id="emailgw" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=2;fillColor=#eaf3ff;strokeColor=#1f4eaa;fontSize=12;" value="&lt;b&gt;EMAIL GATEWAY&lt;/b&gt;&lt;br&gt;(External Service)&lt;br&gt;&lt;div&gt;&lt;br/&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="130" width="250" x="1080" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="apptdb" parent="1" style="shape=cylinder3d;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#f3e5ff;strokeColor=#8e44ad;fontSize=12;" value="&lt;b&gt;appointment_db&lt;/b&gt;&lt;br&gt;(PostgreSQL)&lt;br&gt;VD: Appointments" vertex="1">
+          <mxGeometry height="120" width="130" x="360" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="patientdb" parent="1" style="shape=cylinder3d;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#eaffea;strokeColor=#2e8b57;fontSize=12;" value="&lt;b&gt;patient_db&lt;/b&gt;&lt;br&gt;(PostgreSQL)" vertex="1">
+          <mxGeometry height="120" width="130" x="1290" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="doctordb" parent="1" style="shape=cylinder3d;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2df;strokeColor=#f39c12;fontSize=12;" value="&lt;b&gt;doctor_db&lt;/b&gt;&lt;br&gt;(PostgreSQL)" vertex="1">
+          <mxGeometry height="120" width="140" x="1280" y="315" as="geometry" />
+        </mxCell>
+        <mxCell id="notidb" parent="1" style="shape=cylinder3d;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffecec;strokeColor=#e74c3c;fontSize=12;" value="&lt;b&gt;notification_db&lt;/b&gt;&lt;br&gt;(PostgreSQL)" vertex="1">
+          <mxGeometry height="120" width="130" x="1400" y="555" as="geometry" />
+        </mxCell>
+        <mxCell id="paydb" parent="1" style="shape=cylinder3d;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffecec;strokeColor=#e74c3c;fontSize=12;" value="&lt;b&gt;payment_db&lt;/b&gt;&lt;br&gt;(PostgreSQL)&amp;nbsp;" vertex="1">
+          <mxGeometry height="120" width="130" x="890" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="client" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#1f4eaa;fontSize=11;" target="gateway" value="1. createAppointment&lt;br&gt;(doctorId, dateTime, reason)&lt;br&gt;Authorization: Bearer token">
+          <mxGeometry relative="1" x="-0.0588" y="20" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="gateway" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#1f4eaa;fontSize=11;entryX=-0.01;entryY=0.452;entryDx=0;entryDy=0;entryPerimeter=0;exitX=1.004;exitY=0.48;exitDx=0;exitDy=0;exitPerimeter=0;" target="appt" value="2. Forward request&lt;br&gt;(patientId from JWT, doctorId, dateTime, reason)">
+          <mxGeometry relative="1" x="0.0758" y="24" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="appt" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#1f4eaa;fontSize=11;exitX=1.006;exitY=0.368;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.012;entryY=0.529;entryDx=0;entryDy=0;entryPerimeter=0;" target="patient" value="3. Validate patient&lt;br&gt;(patientId)">
+          <mxGeometry relative="1" x="0.1108" y="-59" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="patient" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#1f4eaa;fontSize=11;exitX=0.001;exitY=0.714;exitDx=0;exitDy=0;exitPerimeter=0;" target="appt" value="4. Patient valid&lt;br&gt;OK / Not OK">
+          <mxGeometry relative="1" x="0.0429" y="-63" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="990" y="180" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="appt" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#1f4eaa;fontSize=11;entryX=-0.008;entryY=0.144;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.994;exitY=0.806;exitDx=0;exitDy=0;exitPerimeter=0;" target="doctor" value="5. Check availability&lt;br&gt;(doctorId, dateTime)">
+          <mxGeometry relative="1" x="0.4004" y="-32" as="geometry">
+            <mxPoint x="-10" y="-2" as="offset" />
+            <Array as="points">
+              <mxPoint x="960" y="282" />
+              <mxPoint x="960" y="300" />
+            </Array>
+            <mxPoint x="889" y="238" as="sourcePoint" />
+            <mxPoint x="990" y="370" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="doctor" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#1f4eaa;fontSize=11;entryX=0.883;entryY=1.011;entryDx=0;entryDy=0;entryPerimeter=0;exitX=-0.011;exitY=0.551;exitDx=0;exitDy=0;exitPerimeter=0;" target="appt" value="6. Availability&lt;br&gt;OK / Not OK">
+          <mxGeometry relative="1" x="-0.3159" y="35" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="860" y="385" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="appt" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#1f4eaa;fontSize=11;entryX=0.993;entryY=0.317;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.289;exitY=0.998;exitDx=0;exitDy=0;exitPerimeter=0;" target="apptdb" value="7. Save appointment">
+          <mxGeometry relative="1" x="0.118" y="-18" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="710" y="438" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="appt" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#e74c3c;dashed=1;fontSize=11;" target="broker" value="8. Publish&lt;br&gt;AppointmentCreated event">
+          <mxGeometry relative="1" x="0.5294" y="75" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9a" edge="1" parent="1" source="broker" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#e74c3c;dashed=1;fontSize=11;entryX=-0.01;entryY=0.439;entryDx=0;entryDy=0;entryPerimeter=0;" target="noti" value="9a. Consume&lt;br&gt;AppointmentCreated event">
+          <mxGeometry relative="1" x="0.0411" y="33" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="1090" y="611" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9b" edge="1" parent="1" source="broker" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#e74c3c;dashed=1;fontSize=11;entryX=0.568;entryY=-0.002;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.391;exitY=0.985;exitDx=0;exitDy=0;exitPerimeter=0;" target="payment" value="9b. Consume&lt;br&gt;AppointmentCreated event">
+          <mxGeometry relative="1" x="-0.1455" y="78" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="noti" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#e74c3c;dashed=1;fontSize=11;" target="emailgw" value="10. Send email confirmation">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="1" source="payment" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#e74c3c;dashed=1;fontSize=11;" target="apptdb" value="11. Optional payment status update&lt;br&gt;(PaymentCompleted / Failed)">
+          <mxGeometry relative="1" x="0.2286" y="-108" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="420" y="855" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e12" edge="1" parent="1" source="appt" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#1f4eaa;fontSize=11;exitX=-0.013;exitY=0.683;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1;entryY=0.75;entryDx=0;entryDy=0;" target="gateway" value="12. Return result">
+          <mxGeometry relative="1" x="0.0462" y="25" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="619.9999999999998" y="123.38384615384618" as="sourcePoint" />
+            <mxPoint x="510" y="245" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e13" edge="1" parent="1" source="gateway" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#1f4eaa;fontSize=11;exitX=-0.013;exitY=0.785;exitDx=0;exitDy=0;entryX=1;entryY=0.75;entryDx=0;entryDy=0;exitPerimeter=0;" target="client" value="13. Response&lt;br&gt;201 Created">
+          <mxGeometry relative="1" x="-0.072" y="25" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dbp" edge="1" parent="1" source="patient" style="endArrow=none;html=1;rounded=0;strokeWidth=2;strokeColor=#000000;" target="patientdb">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dbd" edge="1" parent="1" source="doctor" style="endArrow=none;html=1;rounded=0;strokeWidth=2;strokeColor=#000000;" target="doctordb">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dbn" edge="1" parent="1" source="noti" style="endArrow=none;html=1;rounded=0;strokeWidth=2;strokeColor=#000000;" target="notidb">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dbpay" edge="1" parent="1" source="payment" style="endArrow=none;html=1;rounded=0;strokeWidth=2;strokeColor=#000000;" target="paydb">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="fVg_c33YTbh4kN-Xm_Ya" name="Trang-2">
+    <mxGraphModel dx="1426" dy="743" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

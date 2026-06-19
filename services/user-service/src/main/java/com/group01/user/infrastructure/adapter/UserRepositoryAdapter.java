@@ -28,6 +28,11 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     @Override
+    public Optional<User> findByKeycloakUserId(String keycloakUserId) {
+        return userJpaRepository.findByKeycloakUserId(keycloakUserId).map(userMapper::toDomain);
+    }
+
+    @Override
     public Optional<User> findByEmail(String email) {
         return userJpaRepository.findByEmail(email).map(userMapper::toDomain);
     }
@@ -35,6 +40,11 @@ public class UserRepositoryAdapter implements UserRepository {
     @Override
     public boolean existsByEmail(String email) {
         return userJpaRepository.existsByEmail(email);
+    }
+
+    @Override
+    public boolean existsByKeycloakUserId(String keycloakUserId) {
+        return userJpaRepository.existsByKeycloakUserId(keycloakUserId);
     }
 
     @Override

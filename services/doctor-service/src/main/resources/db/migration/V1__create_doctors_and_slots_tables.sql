@@ -1,0 +1,22 @@
+-- Create doctors table
+CREATE TABLE doctors (
+    id UUID PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    specialization VARCHAR(255) NOT NULL,
+    phone_number VARCHAR(50) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create doctor_slots table
+CREATE TABLE doctor_slots (
+    id UUID PRIMARY KEY,
+    doctor_id UUID NOT NULL REFERENCES doctors(id) ON DELETE CASCADE,
+    start_time TIMESTAMP NOT NULL,
+    end_time TIMESTAMP NOT NULL,
+    is_booked BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

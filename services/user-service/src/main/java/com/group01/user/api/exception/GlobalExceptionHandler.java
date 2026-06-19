@@ -1,14 +1,12 @@
 package com.group01.user.api.exception;
 
 import com.group01.user.domain.exception.EmailAlreadyExistsException;
-import com.group01.user.domain.exception.InvalidCredentialsException;
 import com.group01.user.domain.exception.InvalidUserStatusException;
 import com.group01.user.domain.exception.PhoneAlreadyExistsException;
 import com.group01.user.domain.exception.RoleNotFoundException;
-import com.group01.user.domain.exception.TokenExpiredException;
-import com.group01.user.domain.exception.UnauthorizedException;
 import com.group01.user.domain.exception.UserNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -19,6 +17,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(UserNotFoundException.class)
@@ -29,11 +28,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({EmailAlreadyExistsException.class, PhoneAlreadyExistsException.class})
     ResponseEntity<ErrorResponse> handleConflict(RuntimeException exception, HttpServletRequest request) {
         return error(HttpStatus.CONFLICT, exception.getMessage(), request);
-    }
-
-    @ExceptionHandler({InvalidCredentialsException.class, TokenExpiredException.class, UnauthorizedException.class})
-    ResponseEntity<ErrorResponse> handleUnauthorized(RuntimeException exception, HttpServletRequest request) {
-        return error(HttpStatus.UNAUTHORIZED, exception.getMessage(), request);
     }
 
     @ExceptionHandler({RoleNotFoundException.class, InvalidUserStatusException.class, IllegalArgumentException.class})
@@ -51,6 +45,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     ResponseEntity<ErrorResponse> handleUnexpected(Exception exception, HttpServletRequest request) {
+        log.error("Unexpected exception", exception);
         return error(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected server error", request);
     }
 
