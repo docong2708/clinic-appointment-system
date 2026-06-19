@@ -19,6 +19,10 @@ spring:
     locations: classpath:db/migration
 
 clients:
+  openfeign:
+    connect-timeout-millis: 5000
+    read-timeout-millis: 10000
+    logger-level: basic
   doctor-service:
     base-url: http://localhost:8082
   patient-service:
