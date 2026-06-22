@@ -17,10 +17,10 @@ import java.util.UUID;
 @AllArgsConstructor
 public class User {
     private UUID id;
+    private String keycloakUserId;
     private Email email;
     private String fullName;
     private PhoneNumber phoneNumber;
-    private String passwordHash;
     private UserStatus status;
     @Builder.Default
     private Set<Role> roles = new HashSet<>();

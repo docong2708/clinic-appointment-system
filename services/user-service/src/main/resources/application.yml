@@ -36,9 +36,14 @@ management:
       exposure:
         include: health,info
 
-security:
-  jwt:
-    secret: ${JWT_SECRET:mYvRhtw7xJxXlyePdZWA52rxT0qfjwT069nN11NYhIncVJFOzh1v44ftn3JQlS0sGe6LzD6ld82Xn49ErOoBLU}
-    issuer: clinic-appointment-system
-    access-token-expiration: 15m
-    refresh-token-expiration: 7d
+logging:
+  level:
+    com.group01.user: INFO
+    com.group01.commonsecurity: INFO
+
+keycloak:
+  admin:
+    server-url: ${KEYCLOAK_SERVER_URL:http://localhost:9080}
+    realm: ${KEYCLOAK_REALM:clinic-appointment}
+    client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:clinic-user-service}
+    client-secret: ${KEYCLOAK_ADMIN_CLIENT_SECRET:change-me}

@@ -4,15 +4,16 @@ server:
 spring:
   application:
     name: api-gateway
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:9080/realms/clinic-appointment}
   cloud:
     gateway:
       server:
         webflux:
           routes:
-            - id: user-service-auth
-              uri: lb://user-service
-              predicates:
-                - Path=/api/auth/**
             - id: user-service-users
               uri: lb://user-service
               predicates:
@@ -34,19 +35,10 @@ spring:
               predicates:
                 - Path=/api/notifications/**
 
-security:
-  jwt:
-    secret: ${JWT_SECRET:mYvRhtw7xJxXlyePdZWA52rxT0qfjwT069nN11NYhIncVJFOzh1v44ftn3JQlS0sGe6LzD6ld82Xn49ErOoBLU}
-    issuer: clinic-appointment-system
-    access-token-expiration: 15m
-    refresh-token-expiration: 7d
-
 gateway:
   security:
     public-endpoints:
-      - POST /api/auth/register
-      - POST /api/auth/login
-      - POST /api/auth/refresh-token
+      - POST /api/users/register
       - GET /actuator/**
 
 eureka:

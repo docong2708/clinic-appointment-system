@@ -37,6 +37,9 @@ public class UserJpaEntity {
     @GeneratedValue
     private UUID id;
 
+    @Column(name = "keycloak_user_id", unique = true, length = 64)
+    private String keycloakUserId;
+
     @Column(nullable = false, unique = true, length = 255)
     private String email;
 
@@ -45,9 +48,6 @@ public class UserJpaEntity {
 
     @Column(name = "phone_number", unique = true, length = 30)
     private String phoneNumber;
-
-    @Column(name = "password_hash", nullable = false, length = 255)
-    private String passwordHash;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
