@@ -1,187 +1,945 @@
-import React, { useState } from 'react';
-import PatientPortal from './components/PatientPortal';
-import DoctorDashboard from './components/DoctorDashboard';
-import AdminPanel from './components/AdminPanel';
-import { 
-  Smartphone, 
-  Monitor, 
-  Activity, 
-  User, 
-  Database,
-  Lock,
+import { useMemo, useState } from 'react';
+import {
   ArrowRight,
+  BriefcaseMedical,
+  Building2,
+  CalendarCheck2,
+  CalendarDays,
+  CircleUserRound,
+  ClipboardList,
+  Clock3,
+  FileText,
+  HeartPulse,
+  Hospital,
+  LogIn,
+  LogOut,
+  Search,
   ShieldCheck,
-  Stethoscope
+  Stethoscope,
+  UserRoundPlus,
+  Users,
+  X,
 } from 'lucide-react';
 
+const specialties = [
+  { id: 'sp-1', label: 'Đặt khám theo bệnh viện', icon: Hospital },
+  { id: 'sp-2', label: 'Đặt khám theo bác sĩ', icon: Stethoscope },
+  { id: 'sp-3', label: 'Đặt khám theo chuyên khoa', icon: HeartPulse },
+  { id: 'sp-4', label: 'Gói khám sức khỏe', icon: ShieldCheck },
+  { id: 'sp-5', label: 'Khám doanh nghiệp', icon: BriefcaseMedical },
+  { id: 'sp-6', label: 'Tư vấn từ xa', icon: ClipboardList },
+];
+
+const doctors = [
+  {
+    id: 'DOC-01',
+    name: 'BS.CKII Lý Thị Mỹ Dung',
+    specialty: 'Sản khoa',
+    clinic: 'Phòng khám An Phúc - Quận 3',
+    price: '320.000 đ',
+    schedule: '08:00 - 11:30 | Thứ 2 - Thứ 6',
+  },
+  {
+    id: 'DOC-02',
+    name: 'BS. Nguyễn Minh Khang',
+    specialty: 'Tim mạch',
+    clinic: 'Bệnh viện Đa khoa Tâm Đức',
+    price: '250.000 đ',
+    schedule: '13:30 - 17:00 | Thứ 2 - Thứ 7',
+  },
+  {
+    id: 'DOC-03',
+    name: 'BS. Trần Thu Hà',
+    specialty: 'Da liễu',
+    clinic: 'Phòng khám Thanh Bình',
+    price: '220.000 đ',
+    schedule: '09:00 - 16:00 | Thứ 3 - Chủ nhật',
+  },
+  {
+    id: 'DOC-04',
+    name: 'BS. Phạm Mỹ Linh',
+    specialty: 'Nhi khoa',
+    clinic: 'Bệnh viện Nhi Sài Gòn',
+    price: '280.000 đ',
+    schedule: '07:30 - 11:00 | Thứ 2 - Thứ 7',
+  },
+];
+
+const initialUsers = [
+  {
+    id: 'U-001',
+    fullName: 'Nguyễn Thảo Vy',
+    email: 'patient@clinic.vn',
+    phone: '0901234567',
+    password: '123456',
+    role: 'PATIENT',
+  },
+  {
+    id: 'U-002',
+    fullName: 'BS. Nguyễn Minh Khang',
+    email: 'doctor@clinic.vn',
+    phone: '0907654321',
+    password: '123456',
+    role: 'DOCTOR',
+  },
+  {
+    id: 'U-003',
+    fullName: 'Quản trị hệ thống',
+    email: 'admin@clinic.vn',
+    phone: '0988888888',
+    password: '123456',
+    role: 'ADMIN',
+  },
+];
+
+const initialAppointments = [
+  {
+    id: 'APT-1001',
+    patientName: 'Nguyễn Thảo Vy',
+    patientEmail: 'patient@clinic.vn',
+    doctorId: 'DOC-01',
+    doctorName: 'BS.CKII Lý Thị Mỹ Dung',
+    specialty: 'Sản khoa',
+    clinic: 'Phòng khám An Phúc - Quận 3',
+    date: '2026-06-24',
+    time: '08:30',
+    status: 'Đã xác nhận',
+    reason: 'Khám thai định kỳ',
+  },
+  {
+    id: 'APT-1002',
+    patientName: 'Lê Minh Châu',
+    patientEmail: 'walkin@clinic.vn',
+    doctorId: 'DOC-02',
+    doctorName: 'BS. Nguyễn Minh Khang',
+    specialty: 'Tim mạch',
+    clinic: 'Bệnh viện Đa khoa Tâm Đức',
+    date: '2026-06-24',
+    time: '14:00',
+    status: 'Chờ khám',
+    reason: 'Tái khám tim mạch',
+  },
+  {
+    id: 'APT-1003',
+    patientName: 'Phạm Gia Hân',
+    patientEmail: 'kid@clinic.vn',
+    doctorId: 'DOC-04',
+    doctorName: 'BS. Phạm Mỹ Linh',
+    specialty: 'Nhi khoa',
+    clinic: 'Bệnh viện Nhi Sài Gòn',
+    date: '2026-06-25',
+    time: '09:00',
+    status: 'Đã xác nhận',
+    reason: 'Khám sốt và ho',
+  },
+];
+
+const roleLabel = {
+  PATIENT: 'Bệnh nhân',
+  DOCTOR: 'Bác sĩ',
+  ADMIN: 'Quản trị viên',
+};
+
+function formatDate(date) {
+  const [year, month, day] = date.split('-');
+  return `${day}/${month}/${year}`;
+}
+
+function nextAppointmentId(items) {
+  return `APT-${1000 + items.length + 1}`;
+}
+
 function App() {
-  const [currentRole, setCurrentRole] = useState('patient'); // patient | doctor | admin
-  const [mobileSimulator, setMobileSimulator] = useState(true);
+  const [users, setUsers] = useState(initialUsers);
+  const [appointments, setAppointments] = useState(initialAppointments);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [showQuickBooking, setShowQuickBooking] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState('login');
+  const [authMessage, setAuthMessage] = useState('');
+  const [roleTab, setRoleTab] = useState('overview');
+  const [loginForm, setLoginForm] = useState({
+    email: 'patient@clinic.vn',
+    password: '123456',
+  });
+  const [registerForm, setRegisterForm] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    password: '',
+    role: 'PATIENT',
+  });
+  const [quickBookingForm, setQuickBookingForm] = useState({
+    fullName: '',
+    phone: '',
+    facility: '',
+    need: '',
+  });
+  const [bookingForm, setBookingForm] = useState({
+    doctorId: doctors[0].id,
+    date: '2026-06-26',
+    time: '08:00',
+    reason: '',
+  });
+  const [quickBookingMessage, setQuickBookingMessage] = useState('');
+  const [bookingMessage, setBookingMessage] = useState('');
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      
-      {/* Top Main Panel Control Bar */}
-      <header className="bg-slate-900/60 backdrop-blur-md border-b border-slate-800 py-3.5 px-6 sticky top-0 z-50 flex flex-col md:flex-row items-center justify-between gap-4">
-        
-        {/* Logo and project name */}
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-teal-500 flex items-center justify-center text-slate-950 shadow-lg shadow-teal-500/20">
-            <Activity className="w-5 h-5 font-bold" />
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <h1 className="text-sm font-bold text-white tracking-tight">CarePulse MedSuite</h1>
-              <span className="text-[9px] bg-teal-500/10 text-teal-400 border border-teal-500/20 px-1.5 py-0.5 rounded font-bold uppercase">Mock Core</span>
+  const filteredDoctors = useMemo(() => {
+    const keyword = searchKeyword.trim().toLowerCase();
+    if (!keyword) {
+      return doctors;
+    }
+    return doctors.filter(
+      (doctor) =>
+        doctor.name.toLowerCase().includes(keyword) ||
+        doctor.specialty.toLowerCase().includes(keyword) ||
+        doctor.clinic.toLowerCase().includes(keyword)
+    );
+  }, [searchKeyword]);
+
+  const patientAppointments = useMemo(() => {
+    if (!currentUser) {
+      return [];
+    }
+    return appointments.filter((item) => item.patientEmail === currentUser.email);
+  }, [appointments, currentUser]);
+
+  const doctorAppointments = useMemo(() => {
+    if (!currentUser) {
+      return [];
+    }
+    return appointments.filter((item) => item.doctorName === currentUser.fullName);
+  }, [appointments, currentUser]);
+
+  const selectedDoctor = useMemo(
+    () => doctors.find((doctor) => doctor.id === bookingForm.doctorId) ?? doctors[0],
+    [bookingForm.doctorId]
+  );
+
+  const openAuth = (mode) => {
+    setAuthMode(mode);
+    setAuthMessage('');
+    setShowAuthModal(true);
+  };
+
+  const handleLogin = (event) => {
+    event.preventDefault();
+    const user = users.find(
+      (item) =>
+        item.email.toLowerCase() === loginForm.email.trim().toLowerCase() &&
+        item.password === loginForm.password
+    );
+    if (!user) {
+      setAuthMessage('Email hoặc mật khẩu chưa đúng. Vui lòng kiểm tra lại.');
+      return;
+    }
+    setCurrentUser(user);
+    setRoleTab('overview');
+    setShowAuthModal(false);
+  };
+
+  const handleRegister = (event) => {
+    event.preventDefault();
+    const email = registerForm.email.trim().toLowerCase();
+    if (users.some((user) => user.email.toLowerCase() === email)) {
+      setAuthMessage('Email này đã tồn tại trong hệ thống.');
+      return;
+    }
+    const newUser = {
+      id: `U-${String(users.length + 1).padStart(3, '0')}`,
+      fullName: registerForm.fullName.trim(),
+      email,
+      phone: registerForm.phone.trim(),
+      password: registerForm.password,
+      role: registerForm.role,
+    };
+    setUsers((current) => [...current, newUser]);
+    setCurrentUser(newUser);
+    setRoleTab('overview');
+    setShowAuthModal(false);
+    setRegisterForm({
+      fullName: '',
+      email: '',
+      phone: '',
+      password: '',
+      role: 'PATIENT',
+    });
+  };
+
+  const handleQuickBookingSubmit = (event) => {
+    event.preventDefault();
+    setQuickBookingMessage('Yêu cầu của bạn đã được gửi. Hệ thống sẽ liên hệ trong thời gian sớm nhất.');
+    setQuickBookingForm({
+      fullName: '',
+      phone: '',
+      facility: '',
+      need: '',
+    });
+  };
+
+  const handleBookingSubmit = (event) => {
+    event.preventDefault();
+    if (!currentUser) {
+      setBookingMessage('Bạn cần đăng nhập trước khi đặt lịch khám.');
+      return;
+    }
+
+    const appointment = {
+      id: nextAppointmentId(appointments),
+      patientName: currentUser.fullName,
+      patientEmail: currentUser.email,
+      doctorId: selectedDoctor.id,
+      doctorName: selectedDoctor.name,
+      specialty: selectedDoctor.specialty,
+      clinic: selectedDoctor.clinic,
+      date: bookingForm.date,
+      time: bookingForm.time,
+      status: 'Đã xác nhận',
+      reason: bookingForm.reason.trim(),
+    };
+
+    setAppointments((current) => [appointment, ...current]);
+    setBookingMessage(`Bạn đã đặt lịch với ${selectedDoctor.name} vào ${bookingForm.time}, ngày ${formatDate(bookingForm.date)}.`);
+    setBookingForm((current) => ({
+      ...current,
+      reason: '',
+    }));
+    if (currentUser.role === 'PATIENT') {
+      setRoleTab('appointments');
+    }
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setRoleTab('overview');
+    setBookingMessage('');
+  };
+
+  const renderPublicHome = () => (
+    <div className="site-page">
+      <header className="site-header">
+        <div className="container header-inner">
+          <div className="brand">
+            <div className="brand-icon">
+              <HeartPulse size={20} />
             </div>
-            <p className="text-[10px] text-slate-400">Microservices Clinic Appointment System Frontend</p>
+            <span>ClinicAppointment</span>
           </div>
-        </div>
 
-        {/* Dynamic Role Switcher */}
-        <div className="flex bg-slate-950 p-1.5 rounded-xl border border-slate-800 gap-1">
-          <button
-            onClick={() => setCurrentRole('patient')}
-            className={`flex items-center gap-1.5 text-xs font-semibold py-2 px-4 rounded-lg transition-all ${
-              currentRole === 'patient' 
-                ? 'bg-teal-500 text-slate-950 shadow-md font-bold' 
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Smartphone className="w-3.5 h-3.5" />
-            <span>Patient Portal</span>
-          </button>
-          
-          <button
-            onClick={() => setCurrentRole('doctor')}
-            className={`flex items-center gap-1.5 text-xs font-semibold py-2 px-4 rounded-lg transition-all ${
-              currentRole === 'doctor' 
-                ? 'bg-teal-500 text-slate-950 shadow-md font-bold' 
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Stethoscope className="w-3.5 h-3.5" />
-            <span>Doctor Dashboard</span>
-          </button>
-          
-          <button
-            onClick={() => setCurrentRole('admin')}
-            className={`flex items-center gap-1.5 text-xs font-semibold py-2 px-4 rounded-lg transition-all ${
-              currentRole === 'admin' 
-                ? 'bg-teal-500 text-slate-950 shadow-md font-bold' 
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Monitor className="w-3.5 h-3.5" />
-            <span>Admin Control Panel</span>
-          </button>
-        </div>
+          <nav className="main-nav">
+            <a href="#home">Trang chủ</a>
+            <a href="#doctors">Bác sĩ</a>
+            <a href="#hospitals">Bệnh viện</a>
+            <a href="#clinics">Phòng khám</a>
+            <a href="#packages">Gói khám</a>
+          </nav>
 
-        {/* System Architecture Tech Badge */}
-        <div className="hidden lg:flex items-center gap-4 text-xs">
-          <div className="flex items-center gap-1 text-[10px] bg-slate-950 border border-slate-850 px-2.5 py-1.5 rounded-lg text-slate-400">
-            <Database className="w-3 h-3 text-teal-400" />
-            <span>Spring Boot</span>
-            <span className="text-slate-700">•</span>
-            <Lock className="w-3.5 h-3.5 text-teal-400" />
-            <span>Keycloak Auth</span>
+          <div className="header-actions">
+            <button type="button" className="text-button" onClick={() => openAuth('login')}>
+              Đăng nhập
+            </button>
+            <button type="button" className="primary-button small" onClick={() => openAuth('register')}>
+              Đăng ký
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Main Viewport Container */}
-      <main className="flex-1 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex flex-col justify-start">
-        
-        {/* Informative Subbar explaining architecture connection */}
-        <div className="bg-slate-900/30 border-b border-slate-800/40 px-6 py-2.5 flex items-center justify-between text-[11px] text-slate-400">
-          <div className="flex flex-wrap items-center gap-4">
-            {currentRole === 'patient' && (
-              <>
-                <span className="font-semibold text-teal-400">Patient Module:</span>
-                <span>• Displays upcoming appointments synchronized with Scheduling DB</span>
-                <span>• Step-by-step Booking Flow queries live availabilities from <strong>Doctor Service</strong></span>
-                <span>• Records list queries <strong>Patient Service</strong> endpoints</span>
-              </>
-            )}
-            {currentRole === 'doctor' && (
-              <>
-                <span className="font-semibold text-teal-400">Doctor Module:</span>
-                <span>• Schedule availability grid controls slots in <strong>Doctor Service</strong> DB</span>
-                <span>• Consultation status updates (Waiting / In-Progress / Completed) emit events via <strong>RabbitMQ</strong></span>
-              </>
-            )}
-            {currentRole === 'admin' && (
-              <>
-                <span className="font-semibold text-teal-400">Admin Control Tower:</span>
-                <span>• Live stat metrics monitor health checks across the cluster gateway</span>
-                <span>• Collision Monitor demonstrates distributed lock operations resolving double-booking race conditions</span>
-              </>
-            )}
+      <section id="home" className="hero-section">
+        <div className="container hero-content">
+          <p className="hero-kicker">Kết nối bệnh nhân với bác sĩ và bệnh viện</p>
+          <h1>Đặt lịch khám bệnh trực tuyến nhanh, dễ dùng và rõ ràng bằng tiếng Việt</h1>
+          <p className="hero-subtitle">
+            Tìm bác sĩ, bệnh viện, phòng khám phù hợp và gửi yêu cầu đặt khám chỉ trong vài bước.
+          </p>
+
+          <div className="hero-search">
+            <input
+              type="text"
+              value={searchKeyword}
+              onChange={(event) => setSearchKeyword(event.target.value)}
+              placeholder="Tìm bệnh viện, phòng khám, bác sĩ..."
+            />
+            <button type="button" className="search-button">
+              <Search size={20} />
+            </button>
           </div>
-          
-          {currentRole === 'patient' && (
-            <div className="hidden sm:flex items-center gap-2">
-              <span className="text-[10px]">Simulation View:</span>
-              <button 
-                onClick={() => setMobileSimulator(!mobileSimulator)} 
-                className={`px-2.5 py-1 rounded text-[10px] font-bold border transition-all ${
-                  mobileSimulator 
-                    ? 'bg-teal-500/10 text-teal-400 border-teal-500/20' 
-                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                {mobileSimulator ? 'Phone Simulator Frame' : 'Widescreen Web View'}
+
+          <div className="service-grid">
+            {specialties.map((item) => {
+              const Icon = item.icon;
+              return (
+                <article key={item.id} className="service-card">
+                  <div className="service-icon">
+                    <Icon size={28} />
+                  </div>
+                  <h3>{item.label}</h3>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section id="doctors" className="section-block">
+        <div className="container">
+          <div className="section-head">
+            <div>
+              <span>Đặt khám bác sĩ</span>
+              <h2>Danh sách bác sĩ nổi bật</h2>
+              <p>Chọn bác sĩ theo chuyên khoa, cơ sở y tế và mức phí phù hợp.</p>
+            </div>
+            <button type="button" className="outline-button" onClick={() => setShowQuickBooking(true)}>
+              Đặt khám nhanh
+              <ArrowRight size={16} />
+            </button>
+          </div>
+
+          <div className="doctor-list-grid">
+            {filteredDoctors.map((doctor) => (
+              <article key={doctor.id} className="doctor-web-card">
+                <div className="doctor-avatar">{doctor.name.slice(0, 2)}</div>
+                <h3>{doctor.name}</h3>
+                <span className="doctor-badge">Bác sĩ</span>
+                <ul>
+                  <li>
+                    <Stethoscope size={16} />
+                    <span>{doctor.specialty}</span>
+                  </li>
+                  <li>
+                    <Building2 size={16} />
+                    <span>{doctor.clinic}</span>
+                  </li>
+                  <li>
+                    <CalendarDays size={16} />
+                    <span>{doctor.schedule}</span>
+                  </li>
+                </ul>
+                <div className="doctor-card-footer">
+                  <strong>{doctor.price}</strong>
+                  <button type="button" className="link-button" onClick={() => setShowQuickBooking(true)}>
+                    Xem thêm
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+
+  const renderPatientScreen = () => (
+    <div className="role-page">
+      <header className="role-header">
+        <div className="container role-header-inner">
+          <div>
+            <span className="role-mini">Khu vực bệnh nhân</span>
+            <h1>Xin chào, {currentUser.fullName}</h1>
+          </div>
+          <div className="role-header-actions">
+            <button type="button" className={roleTab === 'overview' ? 'tab-button active' : 'tab-button'} onClick={() => setRoleTab('overview')}>
+              Tổng quan
+            </button>
+            <button type="button" className={roleTab === 'booking' ? 'tab-button active' : 'tab-button'} onClick={() => setRoleTab('booking')}>
+              Đặt lịch
+            </button>
+            <button type="button" className={roleTab === 'appointments' ? 'tab-button active' : 'tab-button'} onClick={() => setRoleTab('appointments')}>
+              Lịch của tôi
+            </button>
+            <button type="button" className="text-button" onClick={handleLogout}>
+              <LogOut size={16} />
+              Đăng xuất
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="container role-content">
+        {roleTab === 'overview' && (
+          <div className="role-grid">
+            <section className="content-card">
+              <h2>Thông tin nhanh</h2>
+              <div className="info-stats">
+                <div>
+                  <span>Lịch đã đặt</span>
+                  <strong>{patientAppointments.length}</strong>
+                </div>
+                <div>
+                  <span>Tài khoản</span>
+                  <strong>{roleLabel[currentUser.role]}</strong>
+                </div>
+                <div>
+                  <span>Số điện thoại</span>
+                  <strong>{currentUser.phone}</strong>
+                </div>
+              </div>
+            </section>
+
+            <section className="content-card">
+              <h2>Lịch khám sắp tới</h2>
+              <div className="list-stack">
+                {patientAppointments.map((item) => (
+                  <article key={item.id} className="schedule-item">
+                    <div>
+                      <h3>{item.doctorName}</h3>
+                      <p>{item.specialty} • {item.clinic}</p>
+                    </div>
+                    <div className="schedule-meta">
+                      <span>{formatDate(item.date)}</span>
+                      <span>{item.time}</span>
+                      <strong>{item.status}</strong>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          </div>
+        )}
+
+        {roleTab === 'booking' && (
+          <div className="role-grid single">
+            <section className="content-card">
+              <h2>Đặt lịch khám</h2>
+              <p className="section-note">Chọn bác sĩ, ngày giờ và nhập lý do khám.</p>
+              {bookingMessage ? <div className="success-box">{bookingMessage}</div> : null}
+              <form className="form-grid" onSubmit={handleBookingSubmit}>
+                <div className="two-columns">
+                  <label>
+                    Bác sĩ
+                    <select
+                      value={bookingForm.doctorId}
+                      onChange={(event) =>
+                        setBookingForm((current) => ({ ...current, doctorId: event.target.value }))
+                      }
+                    >
+                      {doctors.map((doctor) => (
+                        <option key={doctor.id} value={doctor.id}>
+                          {doctor.name} - {doctor.specialty}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Ngày khám
+                    <input
+                      type="date"
+                      value={bookingForm.date}
+                      onChange={(event) =>
+                        setBookingForm((current) => ({ ...current, date: event.target.value }))
+                      }
+                    />
+                  </label>
+                </div>
+                <div className="two-columns">
+                  <label>
+                    Giờ khám
+                    <input
+                      type="time"
+                      value={bookingForm.time}
+                      onChange={(event) =>
+                        setBookingForm((current) => ({ ...current, time: event.target.value }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    Chuyên khoa
+                    <input type="text" value={selectedDoctor.specialty} readOnly />
+                  </label>
+                </div>
+                <label>
+                  Lý do khám
+                  <textarea
+                    rows={4}
+                    value={bookingForm.reason}
+                    onChange={(event) =>
+                      setBookingForm((current) => ({ ...current, reason: event.target.value }))
+                    }
+                    placeholder="Mô tả triệu chứng hoặc nhu cầu khám của bạn"
+                    required
+                  />
+                </label>
+                <button type="submit" className="primary-button submit-button">
+                  Gửi lịch hẹn
+                </button>
+              </form>
+            </section>
+          </div>
+        )}
+
+        {roleTab === 'appointments' && (
+          <div className="role-grid single">
+            <section className="content-card">
+              <h2>Lịch hẹn của tôi</h2>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Mã lịch</th>
+                    <th>Bác sĩ</th>
+                    <th>Ngày khám</th>
+                    <th>Giờ</th>
+                    <th>Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {patientAppointments.map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.id}</td>
+                      <td>{item.doctorName}</td>
+                      <td>{formatDate(item.date)}</td>
+                      <td>{item.time}</td>
+                      <td>{item.status}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+
+  const renderDoctorScreen = () => (
+    <div className="role-page">
+      <header className="role-header doctor">
+        <div className="container role-header-inner">
+          <div>
+            <span className="role-mini">Màn hình bác sĩ</span>
+            <h1>{currentUser.fullName}</h1>
+          </div>
+          <div className="role-header-actions">
+            <button type="button" className={roleTab === 'overview' ? 'tab-button active' : 'tab-button'} onClick={() => setRoleTab('overview')}>
+              Lịch hôm nay
+            </button>
+            <button type="button" className={roleTab === 'appointments' ? 'tab-button active' : 'tab-button'} onClick={() => setRoleTab('appointments')}>
+              Danh sách bệnh nhân
+            </button>
+            <button type="button" className="text-button" onClick={handleLogout}>
+              <LogOut size={16} />
+              Đăng xuất
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="container role-content">
+        <section className="content-card">
+          <h2>Lịch khám theo bác sĩ</h2>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Mã lịch</th>
+                <th>Bệnh nhân</th>
+                <th>Lý do khám</th>
+                <th>Ngày khám</th>
+                <th>Giờ</th>
+                <th>Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody>
+              {doctorAppointments.map((item) => (
+                <tr key={item.id}>
+                  <td>{item.id}</td>
+                  <td>{item.patientName}</td>
+                  <td>{item.reason}</td>
+                  <td>{formatDate(item.date)}</td>
+                  <td>{item.time}</td>
+                  <td>{item.status}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+  );
+
+  const renderAdminScreen = () => (
+    <div className="role-page">
+      <header className="role-header admin">
+        <div className="container role-header-inner">
+          <div>
+            <span className="role-mini">Màn hình quản trị</span>
+            <h1>Quản lý lịch hẹn và phân quyền</h1>
+          </div>
+          <div className="role-header-actions">
+            <button type="button" className={roleTab === 'overview' ? 'tab-button active' : 'tab-button'} onClick={() => setRoleTab('overview')}>
+              Tài khoản
+            </button>
+            <button type="button" className={roleTab === 'appointments' ? 'tab-button active' : 'tab-button'} onClick={() => setRoleTab('appointments')}>
+              Toàn bộ lịch hẹn
+            </button>
+            <button type="button" className="text-button" onClick={handleLogout}>
+              <LogOut size={16} />
+              Đăng xuất
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="container role-content">
+        {roleTab === 'overview' && (
+          <section className="content-card">
+            <h2>Danh sách người dùng</h2>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Họ tên</th>
+                  <th>Email</th>
+                  <th>Số điện thoại</th>
+                  <th>Vai trò</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((user) => (
+                  <tr key={user.id}>
+                    <td>{user.fullName}</td>
+                    <td>{user.email}</td>
+                    <td>{user.phone}</td>
+                    <td>{roleLabel[user.role]}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        )}
+
+        {roleTab === 'appointments' && (
+          <section className="content-card">
+            <h2>Tất cả lịch hẹn</h2>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Mã lịch</th>
+                  <th>Bệnh nhân</th>
+                  <th>Bác sĩ</th>
+                  <th>Chuyên khoa</th>
+                  <th>Ngày khám</th>
+                  <th>Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody>
+                {appointments.map((item) => (
+                  <tr key={item.id}>
+                    <td>{item.id}</td>
+                    <td>{item.patientName}</td>
+                    <td>{item.doctorName}</td>
+                    <td>{item.specialty}</td>
+                    <td>{`${formatDate(item.date)} - ${item.time}`}</td>
+                    <td>{item.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        )}
+      </main>
+    </div>
+  );
+
+  return (
+    <>
+      {!currentUser && renderPublicHome()}
+      {currentUser?.role === 'PATIENT' && renderPatientScreen()}
+      {currentUser?.role === 'DOCTOR' && renderDoctorScreen()}
+      {currentUser?.role === 'ADMIN' && renderAdminScreen()}
+
+      {showQuickBooking && (
+        <div className="modal-overlay" onClick={() => setShowQuickBooking(false)}>
+          <div className="booking-modal" onClick={(event) => event.stopPropagation()}>
+            <button type="button" className="modal-close" onClick={() => setShowQuickBooking(false)}>
+              <X size={24} />
+            </button>
+            <h2>Đặt khám nhanh</h2>
+            <p>Vui lòng để lại thông tin, chúng tôi sẽ liên hệ lại với bạn để tư vấn.</p>
+            {quickBookingMessage ? <div className="success-box">{quickBookingMessage}</div> : null}
+            <form className="form-grid" onSubmit={handleQuickBookingSubmit}>
+              <div className="two-columns">
+                <label>
+                  Họ tên *
+                  <input
+                    type="text"
+                    value={quickBookingForm.fullName}
+                    onChange={(event) =>
+                      setQuickBookingForm((current) => ({ ...current, fullName: event.target.value }))
+                    }
+                    placeholder="VD: Nguyễn Văn A"
+                    required
+                  />
+                </label>
+                <label>
+                  Số điện thoại *
+                  <input
+                    type="tel"
+                    value={quickBookingForm.phone}
+                    onChange={(event) =>
+                      setQuickBookingForm((current) => ({ ...current, phone: event.target.value }))
+                    }
+                    placeholder="VD: 0912345678"
+                    required
+                  />
+                </label>
+              </div>
+              <label>
+                Cơ sở y tế *
+                <input
+                  type="text"
+                  value={quickBookingForm.facility}
+                  onChange={(event) =>
+                    setQuickBookingForm((current) => ({ ...current, facility: event.target.value }))
+                  }
+                  placeholder="Nhập tên bệnh viện / phòng khám / bác sĩ"
+                  required
+                />
+              </label>
+              <label>
+                Nhu cầu khám
+                <textarea
+                  rows={5}
+                  value={quickBookingForm.need}
+                  onChange={(event) =>
+                    setQuickBookingForm((current) => ({ ...current, need: event.target.value }))
+                  }
+                  placeholder="Nhập nhu cầu khám chữa bệnh của bạn, mô tả triệu chứng hoặc dịch vụ muốn hẹn khám..."
+                />
+              </label>
+              <button type="submit" className="primary-button submit-button">
+                Gửi yêu cầu
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showAuthModal && (
+        <div className="modal-overlay" onClick={() => setShowAuthModal(false)}>
+          <div className="auth-modal" onClick={(event) => event.stopPropagation()}>
+            <button type="button" className="modal-close" onClick={() => setShowAuthModal(false)}>
+              <X size={24} />
+            </button>
+            <div className="auth-tabs">
+              <button type="button" className={authMode === 'login' ? 'active' : ''} onClick={() => setAuthMode('login')}>
+                <LogIn size={16} />
+                Đăng nhập
+              </button>
+              <button type="button" className={authMode === 'register' ? 'active' : ''} onClick={() => setAuthMode('register')}>
+                <UserRoundPlus size={16} />
+                Đăng ký
               </button>
             </div>
-          )}
-        </div>
 
-        {/* View Switcher Core */}
-        <div className="flex-1 py-8 px-4 flex items-center justify-center">
-          {currentRole === 'patient' ? (
-            mobileSimulator ? (
-              /* Phone Device Mockup Container */
-              <div className="relative py-12 px-6 bg-slate-900/20 rounded-[50px] border border-slate-800 shadow-2xl flex items-center justify-center">
-                {/* Phone ear speaker slot and camera notch mock */}
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-950 rounded-full border border-slate-800/80 z-30 flex items-center justify-center">
-                  <div className="w-12 h-1 bg-slate-800 rounded-full"></div>
-                  <div className="w-2.5 h-2.5 bg-slate-900 rounded-full ml-3 border border-slate-800"></div>
+            {authMessage ? <div className="error-box">{authMessage}</div> : null}
+
+            {authMode === 'login' ? (
+              <form className="form-grid" onSubmit={handleLogin}>
+                <h2>Đăng nhập hệ thống</h2>
+                <label>
+                  Email
+                  <input
+                    type="email"
+                    value={loginForm.email}
+                    onChange={(event) =>
+                      setLoginForm((current) => ({ ...current, email: event.target.value }))
+                    }
+                    required
+                  />
+                </label>
+                <label>
+                  Mật khẩu
+                  <input
+                    type="password"
+                    value={loginForm.password}
+                    onChange={(event) =>
+                      setLoginForm((current) => ({ ...current, password: event.target.value }))
+                    }
+                    required
+                  />
+                </label>
+                <div className="sample-account-box">
+                  <strong>Tài khoản mẫu:</strong>
+                  <span>Bệnh nhân: `patient@clinic.vn` / `123456`</span>
+                  <span>Bác sĩ: `doctor@clinic.vn` / `123456`</span>
+                  <span>Quản trị: `admin@clinic.vn` / `123456`</span>
                 </div>
-                {/* Screen frame and component */}
-                <PatientPortal />
-                {/* Phone bottom home bar mock */}
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 w-36 h-1.5 bg-slate-700/80 rounded-full z-30"></div>
-              </div>
+                <button type="submit" className="primary-button submit-button">
+                  Đăng nhập
+                </button>
+              </form>
             ) : (
-              <div className="w-full max-w-4xl bg-slate-900 border border-slate-850 p-6 rounded-2xl">
-                <h3 className="text-sm font-bold text-teal-400 mb-4 text-center">Patient Portal (Responsiveness Test Grid)</h3>
-                <div className="flex justify-center">
-                  <PatientPortal />
+              <form className="form-grid" onSubmit={handleRegister}>
+                <h2>Tạo tài khoản mới</h2>
+                <label>
+                  Họ tên
+                  <input
+                    type="text"
+                    value={registerForm.fullName}
+                    onChange={(event) =>
+                      setRegisterForm((current) => ({ ...current, fullName: event.target.value }))
+                    }
+                    required
+                  />
+                </label>
+                <div className="two-columns">
+                  <label>
+                    Email
+                    <input
+                      type="email"
+                      value={registerForm.email}
+                      onChange={(event) =>
+                        setRegisterForm((current) => ({ ...current, email: event.target.value }))
+                      }
+                      required
+                    />
+                  </label>
+                  <label>
+                    Số điện thoại
+                    <input
+                      type="tel"
+                      value={registerForm.phone}
+                      onChange={(event) =>
+                        setRegisterForm((current) => ({ ...current, phone: event.target.value }))
+                      }
+                      required
+                    />
+                  </label>
                 </div>
-              </div>
-            )
-          ) : currentRole === 'doctor' ? (
-            <DoctorDashboard />
-          ) : (
-            <AdminPanel />
-          )}
-        </div>
-      </main>
-
-      {/* Footer System Indicator */}
-      <footer className="bg-slate-950 border-t border-slate-900 py-4 px-6 text-center text-xs text-slate-500">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 max-w-7xl mx-auto">
-          <span>© 2026 CarePulse Medical Microservices. Demo sandbox environment.</span>
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1">
-              <ShieldCheck className="w-4 h-4 text-teal-500/70" /> Hexagonal Architecture
-            </span>
-            <span className="text-slate-800">|</span>
-            <span>Tailwind v4 Sandbox</span>
+                <div className="two-columns">
+                  <label>
+                    Mật khẩu
+                    <input
+                      type="password"
+                      value={registerForm.password}
+                      onChange={(event) =>
+                        setRegisterForm((current) => ({ ...current, password: event.target.value }))
+                      }
+                      required
+                    />
+                  </label>
+                  <label>
+                    Vai trò
+                    <select
+                      value={registerForm.role}
+                      onChange={(event) =>
+                        setRegisterForm((current) => ({ ...current, role: event.target.value }))
+                      }
+                    >
+                      <option value="PATIENT">Bệnh nhân</option>
+                      <option value="DOCTOR">Bác sĩ</option>
+                      <option value="ADMIN">Quản trị viên</option>
+                    </select>
+                  </label>
+                </div>
+                <button type="submit" className="primary-button submit-button">
+                  Đăng ký
+                </button>
+              </form>
+            )}
           </div>
         </div>
-      </footer>
-    </div>
+      )}
+    </>
   );
 }
 
