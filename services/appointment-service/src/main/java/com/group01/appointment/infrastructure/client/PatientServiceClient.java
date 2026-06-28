@@ -9,6 +9,6 @@ import java.util.UUID;
 @FeignClient(name = "patient-service-client", url = "${clients.patient-service.base-url}")
 public interface PatientServiceClient {
 
-    @GetMapping("/patients/{patientId}")
+    @GetMapping("/api/patients/{patientId}")
     void getPatientById(@PathVariable("patientId") UUID patientId);
 }

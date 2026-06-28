@@ -37,8 +37,8 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 
-    @ExceptionHandler(DomainException.class)
-    public ResponseEntity<ErrorResponse> handleDomainException(DomainException ex) {
+    @ExceptionHandler({DomainException.class, IllegalArgumentException.class})
+    public ResponseEntity<ErrorResponse> handleDomainException(RuntimeException ex) {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 ex.getMessage(),

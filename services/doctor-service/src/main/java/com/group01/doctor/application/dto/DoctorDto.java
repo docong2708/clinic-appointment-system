@@ -14,6 +14,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class DoctorDto {
     private UUID id;
+    private UUID userId;
     private String name;
     private String specialization;
     private String phoneNumber;

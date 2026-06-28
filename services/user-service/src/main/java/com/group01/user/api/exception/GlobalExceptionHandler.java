@@ -1,5 +1,6 @@
 package com.group01.user.api.exception;
 
+import com.group01.user.application.exception.ProfileProvisioningException;
 import com.group01.user.domain.exception.EmailAlreadyExistsException;
 import com.group01.user.domain.exception.InvalidUserStatusException;
 import com.group01.user.domain.exception.PhoneAlreadyExistsException;
@@ -33,6 +34,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({RoleNotFoundException.class, InvalidUserStatusException.class, IllegalArgumentException.class})
     ResponseEntity<ErrorResponse> handleBadRequest(RuntimeException exception, HttpServletRequest request) {
         return error(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(ProfileProvisioningException.class)
+    ResponseEntity<ErrorResponse> handleProfileProvisioning(ProfileProvisioningException exception, HttpServletRequest request) {
+        return error(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage(), request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

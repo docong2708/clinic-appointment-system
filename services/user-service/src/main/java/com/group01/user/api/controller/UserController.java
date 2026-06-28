@@ -59,7 +59,16 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponse register(@Valid @RequestBody RegisterRequest request) {
         return toResponse(registerUseCase.execute(new RegisterCommand(
-                request.email(), request.password(), request.fullName(), request.phoneNumber(), request.role())));
+                request.email(),
+                request.password(),
+                request.fullName(),
+                request.phoneNumber(),
+                request.role(),
+                request.specialization(),
+                request.dateOfBirth(),
+                request.gender(),
+                request.contactInformation()
+        )));
     }
 
     @PostMapping
