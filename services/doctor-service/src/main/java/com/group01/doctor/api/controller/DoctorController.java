@@ -43,14 +43,14 @@ public class DoctorController {
 
     @PutMapping("/{id}")
     public ResponseEntity<DoctorDto> updateDoctor(
-            @PathVariable UUID id,
+            @PathVariable("id") UUID id,
             @Valid @RequestBody UpdateDoctorRequest request) {
         DoctorDto updated = updateDoctorUseCase.execute(id, request);
         return ResponseEntity.ok(updated);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DoctorDto> getDoctorById(@PathVariable UUID id) {
+    public ResponseEntity<DoctorDto> getDoctorById(@PathVariable("id") UUID id) {
         DoctorDto doctor = getDoctorUseCase.getById(id);
         return ResponseEntity.ok(doctor);
     }
@@ -62,7 +62,7 @@ public class DoctorController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteDoctor(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteDoctor(@PathVariable("id") UUID id) {
         deleteDoctorUseCase.execute(id);
         return ResponseEntity.noContent().build();
     }

@@ -8,4 +8,5 @@ import java.util.UUID;
 
 @Repository
 public interface SpringDataDoctorRepository extends JpaRepository<DoctorJpaEntity, UUID> {
+    boolean existsByUserId(UUID userId);
 }

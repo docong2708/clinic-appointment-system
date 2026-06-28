@@ -36,14 +36,14 @@ public class ScheduleController {
     private final DeleteSlotUseCase deleteSlotUseCase;
 
     @GetMapping
-    public ResponseEntity<List<SlotDto>> getSchedule(@PathVariable UUID doctorId) {
+    public ResponseEntity<List<SlotDto>> getSchedule(@PathVariable("doctorId") UUID doctorId) {
         List<SlotDto> schedule = viewScheduleUseCase.execute(doctorId);
         return ResponseEntity.ok(schedule);
     }
 
     @PostMapping
     public ResponseEntity<DoctorDto> addSlot(
-            @PathVariable UUID doctorId,
+            @PathVariable("doctorId") UUID doctorId,
             @Valid @RequestBody AddSlotRequest request) {
         DoctorDto updatedDoctor = updateAvailabilityUseCase.execute(doctorId, request);
         return ResponseEntity.ok(updatedDoctor);
@@ -51,24 +51,24 @@ public class ScheduleController {
 
     @PostMapping("/{slotId}/book")
     public ResponseEntity<SlotDto> bookSlot(
-            @PathVariable UUID doctorId,
-            @PathVariable UUID slotId) {
+            @PathVariable("doctorId") UUID doctorId,
+            @PathVariable("slotId") UUID slotId) {
         SlotDto slot = bookSlotUseCase.execute(doctorId, slotId);
         return ResponseEntity.ok(slot);
     }
 
     @DeleteMapping("/{slotId}/book")
     public ResponseEntity<SlotDto> cancelBooking(
-            @PathVariable UUID doctorId,
-            @PathVariable UUID slotId) {
+            @PathVariable("doctorId") UUID doctorId,
+            @PathVariable("slotId") UUID slotId) {
         SlotDto slot = cancelBookingUseCase.execute(doctorId, slotId);
         return ResponseEntity.ok(slot);
     }
 
     @DeleteMapping("/{slotId}")
     public ResponseEntity<Void> deleteSlot(
-            @PathVariable UUID doctorId,
-            @PathVariable UUID slotId) {
+            @PathVariable("doctorId") UUID doctorId,
+            @PathVariable("slotId") UUID slotId) {
         deleteSlotUseCase.execute(doctorId, slotId);
         return ResponseEntity.noContent().build();
     }

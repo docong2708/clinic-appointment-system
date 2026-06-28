@@ -6,10 +6,12 @@ import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 public class Doctor {
     private final DoctorId id;
+    private final UUID userId;
     private String name;
     private String specialization;
     private String phoneNumber;
@@ -17,8 +19,9 @@ public class Doctor {
     private boolean active;
     private final List<Slot> slots;
 
-    public Doctor(DoctorId id, String name, String specialization, String phoneNumber, String email, boolean active, List<Slot> slots) {
+    public Doctor(DoctorId id, UUID userId, String name, String specialization, String phoneNumber, String email, boolean active, List<Slot> slots) {
         this.id = id;
+        this.userId = userId;
         this.name = name;
         this.specialization = specialization;
         this.phoneNumber = phoneNumber;
@@ -27,8 +30,11 @@ public class Doctor {
         this.slots = slots != null ? new ArrayList<>(slots) : new ArrayList<>();
     }
 
-    public static Doctor create(String name, String specialization, String phoneNumber, String email) {
-        return new Doctor(DoctorId.generate(), name, specialization, phoneNumber, email, true, new ArrayList<>());
+    public static Doctor create(UUID userId, String name, String specialization, String phoneNumber, String email) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User id is required");
+        }
+        return new Doctor(DoctorId.generate(), userId, name, specialization, phoneNumber, email, true, new ArrayList<>());
     }
 
     public void updateDetails(String name, String specialization, String phoneNumber, String email, boolean active) {

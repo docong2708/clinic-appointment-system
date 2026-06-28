@@ -17,6 +17,7 @@ public class DoctorAppMapper {
         if (doctor == null) return null;
         return DoctorDto.builder()
                 .id(doctor.getId().value())
+                .userId(doctor.getUserId())
                 .name(doctor.getName())
                 .specialization(doctor.getSpecialization())
                 .phoneNumber(doctor.getPhoneNumber())

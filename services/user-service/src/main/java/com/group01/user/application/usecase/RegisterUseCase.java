@@ -16,6 +16,7 @@ import java.util.Set;
 public class RegisterUseCase {
     private final IdentityProviderClient identityProviderClient;
     private final CreateUserUseCase createUserUseCase;
+    private final ProfileProvisioningClient profileProvisioningClient;
 
     @Transactional
     public User execute(RegisterCommand command) {
@@ -29,8 +30,38 @@ public class RegisterUseCase {
                 command.phoneNumber(),
                 Set.of(role)
         ));
+
+        provisionRoleProfile(user, command, role);
+
         log.info("Register user completed userId={} keycloakUserId={} email={} role={}",
                 user.getId(), user.getKeycloakUserId(), user.getEmail().value(), role);
         return user;
+    }
+
+    private void provisionRoleProfile(User user, RegisterCommand command, String role) {
+        if ("DOCTOR".equals(role)) {
+            profileProvisioningClient.createDoctorProfile(
+                    user.getId(),
+                    command.fullName(),
+                    command.specialization(),
+                    command.phoneNumber(),
+                    command.email()
+            );
+            return;
+        }
+
+        if ("PATIENT".equals(role)) {
+            String contactInformation = command.contactInformation() == null || command.contactInformation().isBlank()
+                    ? command.phoneNumber()
+                    : command.contactInformation();
+
+            profileProvisioningClient.createPatientProfile(
+                    user.getId(),
+                    command.fullName(),
+                    command.dateOfBirth(),
+                    command.gender(),
+                    contactInformation
+            );
+        }
     }
 }

@@ -23,6 +23,9 @@ public class DoctorJpaEntity {
     @Column(name = "id")
     private UUID id;
 
+    @Column(name = "user_id", unique = true)
+    private UUID userId;
+
     @Column(name = "name", nullable = false)
     private String name;
 

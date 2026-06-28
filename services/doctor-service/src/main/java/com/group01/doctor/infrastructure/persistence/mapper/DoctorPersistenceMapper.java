@@ -20,6 +20,7 @@ public class DoctorPersistenceMapper {
 
         DoctorJpaEntity jpaEntity = DoctorJpaEntity.builder()
                 .id(domain.getId().value())
+                .userId(domain.getUserId())
                 .name(domain.getName())
                 .specialization(domain.getSpecialization())
                 .phoneNumber(domain.getPhoneNumber())
@@ -60,6 +61,7 @@ public class DoctorPersistenceMapper {
 
         return new Doctor(
                 DoctorId.of(entity.getId()),
+                entity.getUserId(),
                 entity.getName(),
                 entity.getSpecialization(),
                 entity.getPhoneNumber(),

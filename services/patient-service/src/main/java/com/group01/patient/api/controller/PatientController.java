@@ -1,7 +1,9 @@
 package com.group01.patient.api.controller;
 
 import com.group01.patient.api.dto.CreateMedicalRecordRequest;
+import com.group01.patient.api.dto.CreatePatientRequest;
 import com.group01.patient.api.dto.MedicalRecordResponse;
+import com.group01.patient.api.dto.PatientResponse;
 import com.group01.patient.api.dto.UpdateMedicalRecordRequest;
 import com.group01.patient.application.command.CreateMedicalRecordCommand;
 import com.group01.patient.application.command.UpdateMedicalRecordCommand;
@@ -11,6 +13,9 @@ import com.group01.patient.application.usecase.DeleteMedicalRecordUseCase;
 import com.group01.patient.application.usecase.GetMedicalRecordUseCase;
 import com.group01.patient.application.usecase.GetMedicalRecordsByPatientUseCase;
 import com.group01.patient.application.usecase.UpdateMedicalRecordUseCase;
+import com.group01.patient.domain.exception.PatientNotFoundException;
+import com.group01.patient.infrastructure.persistence.PatientJpaEntity;
+import com.group01.patient.infrastructure.persistence.PatientJpaRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -24,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/patients")
@@ -34,19 +40,22 @@ public class PatientController {
     private final GetMedicalRecordsByPatientUseCase getMedicalRecordsByPatientUseCase;
     private final UpdateMedicalRecordUseCase updateMedicalRecordUseCase;
     private final DeleteMedicalRecordUseCase deleteMedicalRecordUseCase;
+    private final PatientJpaRepository patientJpaRepository;
 
     public PatientController(
             CreateMedicalRecordUseCase createMedicalRecordUseCase,
             GetMedicalRecordUseCase getMedicalRecordUseCase,
             GetMedicalRecordsByPatientUseCase getMedicalRecordsByPatientUseCase,
             UpdateMedicalRecordUseCase updateMedicalRecordUseCase,
-            DeleteMedicalRecordUseCase deleteMedicalRecordUseCase
+            DeleteMedicalRecordUseCase deleteMedicalRecordUseCase,
+            PatientJpaRepository patientJpaRepository
     ) {
         this.createMedicalRecordUseCase = createMedicalRecordUseCase;
         this.getMedicalRecordUseCase = getMedicalRecordUseCase;
         this.getMedicalRecordsByPatientUseCase = getMedicalRecordsByPatientUseCase;
         this.updateMedicalRecordUseCase = updateMedicalRecordUseCase;
         this.deleteMedicalRecordUseCase = deleteMedicalRecordUseCase;
+        this.patientJpaRepository = patientJpaRepository;
     }
 
     @GetMapping("/health")
@@ -54,11 +63,39 @@ public class PatientController {
         return "Patient service running";
     }
 
+    @PostMapping
+    public ResponseEntity<PatientResponse> createPatient(@Valid @RequestBody CreatePatientRequest request) {
+        if (patientJpaRepository.existsByUserId(request.userId())) {
+            throw new IllegalArgumentException("Patient profile already exists for user id: " + request.userId());
+        }
+
+        PatientJpaEntity patient = PatientJpaEntity.builder()
+                .userId(request.userId())
+                .firstName(request.firstName())
+                .lastName(request.lastName())
+                .dateOfBirth(request.dateOfBirth())
+                .gender(request.gender())
+                .contactInformation(request.contactInformation())
+                .build();
+
+        PatientJpaEntity saved = patientJpaRepository.save(patient);
+        return ResponseEntity
+                .created(URI.create("/api/patients/" + saved.getUserId()))
+                .body(PatientResponse.from(saved));
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<PatientResponse> getPatientByUserId(@PathVariable("userId") UUID userId) {
+        PatientJpaEntity patient = patientJpaRepository.findByUserId(userId)
+                .orElseThrow(() -> new PatientNotFoundException(userId));
+        return ResponseEntity.ok(PatientResponse.from(patient));
+    }
+
     // ---- Medical Records ----
 
     @PostMapping("/{patientId}/medical-records")
     public ResponseEntity<MedicalRecordResponse> createMedicalRecord(
-            @PathVariable Long patientId,
+            @PathVariable("patientId") Long patientId,
             @Valid @RequestBody CreateMedicalRecordRequest request
     ) {
         List<CreateMedicalRecordCommand.PrescriptionCommand> prescriptions = request.prescriptions() == null
@@ -84,7 +121,7 @@ public class PatientController {
 
     @GetMapping("/{patientId}/medical-records")
     public ResponseEntity<List<MedicalRecordResponse>> getMedicalRecordsByPatient(
-            @PathVariable Long patientId
+            @PathVariable("patientId") Long patientId
     ) {
         List<MedicalRecordResponse> records = getMedicalRecordsByPatientUseCase.execute(patientId)
                 .stream()
@@ -95,8 +132,8 @@ public class PatientController {
 
     @GetMapping("/{patientId}/medical-records/{recordId}")
     public ResponseEntity<MedicalRecordResponse> getMedicalRecord(
-            @PathVariable Long patientId,
-            @PathVariable Long recordId
+            @PathVariable("patientId") Long patientId,
+            @PathVariable("recordId") Long recordId
     ) {
         MedicalRecordResult result = getMedicalRecordUseCase.execute(recordId);
         return ResponseEntity.ok(MedicalRecordResponse.from(result));
@@ -104,8 +141,8 @@ public class PatientController {
 
     @PutMapping("/{patientId}/medical-records/{recordId}")
     public ResponseEntity<MedicalRecordResponse> updateMedicalRecord(
-            @PathVariable Long patientId,
-            @PathVariable Long recordId,
+            @PathVariable("patientId") Long patientId,
+            @PathVariable("recordId") Long recordId,
             @Valid @RequestBody UpdateMedicalRecordRequest request
     ) {
         List<CreateMedicalRecordCommand.PrescriptionCommand> prescriptions = request.prescriptions() == null
@@ -129,8 +166,8 @@ public class PatientController {
 
     @DeleteMapping("/{patientId}/medical-records/{recordId}")
     public ResponseEntity<Void> deleteMedicalRecord(
-            @PathVariable Long patientId,
-            @PathVariable Long recordId
+            @PathVariable("patientId") Long patientId,
+            @PathVariable("recordId") Long recordId
     ) {
         deleteMedicalRecordUseCase.execute(recordId);
         return ResponseEntity.noContent().build();
