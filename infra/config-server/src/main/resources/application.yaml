@@ -4,25 +4,7 @@ server:
 spring:
   application:
     name: config-server
-  profiles:
-    active: native
 
----
-spring:
-  config:
-    activate:
-      on-profile: native
-  cloud:
-    config:
-      server:
-        native:
-          search-locations: file:./clinic-config-repo,file:../clinic-config-repo,file:../../clinic-config-repo
-
----
-spring:
-  config:
-    activate:
-      on-profile: git
   cloud:
     config:
       server:
@@ -32,3 +14,6 @@ spring:
           password: ${GIT_TOKEN}
           default-label: main
           clone-on-start: true
+
+encrypt:
+  key: ${ENCRYPT_KEY}
