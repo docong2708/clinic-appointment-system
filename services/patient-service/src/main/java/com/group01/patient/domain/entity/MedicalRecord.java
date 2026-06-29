@@ -5,27 +5,28 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Getter
 @Builder
 @AllArgsConstructor
 public class MedicalRecord {
-    private Long id;
-    private Long patientId;
+    private UUID id;
+    private UUID patientId;
     private LocalDate recordDate;
     private String diagnosis;
     private String treatment;
     private String notes;
 
     public static MedicalRecord create(
-            Long patientId,
+            UUID patientId,
             LocalDate recordDate,
             String diagnosis,
             String treatment,
             String notes
     ) {
         return MedicalRecord.builder()
-                .patientId(requirePositive(patientId, "Patient id must be positive"))
+                .patientId(requirePatientId(patientId))
                 .recordDate(requireRecordDate(recordDate))
                 .diagnosis(requireText(diagnosis, "Diagnosis is required"))
                 .treatment(trimNullable(treatment))
@@ -40,9 +41,9 @@ public class MedicalRecord {
         this.notes = trimNullable(notes);
     }
 
-    private static Long requirePositive(Long value, String message) {
-        if (value == null || value <= 0) {
-            throw new IllegalArgumentException(message);
+    private static UUID requirePatientId(UUID value) {
+        if (value == null) {
+            throw new IllegalArgumentException("Patient id is required");
         }
         return value;
     }

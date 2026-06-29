@@ -2,10 +2,11 @@ package com.group01.patient.application.result;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 public record MedicalRecordResult(
-        Long id,
-        Long patientId,
+        UUID id,
+        UUID patientId,
         LocalDate recordDate,
         String diagnosis,
         String treatment,
@@ -13,12 +14,13 @@ public record MedicalRecordResult(
         List<PrescriptionResult> prescriptions
 ) {
     public record PrescriptionResult(
-            Long id,
-            Long medicalRecordId,
+            UUID id,
+            UUID medicalRecordId,
             String medicationName,
             String dosage,
             String frequency,
             String duration
-    ) {}
+    ) {
+    }
 }
 

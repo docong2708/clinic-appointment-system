@@ -60,6 +60,9 @@ public class AppointmentJpaEntity {
     @Column(name = "cancelled_by")
     private UUID cancelledBy;
 
+    @Column(name = "cancelled_by_role", length = 50)
+    private String cancelledByRole;
+
     @Column(name = "cancelled_at")
     private OffsetDateTime cancelledAt;
 

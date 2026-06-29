@@ -4,11 +4,7 @@ import java.util.UUID;
 
 public class PatientNotFoundException extends RuntimeException {
 
-    public PatientNotFoundException(Long patientId) {
+    public PatientNotFoundException(UUID patientId) {
         super("Patient not found with id: " + patientId);
-    }
-
-    public PatientNotFoundException(UUID userId) {
-        super("Patient not found with user id: " + userId);
     }
 }
