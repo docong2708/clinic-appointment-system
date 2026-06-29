@@ -4,12 +4,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.UUID;
+
 @Getter
 @Builder
 @AllArgsConstructor
 public class Prescription {
-    private Long id;
-    private Long medicalRecordId;
+    private UUID id;
+    private UUID medicalRecordId;
     private String medicationName;
     private String dosage;
     private String frequency;

@@ -80,14 +80,14 @@ public class PatientController {
 
         PatientJpaEntity saved = patientJpaRepository.save(patient);
         return ResponseEntity
-                .created(URI.create("/api/patients/" + saved.getUserId()))
+                .created(URI.create("/api/patients/" + saved.getId()))
                 .body(PatientResponse.from(saved));
     }
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<PatientResponse> getPatientByUserId(@PathVariable("userId") UUID userId) {
-        PatientJpaEntity patient = patientJpaRepository.findByUserId(userId)
-                .orElseThrow(() -> new PatientNotFoundException(userId));
+    @GetMapping("/{patientId}")
+    public ResponseEntity<PatientResponse> getPatientById(@PathVariable("patientId") UUID patientId) {
+        PatientJpaEntity patient = patientJpaRepository.findById(patientId)
+                .orElseThrow(() -> new PatientNotFoundException(patientId));
         return ResponseEntity.ok(PatientResponse.from(patient));
     }
 
@@ -95,7 +95,7 @@ public class PatientController {
 
     @PostMapping("/{patientId}/medical-records")
     public ResponseEntity<MedicalRecordResponse> createMedicalRecord(
-            @PathVariable("patientId") Long patientId,
+            @PathVariable("patientId") UUID patientId,
             @Valid @RequestBody CreateMedicalRecordRequest request
     ) {
         List<CreateMedicalRecordCommand.PrescriptionCommand> prescriptions = request.prescriptions() == null
@@ -121,7 +121,7 @@ public class PatientController {
 
     @GetMapping("/{patientId}/medical-records")
     public ResponseEntity<List<MedicalRecordResponse>> getMedicalRecordsByPatient(
-            @PathVariable("patientId") Long patientId
+            @PathVariable("patientId") UUID patientId
     ) {
         List<MedicalRecordResponse> records = getMedicalRecordsByPatientUseCase.execute(patientId)
                 .stream()
@@ -132,8 +132,8 @@ public class PatientController {
 
     @GetMapping("/{patientId}/medical-records/{recordId}")
     public ResponseEntity<MedicalRecordResponse> getMedicalRecord(
-            @PathVariable("patientId") Long patientId,
-            @PathVariable("recordId") Long recordId
+            @PathVariable("patientId") UUID patientId,
+            @PathVariable("recordId") UUID recordId
     ) {
         MedicalRecordResult result = getMedicalRecordUseCase.execute(recordId);
         return ResponseEntity.ok(MedicalRecordResponse.from(result));
@@ -141,8 +141,8 @@ public class PatientController {
 
     @PutMapping("/{patientId}/medical-records/{recordId}")
     public ResponseEntity<MedicalRecordResponse> updateMedicalRecord(
-            @PathVariable("patientId") Long patientId,
-            @PathVariable("recordId") Long recordId,
+            @PathVariable("patientId") UUID patientId,
+            @PathVariable("recordId") UUID recordId,
             @Valid @RequestBody UpdateMedicalRecordRequest request
     ) {
         List<CreateMedicalRecordCommand.PrescriptionCommand> prescriptions = request.prescriptions() == null
@@ -166,8 +166,8 @@ public class PatientController {
 
     @DeleteMapping("/{patientId}/medical-records/{recordId}")
     public ResponseEntity<Void> deleteMedicalRecord(
-            @PathVariable("patientId") Long patientId,
-            @PathVariable("recordId") Long recordId
+            @PathVariable("patientId") UUID patientId,
+            @PathVariable("recordId") UUID recordId
     ) {
         deleteMedicalRecordUseCase.execute(recordId);
         return ResponseEntity.noContent().build();

@@ -8,6 +8,8 @@ import com.group01.patient.domain.repository.MedicalRecordRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Service
 public class GetMedicalRecordUseCase {
 
@@ -18,7 +20,7 @@ public class GetMedicalRecordUseCase {
     }
 
     @Transactional(readOnly = true)
-    public MedicalRecordResult execute(Long id) {
+    public MedicalRecordResult execute(UUID id) {
         MedicalRecordAggregate aggregate = medicalRecordRepository.findById(id)
                 .orElseThrow(() -> new MedicalRecordNotFoundException(id));
         return MedicalRecordResultMapper.from(aggregate);

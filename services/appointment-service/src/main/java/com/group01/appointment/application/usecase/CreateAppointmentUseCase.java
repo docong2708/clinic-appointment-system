@@ -4,12 +4,11 @@ import com.group01.appointment.application.command.CreateAppointmentCommand;
 import com.group01.appointment.application.exception.DoctorNotFoundException;
 import com.group01.appointment.application.exception.PatientNotFoundException;
 import com.group01.appointment.application.port.DoctorClientPort;
-import com.group01.appointment.application.port.NotificationPort;
+import com.group01.appointment.application.port.DoctorClientPort.DoctorSlot;
 import com.group01.appointment.application.port.PatientClientPort;
 import com.group01.appointment.application.result.AppointmentResult;
 import com.group01.appointment.application.result.AppointmentResultMapper;
 import com.group01.appointment.domain.aggregate.AppointmentAggregate;
-import com.group01.appointment.domain.event.AppointmentCreatedEvent;
 import com.group01.appointment.domain.repository.AppointmentLogRepository;
 import com.group01.appointment.domain.repository.AppointmentRepository;
 import com.group01.appointment.domain.vo.AppointmentReason;
@@ -26,20 +25,17 @@ public class CreateAppointmentUseCase {
     private final AppointmentLogRepository appointmentLogRepository;
     private final PatientClientPort patientClientPort;
     private final DoctorClientPort doctorClientPort;
-    private final NotificationPort notificationPort;
 
     public CreateAppointmentUseCase(
             AppointmentRepository appointmentRepository,
             AppointmentLogRepository appointmentLogRepository,
             PatientClientPort patientClientPort,
-            DoctorClientPort doctorClientPort,
-            NotificationPort notificationPort
+            DoctorClientPort doctorClientPort
     ) {
         this.appointmentRepository = appointmentRepository;
         this.appointmentLogRepository = appointmentLogRepository;
         this.patientClientPort = patientClientPort;
         this.doctorClientPort = doctorClientPort;
-        this.notificationPort = notificationPort;
     }
 
     @Transactional
@@ -52,12 +48,28 @@ public class CreateAppointmentUseCase {
             throw new DoctorNotFoundException(command.doctorId());
         }
 
+        DoctorSlot slot = doctorClientPort.getSlot(command.doctorId(), command.slotId());
+        if (slot.booked()) {
+            throw new IllegalStateException("Slot is already booked");
+        }
+
+        DoctorSlot bookedSlot = doctorClientPort.bookSlot(command.doctorId(), command.slotId());
+
+        try {
+            return createAppointment(command, bookedSlot);
+        } catch (RuntimeException exception) {
+            cancelSlotBooking(command);
+            throw exception;
+        }
+    }
+
+    private AppointmentResult createAppointment(CreateAppointmentCommand command, DoctorSlot slot) {
         AppointmentAggregate appointment = AppointmentAggregate.create(
                 PatientId.of(command.patientId()),
                 DoctorId.of(command.doctorId()),
                 command.slotId(),
                 command.rescheduledFromAppointmentId(),
-                AppointmentTime.of(command.startTime(), command.endTime()),
+                AppointmentTime.of(slot.startTime(), slot.endTime()),
                 AppointmentReason.of(command.reason()),
                 command.bookingSource(),
                 command.createdBy()
@@ -66,8 +78,17 @@ public class CreateAppointmentUseCase {
         AppointmentAggregate savedAppointment = appointmentRepository.save(appointment);
 
         appointmentLogRepository.saveAll(appointment.getLogs());
-        notificationPort.publishAppointmentCreated(AppointmentCreatedEvent.from(savedAppointment));
+        // TODO: Re-enable when notification-service appointment event handling is ready.
+        // notificationPort.publishAppointmentCreated(AppointmentCreatedEvent.from(savedAppointment));
 
         return AppointmentResultMapper.from(savedAppointment);
+    }
+
+    private void cancelSlotBooking(CreateAppointmentCommand command) {
+        try {
+            doctorClientPort.cancelSlotBooking(command.doctorId(), command.slotId());
+        } catch (RuntimeException ignored) {
+            // Keep the original create-appointment failure as the response cause.
+        }
     }
 }

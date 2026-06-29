@@ -7,7 +7,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface PatientJpaRepository extends JpaRepository<PatientJpaEntity, Long> {
+public interface PatientJpaRepository extends JpaRepository<PatientJpaEntity, UUID> {
     Optional<PatientJpaEntity> findByUserId(UUID userId);
 
     boolean existsByUserId(UUID userId);

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class GetMedicalRecordsByPatientUseCase {
@@ -18,7 +19,7 @@ public class GetMedicalRecordsByPatientUseCase {
     }
 
     @Transactional(readOnly = true)
-    public List<MedicalRecordResult> execute(Long patientId) {
+    public List<MedicalRecordResult> execute(UUID patientId) {
         return medicalRecordRepository.findByPatientId(patientId)
                 .stream()
                 .map(MedicalRecordResultMapper::from)

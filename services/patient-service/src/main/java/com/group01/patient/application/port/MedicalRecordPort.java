@@ -1,5 +1,7 @@
 package com.group01.patient.application.port;
 
+import java.util.UUID;
+
 /**
  * Port for external/infrastructure operations related to patients.
  * In a real system this might call an external patient-registry service.
@@ -7,6 +9,6 @@ package com.group01.patient.application.port;
  */
 public interface MedicalRecordPort {
 
-    boolean existsPatientById(Long patientId);
+    boolean existsPatientById(UUID patientId);
 }
 
