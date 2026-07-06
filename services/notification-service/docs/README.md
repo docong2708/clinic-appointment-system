@@ -10,13 +10,13 @@ Thư mục này chứa toàn bộ tài liệu hướng dẫn phát triển và t
   - [PHASE-1-TEST-REPORT.md](./PHASE-1-TEST-REPORT.md): Báo cáo test run service thành công.
 
 - 📊 **Phase 2: REST API (Tiếp theo)**
-  - [PHASE-2-REST-API.md](./PHASE-2-REST-API.md): Hướng dẫn thiết kế endpoints & controller.
+  - [PHASE-2-REST-API.md](PHASE-2-REST-API.md): Hướng dẫn thiết kế endpoints & controller.
 
 - 📊 **Phase 3: Kafka Events**
-  - [PHASE-3-KAFKA.md](./PHASE-3-KAFKA.md): Event-Driven integration với các microservices khác.
+  - [PHASE-3-KAFKA.md](PHASE-3-KAFKA.md): Event-Driven integration với các microservices khác.
 
 - 📊 **Phase 4: Retry & Templates**
-  - [PHASE-4-RETRY-TEMPLATES.md](./PHASE-4-RETRY-TEMPLATES.md): Scheduled retries & rendering template system.
+  - [PHASE-4-RETRY-TEMPLATES.md](PHASE-4-RETRY-TEMPLATES.md): Scheduled retries & rendering template system.
 
 - 📐 **Kiến Trúc Tổng Quan**
   - [ARCHITECTURE.md](./ARCHITECTURE.md): Sơ đồ layer & Data Flow.

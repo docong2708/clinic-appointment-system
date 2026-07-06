@@ -10,6 +10,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.GetMapping;
+
+import java.util.UUID;
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/events")
@@ -31,6 +35,27 @@ public class EventController {
         } catch (Exception e) {
             log.error("Error processing appointment event: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/test-send")
+    public ResponseEntity<String> testSendToEmail() {
+        log.info("Test send to ddinhphu2004@gmail.com");
+        try {
+            NotificationEventPayload payload = NotificationEventPayload.builder()
+                    .sourceService("test-service")
+                    .eventId(UUID.randomUUID())
+                    .eventType("TEST_EVENT")
+                    .recipientId(UUID.randomUUID())
+                    .aggregateId(UUID.randomUUID())
+                    .aggregateType("Test")
+                    .eventTime(LocalDateTime.now())
+                    .payload("Test notification to ddinhphu2004@gmail.com")
+                    .build();
+            processInboxEventUseCase.handle(payload);
+            return ResponseEntity.ok("Test email sent!");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error: " + e.getMessage());
         }
     }
 }
