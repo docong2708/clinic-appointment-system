@@ -100,6 +100,11 @@ public class NotificationDelivery {
         this.lastError = errorMessage;
         this.failedAt = LocalDateTime.now();
         this.retryCount++;
+        if (this.retryCount < 3) {
+            this.nextRetryAt = LocalDateTime.now().plusMinutes((long) this.retryCount * 5);
+        } else {
+            this.nextRetryAt = null;
+        }
         this.updatedAt = LocalDateTime.now();
     }
 }
