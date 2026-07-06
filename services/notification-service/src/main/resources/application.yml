@@ -2,4 +2,34 @@ spring:
   application:
     name: notification-service
   config:
-    import: configserver:http://localhost:8888
+    import: optional:configserver:http://localhost:8888
+  datasource:
+    url: jdbc:postgresql://localhost:5432/notification_db
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: noreply@clinic.com
+    password: test-password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  flyway:
+    enabled: false
+
+server:
+  port: 8083
+
+logging:
+  level:
+    root: INFO
+    com.group01: DEBUG
