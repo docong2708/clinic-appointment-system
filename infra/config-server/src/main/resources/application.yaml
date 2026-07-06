@@ -6,29 +6,11 @@ spring:
     name: config-server
   profiles:
     active: native
-
----
-spring:
-  config:
-    activate:
-      on-profile: native
   cloud:
     config:
       server:
         native:
           search-locations: file:./clinic-config-repo,file:../clinic-config-repo,file:../../clinic-config-repo
 
----
-spring:
-  config:
-    activate:
-      on-profile: git
-  cloud:
-    config:
-      server:
-        git:
-          uri: https://github.com/hieult-dev/clinic-config-repo.git
-          username: ${GIT_USERNAME}
-          password: ${GIT_TOKEN}
-          default-label: main
-          clone-on-start: true
+encrypt:
+  key: clinic-secret-key-301
