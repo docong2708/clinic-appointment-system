@@ -1,5 +1,6 @@
 package com.group01.notification.infrastructure.persistence;
 
+import com.group01.notification.api.dto.NotificationResponse;
 import com.group01.notification.domain.aggregate.NotificationAggregate;
 import com.group01.notification.domain.entity.NotificationDelivery;
 import com.group01.notification.domain.vo.*;
@@ -57,6 +58,20 @@ public class NotificationMapper {
                 toLocal(entity.getCreatedAt()),
                 toLocal(entity.getUpdatedAt())
         );
+    }
+
+    public NotificationResponse toResponse(NotificationAggregate agg) {
+        return NotificationResponse.builder()
+                .id(agg.getId().value())
+                .recipientUserId(agg.getRecipientId().value())
+                .type(agg.getType())
+                .title(agg.getTitle().value())
+                .body(agg.getBody())
+                .status(agg.getStatus().name())
+                .priority(agg.getPriority())
+                .createdAt(agg.getCreatedAt())
+                .updatedAt(agg.getUpdatedAt())
+                .build();
     }
 
     public NotificationDeliveryJpaEntity deliveryToJpa(NotificationDelivery delivery) {

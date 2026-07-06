@@ -6,7 +6,6 @@ import com.group01.notification.domain.entity.NotificationDelivery;
 import com.group01.notification.domain.vo.NotificationChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -21,29 +20,26 @@ public class NotificationSenderAdapter implements NotificationSenderPort {
     }
 
     @Override
-    @Async
     public String send(NotificationAggregate aggregate, NotificationDelivery delivery) throws Exception {
-        log.info("Sending notification: [Channel: {}] [To: {}] [Title: {}]", 
-                 delivery.getChannel(), 
-                 delivery.getDestination(), 
-                 aggregate.getTitle());
+        log.info("[MOCK] Sending notification: Channel={} To={} Title={}",
+                 delivery.getChannel(),
+                 delivery.getDestination(),
+                 aggregate.getTitle().value());
 
         NotificationChannel channel = delivery.getChannel();
 
         switch (channel) {
             case EMAIL:
-                return emailSenderService.sendEmail(
-                        delivery.getDestination(),
-                        aggregate.getTitle().value(),
-                        aggregate.getBody()
-                );
-            
+                log.info("[MOCK] Email sent to: {} - Subject: {}", delivery.getDestination(), aggregate.getTitle());
+                return "mock_email_" + System.currentTimeMillis();
+
             case IN_APP:
-                log.info("In-app notification stored. Destination: {}", delivery.getDestination());
-                return "in_app_" + System.currentTimeMillis();
-            
+                log.info("[MOCK] In-app notification sent. Destination: {}", delivery.getDestination());
+                return "mock_in_app_" + System.currentTimeMillis();
+
             default:
-                throw new IllegalArgumentException("Unsupported channel: " + channel);
+                log.warn("[MOCK] Unsupported channel: {}", channel);
+                return "mock_unknown_" + System.currentTimeMillis();
         }
     }
 }
