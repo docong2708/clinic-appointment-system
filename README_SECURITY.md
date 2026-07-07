@@ -93,7 +93,7 @@ curl.exe -X POST http://localhost:9080/realms/clinic-appointment/protocol/openid
 Call gateway:
 
 ```powershell
-curl.exe http://localhost:8080/api/users/me `
+curl.exe http://localhost:8080/auth/me `
   -H "Authorization: Bearer <access_token>"
 ```
 

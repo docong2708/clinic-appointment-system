@@ -17,8 +17,9 @@ import com.group01.user.application.usecase.ChangeUserStatusUseCase;
 import com.group01.user.application.usecase.CreateUserUseCase;
 import com.group01.user.application.usecase.DeleteUserUseCase;
 import com.group01.user.application.usecase.GetAllUsersUseCase;
-import com.group01.user.application.usecase.GetMyProfileUseCase;
+import com.group01.user.application.usecase.GetUserByKeycloakIdUseCase;
 import com.group01.user.application.usecase.GetUserByIdUseCase;
+import com.group01.user.application.usecase.ProfileLookupClient;
 import com.group01.user.application.usecase.RegisterUseCase;
 import com.group01.user.application.usecase.UpdateUserUseCase;
 import com.group01.user.domain.aggregate.Role;
@@ -47,7 +48,8 @@ import java.util.stream.Collectors;
 public class UserController {
     private final RegisterUseCase registerUseCase;
     private final CreateUserUseCase createUserUseCase;
-    private final GetMyProfileUseCase getMyProfileUseCase;
+    private final ProfileLookupClient profileLookupClient;
+    private final GetUserByKeycloakIdUseCase getUserByKeycloakIdUseCase;
     private final GetUserByIdUseCase getUserByIdUseCase;
     private final GetAllUsersUseCase getAllUsersUseCase;
     private final UpdateUserUseCase updateUserUseCase;
@@ -78,9 +80,10 @@ public class UserController {
                 request.keycloakUserId(), request.email(), request.fullName(), request.phoneNumber(), request.roles())));
     }
 
-    @GetMapping("/me")
-    public UserResponse getMyProfile() {
-        return toResponse(getMyProfileUseCase.execute());
+    @GetMapping("/keycloak/{keycloakUserId}")
+    public UserResponse getUserByKeycloakId(@PathVariable("keycloakUserId") String keycloakUserId) {
+        User user = getUserByKeycloakIdUseCase.execute(keycloakUserId);
+        return toResponse(user, resolvePatientId(user));
     }
 
     @GetMapping("/{id}")
@@ -114,9 +117,14 @@ public class UserController {
     }
 
     private UserResponse toResponse(User user) {
+        return toResponse(user, null);
+    }
+
+    private UserResponse toResponse(User user, UUID patientId) {
         return new UserResponse(
                 user.getId(),
                 user.getKeycloakUserId(),
+                patientId,
                 user.getEmail().value(),
                 user.getFullName(),
                 user.getPhoneNumber() == null ? null : user.getPhoneNumber().value(),
@@ -125,6 +133,15 @@ public class UserController {
                 user.getCreatedAt(),
                 user.getUpdatedAt()
         );
+    }
+
+    private UUID resolvePatientId(User user) {
+        boolean isPatient = user.getRoles().stream()
+                .anyMatch(role -> "PATIENT".equals(role.getName().name()));
+        if (!isPatient) {
+            return null;
+        }
+        return profileLookupClient.findPatientIdByUserId(user.getId()).orElse(null);
     }
 
     private Set<RoleResponse> toRoleResponses(Set<Role> roles) {

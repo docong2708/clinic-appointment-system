@@ -1,18 +1,21 @@
 package com.group01.user.infrastructure.profile;
 
 import com.group01.user.application.exception.ProfileProvisioningException;
+import com.group01.user.application.usecase.ProfileLookupClient;
 import com.group01.user.application.usecase.ProfileProvisioningClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClient;
 
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.UUID;
 
 @Component
-public class ProfileProvisioningRestClient implements ProfileProvisioningClient {
+public class ProfileProvisioningRestClient implements ProfileProvisioningClient, ProfileLookupClient {
     private final RestClient doctorClient;
     private final RestClient patientClient;
 
@@ -78,6 +81,21 @@ public class ProfileProvisioningRestClient implements ProfileProvisioningClient 
         }
     }
 
+    @Override
+    public Optional<UUID> findPatientIdByUserId(UUID userId) {
+        try {
+            PatientProfileResponse response = patientClient.get()
+                    .uri("/api/patients/by-user/{userId}", userId)
+                    .retrieve()
+                    .body(PatientProfileResponse.class);
+            return response == null ? Optional.empty() : Optional.of(response.id());
+        } catch (HttpClientErrorException.NotFound exception) {
+            return Optional.empty();
+        } catch (RestClientException exception) {
+            throw new ProfileProvisioningException("Could not fetch patient profile", exception);
+        }
+    }
+
     private NameParts splitName(String fullName) {
         if (fullName == null || fullName.isBlank()) {
             return new NameParts(null, null);
@@ -101,6 +119,17 @@ public class ProfileProvisioningRestClient implements ProfileProvisioningClient 
     }
 
     private record CreatePatientProfileRequest(
+            UUID userId,
+            String firstName,
+            String lastName,
+            LocalDate dateOfBirth,
+            String gender,
+            String contactInformation
+    ) {
+    }
+
+    private record PatientProfileResponse(
+            UUID id,
             UUID userId,
             String firstName,
             String lastName,
