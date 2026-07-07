@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.group01.doctor.application.dto.CreateDoctorRequest;
@@ -55,9 +56,18 @@ public class DoctorController {
         return ResponseEntity.ok(doctor);
     }
 
+    @GetMapping("/specializations")
+    public ResponseEntity<List<String>> getSpecializations() {
+        return ResponseEntity.ok(getDoctorUseCase.getSpecializations());
+    }
+
     @GetMapping
-    public ResponseEntity<List<DoctorDto>> getAllDoctors() {
-        List<DoctorDto> doctors = getDoctorUseCase.getAll();
+    public ResponseEntity<List<DoctorDto>> getAllDoctors(
+            @RequestParam(value = "specialization", required = false) String specialization
+    ) {
+        List<DoctorDto> doctors = specialization == null || specialization.isBlank()
+                ? getDoctorUseCase.getAll()
+                : getDoctorUseCase.getBySpecialization(specialization);
         return ResponseEntity.ok(doctors);
     }
 

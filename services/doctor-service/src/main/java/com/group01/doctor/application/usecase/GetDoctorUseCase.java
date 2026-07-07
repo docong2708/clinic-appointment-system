@@ -33,4 +33,16 @@ public class GetDoctorUseCase {
                 .map(mapper::toDto)
                 .collect(Collectors.toList());
     }
+
+    @Transactional(readOnly = true)
+    public List<DoctorDto> getBySpecialization(String specialization) {
+        return doctorRepository.findBySpecialization(specialization).stream()
+                .map(mapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> getSpecializations() {
+        return doctorRepository.findDistinctSpecializations();
+    }
 }

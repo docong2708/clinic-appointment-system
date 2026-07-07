@@ -10,6 +10,8 @@ import java.util.UUID;
 public interface DoctorRepository {
     Optional<Doctor> findById(DoctorId id);
     List<Doctor> findAll();
+    List<Doctor> findBySpecialization(String specialization);
+    List<String> findDistinctSpecializations();
     boolean existsByUserId(UUID userId);
     Doctor save(Doctor doctor);
     void deleteById(DoctorId id);

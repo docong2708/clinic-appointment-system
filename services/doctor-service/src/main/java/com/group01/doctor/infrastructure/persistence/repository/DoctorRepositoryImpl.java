@@ -34,6 +34,18 @@ public class DoctorRepositoryImpl implements DoctorRepository {
     }
 
     @Override
+    public List<Doctor> findBySpecialization(String specialization) {
+        return jpaRepository.findBySpecializationIgnoreCaseAndActiveTrue(specialization).stream()
+                .map(mapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<String> findDistinctSpecializations() {
+        return jpaRepository.findDistinctActiveSpecializations();
+    }
+
+    @Override
     public boolean existsByUserId(UUID userId) {
         return jpaRepository.existsByUserId(userId);
     }
