@@ -1,9 +1,10 @@
 package com.group01.notification.infrastructure.sender;
 
+import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -19,11 +20,15 @@ public class EmailSenderService {
 
     public String sendEmail(String to, String subject, String body) throws Exception {
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(to);
-            message.setSubject(subject);
-            message.setText(body);
-            message.setFrom("noreply@clinic.com");
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            
+            helper.setTo(to);
+            helper.setSubject(subject);
+            
+            boolean isHtml = body.trim().startsWith("<!DOCTYPE") || body.trim().startsWith("<html>");
+            helper.setText(body, isHtml);
+            helper.setFrom("noreply@clinic.com");
 
             mailSender.send(message);
             log.info("Email sent successfully to: {}", to);
