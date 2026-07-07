@@ -1,9 +1,9 @@
 package com.group01.appointment.application.port;
 
-import com.group01.appointment.domain.event.AppointmentCanceledEvent;
-import com.group01.appointment.domain.event.AppointmentConfirmedEvent;
-import com.group01.appointment.domain.event.AppointmentCreatedEvent;
-import com.group01.appointment.domain.event.AppointmentUpdatedEvent;
+import com.group01.commonevents.appointment.AppointmentCanceledEvent;
+import com.group01.commonevents.appointment.AppointmentConfirmedEvent;
+import com.group01.commonevents.appointment.AppointmentCreatedEvent;
+import com.group01.commonevents.appointment.AppointmentUpdatedEvent;
 
 public interface NotificationPort {
 

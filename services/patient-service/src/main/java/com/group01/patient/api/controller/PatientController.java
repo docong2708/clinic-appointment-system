@@ -84,6 +84,13 @@ public class PatientController {
                 .body(PatientResponse.from(saved));
     }
 
+    @GetMapping("/by-user/{userId}")
+    public ResponseEntity<PatientResponse> getPatientByUserId(@PathVariable("userId") UUID userId) {
+        PatientJpaEntity patient = patientJpaRepository.findByUserId(userId)
+                .orElseThrow(() -> new PatientNotFoundException(userId));
+        return ResponseEntity.ok(PatientResponse.from(patient));
+    }
+
     @GetMapping("/{patientId}")
     public ResponseEntity<PatientResponse> getPatientById(@PathVariable("patientId") UUID patientId) {
         PatientJpaEntity patient = patientJpaRepository.findById(patientId)
