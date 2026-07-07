@@ -7,6 +7,7 @@ import java.util.UUID;
 public record UserResponse(
         UUID id,
         String keycloakUserId,
+        UUID patientId,
         String email,
         String fullName,
         String phoneNumber,

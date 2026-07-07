@@ -1,10 +1,12 @@
 package com.group01.appointment.application.usecase;
 
 import com.group01.appointment.application.command.CreateAppointmentCommand;
+import com.group01.appointment.application.event.AppointmentEventMapper;
 import com.group01.appointment.application.exception.DoctorNotFoundException;
 import com.group01.appointment.application.exception.PatientNotFoundException;
 import com.group01.appointment.application.port.DoctorClientPort;
 import com.group01.appointment.application.port.DoctorClientPort.DoctorSlot;
+import com.group01.appointment.application.port.NotificationPort;
 import com.group01.appointment.application.port.PatientClientPort;
 import com.group01.appointment.application.result.AppointmentResult;
 import com.group01.appointment.application.result.AppointmentResultMapper;
@@ -25,17 +27,20 @@ public class CreateAppointmentUseCase {
     private final AppointmentLogRepository appointmentLogRepository;
     private final PatientClientPort patientClientPort;
     private final DoctorClientPort doctorClientPort;
+    private final NotificationPort notificationPort;
 
     public CreateAppointmentUseCase(
             AppointmentRepository appointmentRepository,
             AppointmentLogRepository appointmentLogRepository,
             PatientClientPort patientClientPort,
-            DoctorClientPort doctorClientPort
+            DoctorClientPort doctorClientPort,
+            NotificationPort notificationPort
     ) {
         this.appointmentRepository = appointmentRepository;
         this.appointmentLogRepository = appointmentLogRepository;
         this.patientClientPort = patientClientPort;
         this.doctorClientPort = doctorClientPort;
+        this.notificationPort = notificationPort;
     }
 
     @Transactional
@@ -78,8 +83,7 @@ public class CreateAppointmentUseCase {
         AppointmentAggregate savedAppointment = appointmentRepository.save(appointment);
 
         appointmentLogRepository.saveAll(appointment.getLogs());
-        // TODO: Re-enable when notification-service appointment event handling is ready.
-        // notificationPort.publishAppointmentCreated(AppointmentCreatedEvent.from(savedAppointment));
+        notificationPort.publishAppointmentCreated(AppointmentEventMapper.created(savedAppointment));
 
         return AppointmentResultMapper.from(savedAppointment);
     }
