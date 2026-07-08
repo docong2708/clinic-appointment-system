@@ -14,4 +14,10 @@ public class CreateNotificationCommand {
     private Short priority;
     private String channel;
     private String destination;
+    private String sourceService;
+    private UUID sourceEventId;
+    private String dedupeKey;
+    private String aggregateType;
+    private UUID aggregateId;
+    private UUID sourceInboxEventId;
 }

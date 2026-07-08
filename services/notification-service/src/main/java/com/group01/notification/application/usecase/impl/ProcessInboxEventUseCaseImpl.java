@@ -72,6 +72,12 @@ public class ProcessInboxEventUseCaseImpl implements ProcessInboxEventUseCase {
                     .priority((short) 1)
                     .channel("EMAIL")
                     .destination("phudinh193@gmail.com")
+                    .sourceService(payload.getSourceService())
+                    .sourceEventId(payload.getEventId())
+                    .dedupeKey(payload.getEventType())
+                    .aggregateType(payload.getAggregateType())
+                    .aggregateId(payload.getAggregateId())
+                    .sourceInboxEventId(inboxEvent.getId())
                     .build();
 
             createNotificationUseCase.handle(command);

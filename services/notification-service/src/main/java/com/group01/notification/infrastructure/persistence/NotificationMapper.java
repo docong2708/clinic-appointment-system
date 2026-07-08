@@ -26,6 +26,10 @@ public class NotificationMapper {
                 .locale(agg.getLocale())
                 .sourceEventId(agg.getSourceEventId())
                 .sourceService(agg.getSourceService())
+                .dedupeKey(agg.getDedupeKey())
+                .aggregateType(agg.getAggregateType())
+                .aggregateId(agg.getAggregateId())
+                .sourceInboxEventId(agg.getSourceInboxEventId())
                 .templateKey(agg.getTemplateKey())
                 .templateVersion(agg.getTemplateVersion())
                 .actionUrl(agg.getActionUrl())
@@ -49,6 +53,10 @@ public class NotificationMapper {
                 entity.getLocale(),
                 entity.getSourceEventId(),
                 entity.getSourceService(),
+                entity.getDedupeKey(),
+                entity.getAggregateType(),
+                entity.getAggregateId(),
+                entity.getSourceInboxEventId(),
                 entity.getTemplateKey(),
                 entity.getTemplateVersion(),
                 entity.getActionUrl(),

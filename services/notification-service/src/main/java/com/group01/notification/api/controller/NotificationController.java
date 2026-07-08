@@ -37,6 +37,11 @@ public class NotificationController {
                 .priority(request.getPriority())
                 .channel(request.getChannel())
                 .destination(request.getDestination())
+                .sourceService("notification-service")
+                .sourceEventId(UUID.randomUUID())
+                .dedupeKey(UUID.randomUUID().toString())
+                .aggregateType("Notification")
+                .aggregateId(request.getRecipientUserId())
                 .build();
         
         NotificationAggregate result = createUseCase.handle(command);

@@ -61,13 +61,14 @@ public class RabbitMQNotificationListener {
     }
 
     private void processEvent(java.util.UUID eventId, String eventType, java.util.UUID recipientId, Object payload) {
+        NotificationInboxEvent inboxEvent = null;
         try {
             if (inboxEventRepository.existsBySourceEventId(eventId)) {
                 log.info("Event {} already processed, skipping", eventId);
                 return;
             }
 
-            NotificationInboxEvent inboxEvent = NotificationInboxEvent.create(
+            inboxEvent = NotificationInboxEvent.create(
                     "appointment-service",
                     eventId,
                     eventType,
@@ -86,6 +87,12 @@ public class RabbitMQNotificationListener {
                     .priority((short) 1)
                     .channel("EMAIL")
                     .destination("phudinh193@gmail.com")
+                    .sourceService("appointment-service")
+                    .sourceEventId(eventId)
+                    .dedupeKey(eventType)
+                    .aggregateType("Appointment")
+                    .aggregateId(eventId)
+                    .sourceInboxEventId(inboxEvent.getId())
                     .build();
 
             createNotificationUseCase.handle(command);
@@ -95,17 +102,10 @@ public class RabbitMQNotificationListener {
             log.info("Successfully processed event: {}", eventId);
         } catch (Exception e) {
             log.error("Failed to process event: {}", eventId, e);
-            NotificationInboxEvent failedEvent = NotificationInboxEvent.create(
-                    "appointment-service",
-                    eventId,
-                    eventType,
-                    "Appointment",
-                    eventId,
-                    convertToJson(payload),
-                    java.util.UUID.randomUUID().toString()
-            );
-            failedEvent.markAsFailed(e.getMessage());
-            inboxEventRepository.save(failedEvent);
+            if (inboxEvent != null) {
+                inboxEvent.markAsFailed(e.getMessage());
+                inboxEventRepository.save(inboxEvent);
+            }
         }
     }
 

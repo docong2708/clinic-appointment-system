@@ -15,6 +15,9 @@ public class NotificationJpaEntity {
     @Id
     private UUID id;
 
+    @Column(name = "source_inbox_event_id")
+    private UUID sourceInboxEventId;
+
     @Column(name = "recipient_user_id", nullable = false)
     private UUID recipientUserId;
 
@@ -36,11 +39,20 @@ public class NotificationJpaEntity {
     @Column(name = "locale", nullable = false, length = 20)
     private String locale;
 
-    @Column(name = "source_event_id")
+    @Column(name = "source_event_id", nullable = false)
     private UUID sourceEventId;
 
-    @Column(name = "source_service", length = 100)
+    @Column(name = "source_service", nullable = false, length = 100)
     private String sourceService;
+
+    @Column(name = "dedupe_key", nullable = false, length = 255)
+    private String dedupeKey;
+
+    @Column(name = "aggregate_type", nullable = false, length = 100)
+    private String aggregateType;
+
+    @Column(name = "aggregate_id", nullable = false)
+    private UUID aggregateId;
 
     @Column(name = "template_key", length = 100)
     private String templateKey;
