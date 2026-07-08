@@ -1,10 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-CREATE TYPE notification_channel AS ENUM ('IN_APP', 'EMAIL', 'SMS', 'PUSH');
-CREATE TYPE notification_status AS ENUM ('CREATED', 'READY', 'PARTIALLY_SENT', 'SENT', 'FAILED', 'CANCELED');
-CREATE TYPE delivery_status AS ENUM ('PENDING', 'SENDING', 'SENT', 'FAILED', 'CANCELED');
-CREATE TYPE inbox_event_status AS ENUM ('RECEIVED', 'PROCESSING', 'PROCESSED', 'FAILED');
-
 CREATE TABLE notification_inbox_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     source_service VARCHAR(100) NOT NULL,
@@ -12,14 +7,16 @@ CREATE TABLE notification_inbox_events (
     event_type VARCHAR(100) NOT NULL,
     aggregate_type VARCHAR(100) NOT NULL,
     aggregate_id UUID NOT NULL,
-    payload JSONB NOT NULL,
-    status inbox_event_status NOT NULL DEFAULT 'RECEIVED',
+    payload TEXT NOT NULL,
+    status VARCHAR(255) NOT NULL DEFAULT 'RECEIVED',
     correlation_id VARCHAR(100),
     received_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     processed_at TIMESTAMPTZ,
     error_message TEXT,
     CONSTRAINT uq_notification_inbox_events_source_event
-        UNIQUE (source_service, source_event_id)
+        UNIQUE (source_service, source_event_id),
+    CONSTRAINT chk_notification_inbox_events_status
+        CHECK (status IN ('RECEIVED', 'PROCESSING', 'PROCESSED', 'FAILED'))
 );
 
 CREATE TABLE notifications (
@@ -36,7 +33,7 @@ CREATE TABLE notifications (
     recipient_user_id UUID NOT NULL,
     recipient_role VARCHAR(50),
     type VARCHAR(100) NOT NULL,
-    status notification_status NOT NULL DEFAULT 'CREATED',
+    status VARCHAR(50) NOT NULL DEFAULT 'CREATED',
     priority SMALLINT NOT NULL DEFAULT 5,
     title VARCHAR(255) NOT NULL,
     body TEXT NOT NULL,
@@ -54,7 +51,9 @@ CREATE TABLE notifications (
     CONSTRAINT uq_notifications_source_recipient_dedupe
         UNIQUE (source_service, source_event_id, recipient_user_id, dedupe_key),
     CONSTRAINT chk_notifications_priority_range
-        CHECK (priority BETWEEN 1 AND 9)
+        CHECK (priority BETWEEN 1 AND 9),
+    CONSTRAINT chk_notifications_status
+        CHECK (status IN ('CREATED', 'READY', 'PARTIALLY_SENT', 'SENT', 'FAILED', 'CANCELED'))
 );
 
 CREATE TABLE notification_deliveries (
@@ -62,10 +61,10 @@ CREATE TABLE notification_deliveries (
     notification_id UUID NOT NULL
         REFERENCES notifications(id)
         ON DELETE CASCADE,
-    channel notification_channel NOT NULL,
+    channel VARCHAR(255) NOT NULL,
     destination_type VARCHAR(30),
-    destination VARCHAR(512),
-    status delivery_status NOT NULL DEFAULT 'PENDING',
+    destination VARCHAR(512) NOT NULL,
+    status VARCHAR(255) NOT NULL DEFAULT 'PENDING',
     retry_count INTEGER NOT NULL DEFAULT 0,
     scheduled_at TIMESTAMPTZ,
     next_retry_at TIMESTAMPTZ,
@@ -79,7 +78,11 @@ CREATE TABLE notification_deliveries (
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_notification_deliveries_retry_count
-        CHECK (retry_count >= 0)
+        CHECK (retry_count >= 0),
+    CONSTRAINT chk_notification_deliveries_channel
+        CHECK (channel IN ('IN_APP', 'EMAIL', 'SMS', 'PUSH')),
+    CONSTRAINT chk_notification_deliveries_status
+        CHECK (status IN ('PENDING', 'SENDING', 'SENT', 'FAILED', 'CANCELED'))
 );
 
 CREATE TABLE notification_delivery_attempts (
@@ -88,7 +91,7 @@ CREATE TABLE notification_delivery_attempts (
         REFERENCES notification_deliveries(id)
         ON DELETE CASCADE,
     attempt_number INTEGER NOT NULL,
-    status delivery_status NOT NULL,
+    status VARCHAR(255) NOT NULL,
     provider_name VARCHAR(100),
     provider_message_id VARCHAR(255),
     error_code VARCHAR(100),
@@ -97,19 +100,23 @@ CREATE TABLE notification_delivery_attempts (
     CONSTRAINT uq_notification_delivery_attempts_delivery_attempt
         UNIQUE (delivery_id, attempt_number),
     CONSTRAINT chk_notification_delivery_attempts_attempt_number
-        CHECK (attempt_number > 0)
+        CHECK (attempt_number > 0),
+    CONSTRAINT chk_notification_delivery_attempts_status
+        CHECK (status IN ('PENDING', 'SENDING', 'SENT', 'FAILED', 'CANCELED'))
 );
 
 CREATE TABLE notification_preferences (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     notification_type VARCHAR(100) NOT NULL,
-    channel notification_channel NOT NULL,
+    channel VARCHAR(255) NOT NULL,
     enabled BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uq_notification_preferences_user_type_channel
-        UNIQUE (user_id, notification_type, channel)
+        UNIQUE (user_id, notification_type, channel),
+    CONSTRAINT chk_notification_preferences_channel
+        CHECK (channel IN ('IN_APP', 'EMAIL', 'SMS', 'PUSH'))
 );
 
 CREATE INDEX idx_notifications_recipient_created

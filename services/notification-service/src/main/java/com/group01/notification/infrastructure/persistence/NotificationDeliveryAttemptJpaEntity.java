@@ -24,13 +24,13 @@ public class NotificationDeliveryAttemptJpaEntity {
     @Column(nullable = false)
     private String status;
 
-    @Column(name = "provider_name")
+    @Column(name = "provider_name", length = 100)
     private String providerName;
 
     @Column(name = "provider_message_id")
     private String providerMessageId;
 
-    @Column(name = "error_code")
+    @Column(name = "error_code", length = 100)
     private String errorCode;
 
     @Column(name = "error_message", columnDefinition = "TEXT")

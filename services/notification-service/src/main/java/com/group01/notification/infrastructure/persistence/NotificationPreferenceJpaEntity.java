@@ -18,7 +18,7 @@ public class NotificationPreferenceJpaEntity {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @Column(name = "notification_type", nullable = false)
+    @Column(name = "notification_type", nullable = false, length = 100)
     private String notificationType;
 
     @Column(nullable = false)

@@ -7,7 +7,6 @@ import com.group01.notification.domain.vo.NotificationChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 @Primary
@@ -17,7 +16,6 @@ public class MockNotificationSenderAdapter implements NotificationSenderPort {
     private static final Logger log = LoggerFactory.getLogger(MockNotificationSenderAdapter.class);
 
     @Override
-    @Async
     public String send(NotificationAggregate aggregate, NotificationDelivery delivery) throws Exception {
         log.info("[MOCK] Sending notification: [Channel: {}] [To: {}] [Title: {}]", 
                  delivery.getChannel(), 
