@@ -21,7 +21,7 @@ public record AuthProperties(
         if (clientId == null || clientId.isBlank()) {
             clientId = "clinic-web";
         }
-        if (accessTokenCookieName == null || accessTokenCookieName.isBlank()) {
+        if (isBlankOrUnresolvedPlaceholder(accessTokenCookieName)) {
             accessTokenCookieName = "ACCESS_TOKEN";
         }
         if (cookieMaxAgeSeconds <= 0) {
@@ -33,5 +33,9 @@ public record AuthProperties(
         if (userServiceBaseUrl == null || userServiceBaseUrl.isBlank()) {
             userServiceBaseUrl = "http://localhost:8085";
         }
+    }
+
+    private static boolean isBlankOrUnresolvedPlaceholder(String value) {
+        return value == null || value.isBlank() || (value.startsWith("${") && value.endsWith("}"));
     }
 }

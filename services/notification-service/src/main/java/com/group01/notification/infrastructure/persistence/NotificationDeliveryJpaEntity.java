@@ -21,7 +21,7 @@ public class NotificationDeliveryJpaEntity {
     @Column(nullable = false)
     private String channel;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 512)
     private String destination;
 
     @Column(nullable = false)
@@ -36,7 +36,7 @@ public class NotificationDeliveryJpaEntity {
     @Column(name = "next_retry_at")
     private OffsetDateTime nextRetryAt;
 
-    @Column(name = "provider_name")
+    @Column(name = "provider_name", length = 100)
     private String providerName;
 
     @Column(name = "provider_message_id")

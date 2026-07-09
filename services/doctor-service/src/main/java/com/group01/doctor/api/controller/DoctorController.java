@@ -12,15 +12,20 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.group01.doctor.application.dto.CreateDoctorRequest;
 import com.group01.doctor.application.dto.DoctorDto;
+import com.group01.doctor.application.dto.DoctorProfileResponse;
 import com.group01.doctor.application.dto.UpdateDoctorRequest;
+import com.group01.doctor.application.dto.UpdateProfileRequest;
 import com.group01.doctor.application.usecase.CreateDoctorUseCase;
 import com.group01.doctor.application.usecase.DeleteDoctorUseCase;
 import com.group01.doctor.application.usecase.GetDoctorUseCase;
 import com.group01.doctor.application.usecase.UpdateDoctorUseCase;
+import com.group01.doctor.application.usecase.GetDoctorProfileUseCase;
+import com.group01.doctor.application.usecase.UpdateDoctorProfileUseCase;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +39,25 @@ public class DoctorController {
     private final UpdateDoctorUseCase updateDoctorUseCase;
     private final GetDoctorUseCase getDoctorUseCase;
     private final DeleteDoctorUseCase deleteDoctorUseCase;
+    private final GetDoctorProfileUseCase getDoctorProfileUseCase;
+    private final UpdateDoctorProfileUseCase updateDoctorProfileUseCase;
+
+    @GetMapping("/me")
+    public ResponseEntity<DoctorProfileResponse> getMyProfile(
+            @org.springframework.web.bind.annotation.RequestHeader(value = "X-User-Id") String userIdHeader) {
+        UUID userId = UUID.fromString(userIdHeader);
+        DoctorProfileResponse profile = getDoctorProfileUseCase.execute(userId);
+        return ResponseEntity.ok(profile);
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<DoctorProfileResponse> updateMyProfile(
+            @org.springframework.web.bind.annotation.RequestHeader(value = "X-User-Id") String userIdHeader,
+            @Valid @RequestBody UpdateProfileRequest request) {
+        UUID userId = UUID.fromString(userIdHeader);
+        DoctorProfileResponse updated = updateDoctorProfileUseCase.execute(userId, request);
+        return ResponseEntity.ok(updated);
+    }
 
     @PostMapping
     public ResponseEntity<DoctorDto> createDoctor(@Valid @RequestBody CreateDoctorRequest request) {
@@ -55,9 +79,15 @@ public class DoctorController {
         return ResponseEntity.ok(doctor);
     }
 
+    @GetMapping("/specializations")
+    public ResponseEntity<List<String>> getSpecializations() {
+        return ResponseEntity.ok(getDoctorUseCase.getSpecializations());
+    }
+
     @GetMapping
-    public ResponseEntity<List<DoctorDto>> getAllDoctors() {
-        List<DoctorDto> doctors = getDoctorUseCase.getAll();
+    public ResponseEntity<List<DoctorDto>> getAllDoctors(
+            @RequestParam(value = "specialization", required = false) String specialization) {
+        List<DoctorDto> doctors = getDoctorUseCase.getAll(specialization);
         return ResponseEntity.ok(doctors);
     }
 

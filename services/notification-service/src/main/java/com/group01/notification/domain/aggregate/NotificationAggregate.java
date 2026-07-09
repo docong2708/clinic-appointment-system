@@ -20,6 +20,10 @@ public class NotificationAggregate {
     private String locale;
     private UUID sourceEventId;
     private String sourceService;
+    private String dedupeKey;
+    private String aggregateType;
+    private UUID aggregateId;
+    private UUID sourceInboxEventId;
     private String templateKey;
     private Integer templateVersion;
     private String actionUrl;
@@ -39,7 +43,13 @@ public class NotificationAggregate {
             String type,
             NotificationTitle title,
             String body,
-            Short priority
+            Short priority,
+            String sourceService,
+            UUID sourceEventId,
+            String dedupeKey,
+            String aggregateType,
+            UUID aggregateId,
+            UUID sourceInboxEventId
     ) {
         if (body == null || body.isBlank()) {
             throw new IllegalArgumentException("Body cannot be blank");
@@ -54,6 +64,12 @@ public class NotificationAggregate {
         notification.priority = priority;
         notification.status = NotificationStatus.CREATED;
         notification.locale = "vi-VN";
+        notification.sourceService = sourceService;
+        notification.sourceEventId = sourceEventId;
+        notification.dedupeKey = dedupeKey;
+        notification.aggregateType = aggregateType;
+        notification.aggregateId = aggregateId;
+        notification.sourceInboxEventId = sourceInboxEventId;
         notification.createdAt = LocalDateTime.now();
         notification.updatedAt = LocalDateTime.now();
         return notification;
@@ -70,6 +86,10 @@ public class NotificationAggregate {
             String locale,
             UUID sourceEventId,
             String sourceService,
+            String dedupeKey,
+            String aggregateType,
+            UUID aggregateId,
+            UUID sourceInboxEventId,
             String templateKey,
             Integer templateVersion,
             String actionUrl,
@@ -90,6 +110,10 @@ public class NotificationAggregate {
         notification.locale = locale;
         notification.sourceEventId = sourceEventId;
         notification.sourceService = sourceService;
+        notification.dedupeKey = dedupeKey;
+        notification.aggregateType = aggregateType;
+        notification.aggregateId = aggregateId;
+        notification.sourceInboxEventId = sourceInboxEventId;
         notification.templateKey = templateKey;
         notification.templateVersion = templateVersion;
         notification.actionUrl = actionUrl;

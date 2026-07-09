@@ -12,9 +12,9 @@ public class Slot {
     private final DoctorId doctorId;
     private final LocalDateTime startTime;
     private final LocalDateTime endTime;
-    private boolean booked;
+    private SlotStatus status;
 
-    public Slot(SlotId id, DoctorId doctorId, LocalDateTime startTime, LocalDateTime endTime, boolean booked) {
+    public Slot(SlotId id, DoctorId doctorId, LocalDateTime startTime, LocalDateTime endTime, SlotStatus status) {
         if (startTime == null || endTime == null) {
             throw new IllegalArgumentException("Start time and End time must not be null");
         }
@@ -25,11 +25,11 @@ public class Slot {
         this.doctorId = doctorId;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.booked = booked;
+        this.status = status != null ? status : SlotStatus.AVAILABLE;
     }
 
     public static Slot create(DoctorId doctorId, LocalDateTime startTime, LocalDateTime endTime) {
-        return new Slot(SlotId.generate(), doctorId, startTime, endTime, false);
+        return new Slot(SlotId.generate(), doctorId, startTime, endTime, SlotStatus.AVAILABLE);
     }
 
     public boolean overlapsWith(Slot other) {
@@ -37,14 +37,29 @@ public class Slot {
         return this.startTime.isBefore(other.getEndTime()) && this.endTime.isAfter(other.getStartTime());
     }
 
+    public boolean isBooked() {
+        return this.status == SlotStatus.BOOKED;
+    }
+
     public void book() {
-        if (this.booked) {
+        if (this.status == SlotStatus.BOOKED) {
             throw new IllegalStateException("Slot is already booked");
         }
-        this.booked = true;
+        this.status = SlotStatus.BOOKED;
+    }
+
+    public void reserve() {
+        if (this.status != SlotStatus.AVAILABLE) {
+            throw new IllegalStateException("Slot is not available to reserve");
+        }
+        this.status = SlotStatus.RESERVED;
+    }
+
+    public void release() {
+        this.status = SlotStatus.AVAILABLE;
     }
 
     public void cancelBooking() {
-        this.booked = false;
+        this.status = SlotStatus.AVAILABLE;
     }
 }

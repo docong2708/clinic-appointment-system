@@ -38,7 +38,13 @@ public class ProcessNotificationUseCase implements CreateNotificationUseCase {
                 command.getType(),
                 NotificationTitle.of(command.getTitle()),
                 command.getBody(),
-                command.getPriority()
+                command.getPriority(),
+                command.getSourceService(),
+                command.getSourceEventId(),
+                command.getDedupeKey(),
+                command.getAggregateType(),
+                command.getAggregateId(),
+                command.getSourceInboxEventId()
         );
 
         // 2. Tạo Delivery

@@ -20,5 +20,8 @@ public class DoctorDto {
     private String phoneNumber;
     private String email;
     private boolean active;
+    private String biography;
+    private String qualifications;
+    private String avatarUrl;
     private List<SlotDto> slots;
 }

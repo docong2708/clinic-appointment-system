@@ -1,0 +1,30 @@
+# Email configuration for MVP email system
+spring:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: 
+    password: 
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 3000
+          writetimeout: 5000
+    default-encoding: UTF-8
+
+# Email service configuration
+mail:
+  from: 
+  from-name: 
+  provider: SMTP
+
+# Logging for email debugging
+logging:
+  level:
+    com.group01.notification.infrastructure.sender: DEBUG
+    org.springframework.mail: DEBUG

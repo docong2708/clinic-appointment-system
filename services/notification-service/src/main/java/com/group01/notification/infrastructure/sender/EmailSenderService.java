@@ -1,41 +1,81 @@
 package com.group01.notification.infrastructure.sender;
 
-import jakarta.mail.internet.MimeMessage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+/**
+ * Service to send emails via SMTP.
+ * Handles actual email delivery to mail provider.
+ */
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class EmailSenderService {
-
-    private static final Logger log = LoggerFactory.getLogger(EmailSenderService.class);
 
     private final JavaMailSender mailSender;
 
-    public EmailSenderService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
-    }
+    @Value("${mail.from:noreply@example.com}")
+    private String fromEmail;
 
-    public String sendEmail(String to, String subject, String body) throws Exception {
+    @Value("${mail.from-name:MSS Clinic}")
+    private String fromName;
+
+    /**
+     * Send email via SMTP.
+     *
+     * @param recipientEmail Recipient email address
+     * @param subject        Email subject
+     * @param body           Email body (plain text)
+     * @return String representing message id
+     * @throws Exception if sending fails
+     */
+    public String sendEmail(String recipientEmail, String subject, String body) throws Exception {
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            
-            helper.setTo(to);
-            helper.setSubject(subject);
-            
-            boolean isHtml = body.trim().startsWith("<!DOCTYPE") || body.trim().startsWith("<html>");
-            helper.setText(body, isHtml);
-            helper.setFrom("noreply@clinic.com");
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(recipientEmail);
+            message.setSubject(subject);
+            message.setText(body);
 
             mailSender.send(message);
-            log.info("Email sent successfully to: {}", to);
+            log.info("Email sent successfully to: {}", recipientEmail);
             
             return "email_" + System.currentTimeMillis();
+
         } catch (Exception e) {
-            log.error("Failed to send email to: {}", to, e);
+            log.error("Failed to send email to: {}", recipientEmail, e);
+            throw new Exception("Email send failed: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Send HTML email via SMTP.
+     *
+     * @param recipientEmail Recipient email address
+     * @param subject        Email subject
+     * @param htmlBody       Email body (HTML)
+     * @return String representing message id
+     * @throws Exception if sending fails
+     */
+    public String sendHtmlEmail(String recipientEmail, String subject, String htmlBody) throws Exception {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(recipientEmail);
+            message.setSubject(subject);
+            message.setText(htmlBody);
+
+            mailSender.send(message);
+            log.info("HTML email sent successfully to: {}", recipientEmail);
+            
+            return "email_" + System.currentTimeMillis();
+
+        } catch (Exception e) {
+            log.error("Failed to send HTML email to: {}", recipientEmail, e);
             throw new Exception("Email send failed: " + e.getMessage(), e);
         }
     }
