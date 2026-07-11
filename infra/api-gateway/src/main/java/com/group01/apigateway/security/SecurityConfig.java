@@ -5,6 +5,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpMethod;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.config.Customizer;
@@ -12,7 +13,7 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.converter.RsaKeyConverters;
+import org.springframework.security.oauth2.client.web.server.ServerOAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
@@ -40,7 +41,8 @@ public class SecurityConfig {
     SecurityWebFilterChain securityWebFilterChain(
             ServerHttpSecurity http,
             AccessTokenCookieServerAuthenticationConverter accessTokenCookieServerAuthenticationConverter,
-            ReactiveJwtDecoder keycloakJwtDecoder
+            OAuth2LoginSuccessHandler oauth2LoginSuccessHandler,
+            ServerOAuth2AuthorizationRequestResolver keycloakAuthorizationRequestResolver
     ) {
         return http
                 // TODO: Cookie-based auth in production should enable CSRF protection for POST/PUT/PATCH/DELETE.
@@ -48,11 +50,23 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
+                .exceptionHandling(exceptionHandling -> exceptionHandling
+                        .authenticationEntryPoint((exchange, exception) -> {
+                            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                            return exchange.getResponse().setComplete();
+                        })
+                )
                 .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
+
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // Actuator
                         .pathMatchers(HttpMethod.GET, "/actuator/**").permitAll()
+
+                        // Auth cũ
                         .pathMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                        .pathMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
                         .pathMatchers(HttpMethod.POST, "/auth/logout").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/doctors/me", "/api/doctors/me/**").hasRole("DOCTOR")
                         .pathMatchers(HttpMethod.PUT, "/api/doctors/me", "/api/doctors/me/**").hasRole("DOCTOR")
@@ -65,19 +79,47 @@ public class SecurityConfig {
                                 "/api/doctors/specializations")
                         .permitAll()
                         .pathMatchers(HttpMethod.GET, "/auth/me").authenticated()
+
+                        // OAuth2 login redirect với Keycloak
+                        .pathMatchers("/oauth2/**").permitAll()
+                        .pathMatchers("/login/oauth2/**").permitAll()
+
+                        // Public APIs
                         .pathMatchers(HttpMethod.POST, "/api/users/register").permitAll()
+                        .pathMatchers(HttpMethod.GET, "/api/doctors").permitAll()
+                        .pathMatchers(HttpMethod.GET, "/api/doctors/specializations").permitAll()
+                        .pathMatchers(HttpMethod.GET, "/api/doctors/*/slots").permitAll()
+
+                        // Doctor
+                        .pathMatchers(HttpMethod.GET, "/api/doctors/me/**").hasRole("DOCTOR")
+
+                        // User
                         .pathMatchers("/api/users/**").hasRole("ADMIN")
+
+                        // Appointment
                         .pathMatchers(HttpMethod.POST, "/api/appointments").hasRole("PATIENT")
                         .pathMatchers(HttpMethod.GET, "/api/appointments/my").hasRole("PATIENT")
                         .pathMatchers(HttpMethod.GET, "/api/appointments/doctor/**").hasRole("DOCTOR")
+
+                        // Patient
                         .pathMatchers("/api/patients/**").hasAnyRole("ADMIN", "PATIENT")
+
+                        // Notification
                         .pathMatchers("/api/notifications/**").authenticated()
-                        .anyExchange().authenticated())
+
+                        .anyExchange().authenticated()
+                )
+
+                .oauth2Login(oauth2 -> oauth2
+                        .authorizationRequestResolver(keycloakAuthorizationRequestResolver)
+                        .authenticationSuccessHandler(oauth2LoginSuccessHandler)
+                )
+
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .bearerTokenConverter(accessTokenCookieServerAuthenticationConverter)
-                        .jwt(jwt -> jwt
-                                .jwtDecoder(keycloakJwtDecoder)
-                                .jwtAuthenticationConverter(keycloakJwtAuthenticationConverter())))
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(keycloakJwtAuthenticationConverter()))
+                )
+
                 .build();
     }
 

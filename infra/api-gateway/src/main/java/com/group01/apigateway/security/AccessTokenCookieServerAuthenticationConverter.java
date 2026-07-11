@@ -54,6 +54,7 @@ public class AccessTokenCookieServerAuthenticationConverter implements ServerAut
 
         String path = exchange.getRequest().getPath().pathWithinApplication().value();
         return (HttpMethod.POST.equals(method) && "/auth/login".equals(path))
+                || (HttpMethod.POST.equals(method) && "/auth/refresh".equals(path))
                 || (HttpMethod.POST.equals(method) && "/auth/logout".equals(path))
                 || (HttpMethod.POST.equals(method) && "/api/users/register".equals(path))
                 || (HttpMethod.GET.equals(method) && "/api/doctors".equals(path))
