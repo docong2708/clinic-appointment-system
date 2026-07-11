@@ -19,12 +19,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -97,17 +100,25 @@ public class AuthController {
         form.add("username", request.usernameOrEmail());
         form.add("password", request.password());
 
-        return webClientBuilder.build()
-                .post()
-                .uri(authProperties.tokenUri())
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(BodyInserters.fromFormData(form))
-                .retrieve()
-                .onStatus(
-                        status -> status.is4xxClientError(),
-                        response -> Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"))
-                )
-                .bodyToMono(TOKEN_RESPONSE_TYPE)
+        URI configuredTokenUri = URI.create(authProperties.tokenUri());
+        String hostHeader = configuredTokenUri.getHost() + (configuredTokenUri.getPort() > 0 ? ":" + configuredTokenUri.getPort() : "");
+        String transportTokenUri = authProperties.tokenUri().replace("http://localhost:9080", "http://[::1]:9080");
+
+        return Mono.fromCallable(() -> RestClient.create()
+                        .post()
+                        .uri(transportTokenUri)
+                        .header(HttpHeaders.HOST, hostHeader)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .body(form)
+                        .retrieve()
+                        .onStatus(
+                                status -> status.is4xxClientError(),
+                                (clientRequest, clientResponse) -> {
+                                    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+                                }
+                        )
+                        .body(TOKEN_RESPONSE_TYPE))
+                .subscribeOn(Schedulers.boundedElastic())
                 .map(this::extractAccessToken);
     }
 
