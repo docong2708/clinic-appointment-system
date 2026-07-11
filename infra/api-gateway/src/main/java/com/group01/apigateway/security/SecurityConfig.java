@@ -1,16 +1,23 @@
 package com.group01.apigateway.security;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.core.io.Resource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpMethod;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.converter.RsaKeyConverters;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 import org.springframework.security.web.server.SecurityWebFilterChain;
@@ -23,6 +30,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.security.interfaces.RSAPublicKey;
 import java.util.Set;
 
 @Configuration
@@ -31,7 +39,8 @@ public class SecurityConfig {
     @Bean
     SecurityWebFilterChain securityWebFilterChain(
             ServerHttpSecurity http,
-            AccessTokenCookieServerAuthenticationConverter accessTokenCookieServerAuthenticationConverter
+            AccessTokenCookieServerAuthenticationConverter accessTokenCookieServerAuthenticationConverter,
+            ReactiveJwtDecoder keycloakJwtDecoder
     ) {
         return http
                 // TODO: Cookie-based auth in production should enable CSRF protection for POST/PUT/PATCH/DELETE.
@@ -45,20 +54,47 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.GET, "/actuator/**").permitAll()
                         .pathMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .pathMatchers(HttpMethod.POST, "/auth/logout").permitAll()
+                        .pathMatchers(HttpMethod.GET, "/api/doctors/me", "/api/doctors/me/**").hasRole("DOCTOR")
+                        .pathMatchers(HttpMethod.PUT, "/api/doctors/me", "/api/doctors/me/**").hasRole("DOCTOR")
+                        .pathMatchers(HttpMethod.POST, "/api/doctors/*/slots", "/api/doctors/*/slots/**").hasAnyRole("DOCTOR", "ADMIN")
+                        .pathMatchers(HttpMethod.DELETE, "/api/doctors/*/slots/**").hasAnyRole("DOCTOR", "ADMIN")
+                        .pathMatchers(HttpMethod.GET,
+                                "/api/doctors",
+                                "/api/doctors/*",
+                                "/api/doctors/*/slots",
+                                "/api/doctors/specializations")
+                        .permitAll()
                         .pathMatchers(HttpMethod.GET, "/auth/me").authenticated()
                         .pathMatchers(HttpMethod.POST, "/api/users/register").permitAll()
                         .pathMatchers("/api/users/**").hasRole("ADMIN")
                         .pathMatchers(HttpMethod.POST, "/api/appointments").hasRole("PATIENT")
                         .pathMatchers(HttpMethod.GET, "/api/appointments/my").hasRole("PATIENT")
-                        .pathMatchers(HttpMethod.GET, "/api/doctors/me/**").hasRole("DOCTOR")
                         .pathMatchers(HttpMethod.GET, "/api/appointments/doctor/**").hasRole("DOCTOR")
                         .pathMatchers("/api/patients/**").hasAnyRole("ADMIN", "PATIENT")
                         .pathMatchers("/api/notifications/**").authenticated()
                         .anyExchange().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .bearerTokenConverter(accessTokenCookieServerAuthenticationConverter)
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(keycloakJwtAuthenticationConverter())))
+                        .jwt(jwt -> jwt
+                                .jwtDecoder(keycloakJwtDecoder)
+                                .jwtAuthenticationConverter(keycloakJwtAuthenticationConverter())))
                 .build();
+    }
+
+    @Bean
+    ReactiveJwtDecoder keycloakJwtDecoder(
+            @Value("${spring.security.oauth2.resourceserver.jwt.public-key-location}") Resource publicKeyResource,
+            @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}") String issuerUri
+    ) throws Exception {
+        RSAPublicKey publicKey;
+        try (var inputStream = publicKeyResource.getInputStream()) {
+            publicKey = RsaKeyConverters.x509().convert(inputStream);
+        }
+
+        NimbusReactiveJwtDecoder jwtDecoder = NimbusReactiveJwtDecoder.withPublicKey(publicKey).build();
+        OAuth2TokenValidator<Jwt> validator = JwtValidators.createDefaultWithIssuer(issuerUri);
+        jwtDecoder.setJwtValidator(validator);
+        return jwtDecoder;
     }
 
     @Bean
@@ -104,4 +140,3 @@ public class SecurityConfig {
         }
     }
 }
-

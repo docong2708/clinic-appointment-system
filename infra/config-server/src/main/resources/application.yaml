@@ -5,19 +5,16 @@ spring:
   application:
     name: config-server
 
+  profiles:
+    active: native
   cloud:
     config:
       server:
-        git:
-          uri: https://github.com/hieult-dev/clinic-config-repo.git
-          default-label: main
-          username: ${GIT_USERNAME}
-          password: ${GIT_TOKEN}
-          clone-on-start: true
-          force-pull: true
+        native:
+          search-locations: file:../../clinic-config-repo
 
 encrypt:
-  key: ${ENCRYPT_KEY}
+  key: ${ENCRYPT_KEY:default_key}
 
 management:
   endpoints:

@@ -3,6 +3,7 @@ package com.group01.doctor.application.usecase;
 import com.group01.doctor.application.dto.DoctorDto;
 import com.group01.doctor.application.mapper.DoctorAppMapper;
 import com.group01.doctor.domain.exception.DoctorNotFoundException;
+import com.group01.doctor.domain.model.Doctor;
 import com.group01.doctor.domain.repository.DoctorRepository;
 import com.group01.doctor.domain.valueobject.DoctorId;
 import lombok.RequiredArgsConstructor;
@@ -23,14 +24,20 @@ public class GetDoctorUseCase {
     @Transactional(readOnly = true)
     public DoctorDto getById(UUID id) {
         return doctorRepository.findById(DoctorId.of(id))
-                .map(mapper::toDto)
+                .map(doctor -> mapper.toDto(doctor))
                 .orElseThrow(() -> new DoctorNotFoundException("Doctor with ID " + id + " not found"));
     }
 
     @Transactional(readOnly = true)
-    public List<DoctorDto> getAll() {
-        return doctorRepository.findAll().stream()
-                .map(mapper::toDto)
+    public List<DoctorDto> getAll(String specialization) {
+        List<Doctor> doctors;
+        if (specialization != null && !specialization.trim().isEmpty()) {
+            doctors = doctorRepository.findBySpecialization(specialization.trim());
+        } else {
+            doctors = doctorRepository.findAll();
+        }
+        return doctors.stream()
+                .map(doctor -> mapper.toDto(doctor))
                 .collect(Collectors.toList());
     }
 

@@ -4,6 +4,7 @@ import com.group01.doctor.domain.model.Doctor;
 import com.group01.doctor.domain.repository.DoctorRepository;
 import com.group01.doctor.domain.valueobject.DoctorId;
 import com.group01.doctor.infrastructure.persistence.entity.DoctorJpaEntity;
+import com.group01.doctor.infrastructure.persistence.entity.SlotJpaEntity;
 import com.group01.doctor.infrastructure.persistence.mapper.DoctorPersistenceMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -27,6 +28,12 @@ public class DoctorRepositoryImpl implements DoctorRepository {
     }
 
     @Override
+    public Optional<Doctor> findByUserId(UUID userId) {
+        return jpaRepository.findByUserId(userId)
+                .map(mapper::toDomain);
+    }
+
+    @Override
     public List<Doctor> findAll() {
         return jpaRepository.findAll().stream()
                 .map(mapper::toDomain)
@@ -35,7 +42,7 @@ public class DoctorRepositoryImpl implements DoctorRepository {
 
     @Override
     public List<Doctor> findBySpecialization(String specialization) {
-        return jpaRepository.findBySpecializationIgnoreCaseAndActiveTrue(specialization).stream()
+        return jpaRepository.findBySpecializationContainingIgnoreCase(specialization).stream()
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
@@ -52,13 +59,68 @@ public class DoctorRepositoryImpl implements DoctorRepository {
 
     @Override
     public Doctor save(Doctor doctor) {
-        DoctorJpaEntity jpaEntity = mapper.toJpaEntity(doctor);
-        DoctorJpaEntity savedEntity = jpaRepository.save(jpaEntity);
-        return mapper.toDomain(savedEntity);
+        Optional<DoctorJpaEntity> existingOpt = jpaRepository.findById(doctor.getId().value());
+        
+        if (existingOpt.isPresent()) {
+            DoctorJpaEntity existing = existingOpt.get();
+            existing.setName(doctor.getName());
+            existing.setSpecialization(doctor.getSpecialization());
+            existing.setPhoneNumber(doctor.getPhoneNumber());
+            existing.setEmail(doctor.getEmail());
+            existing.setActive(doctor.isActive());
+            existing.setBiography(doctor.getBiography());
+            existing.setQualifications(doctor.getQualifications());
+            existing.setAvatarUrl(doctor.getAvatarUrl());
+            
+            if (doctor.getSlots() != null) {
+                java.util.Map<UUID, SlotJpaEntity> existingSlotsMap = existing.getSlots().stream()
+                        .collect(Collectors.toMap(SlotJpaEntity::getId, s -> s));
+
+                List<UUID> domainSlotIds = doctor.getSlots().stream()
+                        .map(s -> s.getId().value())
+                        .collect(Collectors.toList());
+
+                // Remove slots that are no longer in the domain list
+                existing.getSlots().removeIf(s -> !domainSlotIds.contains(s.getId()));
+
+                // Update or add slots
+                for (com.group01.doctor.domain.model.Slot domainSlot : doctor.getSlots()) {
+                    SlotJpaEntity slotEntity = existingSlotsMap.get(domainSlot.getId().value());
+                    if (slotEntity != null) {
+                        // Update existing slot fields
+                        slotEntity.setStartTime(domainSlot.getStartTime());
+                        slotEntity.setEndTime(domainSlot.getEndTime());
+                        slotEntity.setStatus(domainSlot.getStatus());
+                    } else {
+                        // Add new slot
+                        SlotJpaEntity newSlot = SlotJpaEntity.builder()
+                                .id(domainSlot.getId().value())
+                                .doctor(existing)
+                                .startTime(domainSlot.getStartTime())
+                                .endTime(domainSlot.getEndTime())
+                                .status(domainSlot.getStatus())
+                                .build();
+                        existing.getSlots().add(newSlot);
+                    }
+                }
+            }
+            
+            DoctorJpaEntity savedEntity = jpaRepository.save(existing);
+            return mapper.toDomain(savedEntity);
+        } else {
+            DoctorJpaEntity jpaEntity = mapper.toJpaEntity(doctor);
+            DoctorJpaEntity savedEntity = jpaRepository.save(jpaEntity);
+            return mapper.toDomain(savedEntity);
+        }
     }
 
     @Override
     public void deleteById(DoctorId id) {
         jpaRepository.deleteById(id.value());
+    }
+
+    @Override
+    public int releaseExpiredSlots(java.time.LocalDateTime cutoffTime) {
+        return jpaRepository.releaseExpiredReservations(cutoffTime);
     }
 }

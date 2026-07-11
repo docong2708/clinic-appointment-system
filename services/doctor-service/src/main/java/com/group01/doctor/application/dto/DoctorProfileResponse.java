@@ -12,7 +12,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class DoctorDto {
+public class DoctorProfileResponse {
     private UUID id;
     private UUID userId;
     private String name;
