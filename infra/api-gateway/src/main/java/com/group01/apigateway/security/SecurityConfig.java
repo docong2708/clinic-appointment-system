@@ -1,11 +1,13 @@
 package com.group01.apigateway.security;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.core.io.Resource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpMethod;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -13,6 +15,10 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.web.server.ServerOAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 import org.springframework.security.web.server.SecurityWebFilterChain;
@@ -25,6 +31,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.security.interfaces.RSAPublicKey;
 import java.util.Set;
 
 @Configuration
@@ -61,6 +68,16 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .pathMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
                         .pathMatchers(HttpMethod.POST, "/auth/logout").permitAll()
+                        .pathMatchers(HttpMethod.GET, "/api/doctors/me", "/api/doctors/me/**").hasRole("DOCTOR")
+                        .pathMatchers(HttpMethod.PUT, "/api/doctors/me", "/api/doctors/me/**").hasRole("DOCTOR")
+                        .pathMatchers(HttpMethod.POST, "/api/doctors/*/slots", "/api/doctors/*/slots/**").hasAnyRole("DOCTOR", "ADMIN")
+                        .pathMatchers(HttpMethod.DELETE, "/api/doctors/*/slots/**").hasAnyRole("DOCTOR", "ADMIN")
+                        .pathMatchers(HttpMethod.GET,
+                                "/api/doctors",
+                                "/api/doctors/*",
+                                "/api/doctors/*/slots",
+                                "/api/doctors/specializations")
+                        .permitAll()
                         .pathMatchers(HttpMethod.GET, "/auth/me").authenticated()
 
                         // OAuth2 login redirect với Keycloak
@@ -107,6 +124,22 @@ public class SecurityConfig {
     }
 
     @Bean
+    ReactiveJwtDecoder keycloakJwtDecoder(
+            @Value("${spring.security.oauth2.resourceserver.jwt.public-key-location}") Resource publicKeyResource,
+            @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}") String issuerUri
+    ) throws Exception {
+        RSAPublicKey publicKey;
+        try (var inputStream = publicKeyResource.getInputStream()) {
+            publicKey = RsaKeyConverters.x509().convert(inputStream);
+        }
+
+        NimbusReactiveJwtDecoder jwtDecoder = NimbusReactiveJwtDecoder.withPublicKey(publicKey).build();
+        OAuth2TokenValidator<Jwt> validator = JwtValidators.createDefaultWithIssuer(issuerUri);
+        jwtDecoder.setJwtValidator(validator);
+        return jwtDecoder;
+    }
+
+    @Bean
     CorsWebFilter corsWebFilter(AuthProperties authProperties) {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
@@ -149,4 +182,3 @@ public class SecurityConfig {
         }
     }
 }
-

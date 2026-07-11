@@ -1,5 +1,6 @@
 package com.group01.doctor.infrastructure.persistence.entity;
 
+import com.group01.doctor.domain.model.SlotStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -31,8 +32,13 @@ public class SlotJpaEntity {
     @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime;
 
-    @Column(name = "is_booked", nullable = false)
-    private boolean booked;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private SlotStatus status;
+
+    @Version
+    @Column(name = "version")
+    private Long version;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

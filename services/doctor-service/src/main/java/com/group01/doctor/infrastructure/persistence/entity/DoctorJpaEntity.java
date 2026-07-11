@@ -41,9 +41,22 @@ public class DoctorJpaEntity {
     @Column(name = "is_active", nullable = false)
     private boolean active;
 
+    @Column(name = "biography")
+    private String biography;
+
+    @Column(name = "qualifications")
+    private String qualifications;
+
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
     @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
     private List<SlotJpaEntity> slots = new ArrayList<>();
+
+    @Version
+    @Column(name = "version")
+    private Long version;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

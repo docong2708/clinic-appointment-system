@@ -184,6 +184,31 @@
       ]
     },
     {
+      "username": "patient1@clinic.local",
+      "email": "patient1@clinic.local",
+      "firstName": "Patient",
+      "lastName": "One",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "password123", "temporary": false }
+      ],
+      "realmRoles": ["PATIENT"]
+    },
+    {
+      "id": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+      "username": "dr.nva@clinic.com",
+      "email": "dr.nva@clinic.com",
+      "firstName": "Nguyen Van",
+      "lastName": "A",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "password123", "temporary": false }
+      ],
+      "realmRoles": ["DOCTOR"]
+    },
+    {
       "username": "service-account-clinic-user-service",
       "enabled": true,
       "serviceAccountClientId": "clinic-user-service",

@@ -18,4 +18,5 @@ public class SlotDto {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private boolean booked;
+    private String status;
 }

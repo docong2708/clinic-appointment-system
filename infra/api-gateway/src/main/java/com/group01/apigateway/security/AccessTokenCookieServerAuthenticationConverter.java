@@ -1,5 +1,6 @@
 package com.group01.apigateway.security;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.core.Authentication;
@@ -11,6 +12,7 @@ import reactor.core.publisher.Mono;
 
 @Component
 public class AccessTokenCookieServerAuthenticationConverter implements ServerAuthenticationConverter {
+    private static final String UUID_PATH_SEGMENT = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
 
     private final AuthProperties authProperties;
 
@@ -24,6 +26,16 @@ public class AccessTokenCookieServerAuthenticationConverter implements ServerAut
             return Mono.empty();
         }
 
+        // 1. Try to read from Authorization header first
+        String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+        if (authHeader != null && authHeader.toLowerCase().startsWith("bearer ")) {
+            String token = authHeader.substring(7);
+            if (!token.isBlank()) {
+                return Mono.just(new BearerTokenAuthenticationToken(token));
+            }
+        }
+
+        // 2. Fallback to cookie
         HttpCookie cookie = exchange.getRequest()
                 .getCookies()
                 .getFirst(authProperties.accessTokenCookieName());
@@ -45,6 +57,10 @@ public class AccessTokenCookieServerAuthenticationConverter implements ServerAut
                 || (HttpMethod.POST.equals(method) && "/auth/refresh".equals(path))
                 || (HttpMethod.POST.equals(method) && "/auth/logout".equals(path))
                 || (HttpMethod.POST.equals(method) && "/api/users/register".equals(path))
+                || (HttpMethod.GET.equals(method) && "/api/doctors".equals(path))
+                || (HttpMethod.GET.equals(method) && "/api/doctors/specializations".equals(path))
+                || (HttpMethod.GET.equals(method) && path.matches("^/api/doctors/" + UUID_PATH_SEGMENT + "$"))
+                || (HttpMethod.GET.equals(method) && path.matches("^/api/doctors/" + UUID_PATH_SEGMENT + "/slots$"))
                 || "/actuator".equals(path)
                 || path.startsWith("/actuator/");
     }
