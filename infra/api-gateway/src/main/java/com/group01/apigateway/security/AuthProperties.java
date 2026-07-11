@@ -8,8 +8,10 @@ public record AuthProperties(
         String clientId,
         String clientSecret,
         String accessTokenCookieName,
+        String refreshTokenCookieName,
         boolean cookieSecure,
         long cookieMaxAgeSeconds,
+        long refreshTokenCookieMaxAgeSeconds,
         String frontendOrigin,
         String userServiceBaseUrl
 ) {
@@ -24,8 +26,14 @@ public record AuthProperties(
         if (isBlankOrUnresolvedPlaceholder(accessTokenCookieName)) {
             accessTokenCookieName = "ACCESS_TOKEN";
         }
+        if (isBlankOrUnresolvedPlaceholder(refreshTokenCookieName)) {
+            refreshTokenCookieName = "REFRESH_TOKEN";
+        }
         if (cookieMaxAgeSeconds <= 0) {
             cookieMaxAgeSeconds = 3600;
+        }
+        if (refreshTokenCookieMaxAgeSeconds <= 0) {
+            refreshTokenCookieMaxAgeSeconds = 604800;
         }
         if (frontendOrigin == null || frontendOrigin.isBlank()) {
             frontendOrigin = "http://localhost:5173";

@@ -3,6 +3,7 @@ package com.group01.user.api.controller;
 import com.group01.user.api.dto.request.AssignRoleRequest;
 import com.group01.user.api.dto.request.ChangeUserStatusRequest;
 import com.group01.user.api.dto.request.CreateUserRequest;
+import com.group01.user.api.dto.request.OAuth2UserSyncRequest;
 import com.group01.user.api.dto.request.RegisterRequest;
 import com.group01.user.api.dto.request.UpdateUserRequest;
 import com.group01.user.api.dto.response.RoleResponse;
@@ -21,6 +22,7 @@ import com.group01.user.application.usecase.GetUserByKeycloakIdUseCase;
 import com.group01.user.application.usecase.GetUserByIdUseCase;
 import com.group01.user.application.usecase.ProfileLookupClient;
 import com.group01.user.application.usecase.RegisterUseCase;
+import com.group01.user.application.usecase.SyncOAuth2UserUseCase;
 import com.group01.user.application.usecase.UpdateUserUseCase;
 import com.group01.user.domain.aggregate.Role;
 import com.group01.user.domain.aggregate.User;
@@ -48,6 +50,7 @@ import java.util.stream.Collectors;
 public class UserController {
     private final RegisterUseCase registerUseCase;
     private final CreateUserUseCase createUserUseCase;
+    private final SyncOAuth2UserUseCase syncOAuth2UserUseCase;
     private final ProfileLookupClient profileLookupClient;
     private final GetUserByKeycloakIdUseCase getUserByKeycloakIdUseCase;
     private final GetUserByIdUseCase getUserByIdUseCase;
@@ -78,6 +81,17 @@ public class UserController {
     public UserResponse createUser(@Valid @RequestBody CreateUserRequest request) {
         return toResponse(createUserUseCase.execute(new CreateUserCommand(
                 request.keycloakUserId(), request.email(), request.fullName(), request.phoneNumber(), request.roles())));
+    }
+
+    @PostMapping("/oauth2/sync")
+    public UserResponse syncOAuth2User(@Valid @RequestBody OAuth2UserSyncRequest request) {
+        User user = syncOAuth2UserUseCase.execute(
+                request.keycloakUserId(),
+                request.email(),
+                request.fullName(),
+                request.roles()
+        );
+        return toResponse(user, resolvePatientId(user));
     }
 
     @GetMapping("/keycloak/{keycloakUserId}")
