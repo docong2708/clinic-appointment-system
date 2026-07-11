@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.group01.commonsecurity.currentuser.CurrentUserHolder;
 import com.group01.doctor.application.dto.CreateDoctorRequest;
 import com.group01.doctor.application.dto.DoctorDto;
 import com.group01.doctor.application.dto.DoctorProfileResponse;
@@ -26,6 +27,7 @@ import com.group01.doctor.application.usecase.GetDoctorUseCase;
 import com.group01.doctor.application.usecase.UpdateDoctorUseCase;
 import com.group01.doctor.application.usecase.GetDoctorProfileUseCase;
 import com.group01.doctor.application.usecase.UpdateDoctorProfileUseCase;
+import com.group01.doctor.infrastructure.security.RequireRole;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,31 +43,74 @@ public class DoctorController {
     private final DeleteDoctorUseCase deleteDoctorUseCase;
     private final GetDoctorProfileUseCase getDoctorProfileUseCase;
     private final UpdateDoctorProfileUseCase updateDoctorProfileUseCase;
+    private final com.group01.doctor.domain.repository.DoctorRepository doctorRepository;
+
+    @GetMapping("/debug")
+    public ResponseEntity<?> debug(@RequestParam(value = "userId", required = false) String userIdStr, jakarta.servlet.http.HttpServletRequest request) {
+        java.util.Map<String, Object> debugInfo = new java.util.HashMap<>();
+        try {
+            java.util.Map<String, String> headers = new java.util.HashMap<>();
+            java.util.Enumeration<String> headerNames = request.getHeaderNames();
+            while (headerNames.hasMoreElements()) {
+                String name = headerNames.nextElement();
+                headers.put(name, request.getHeader(name));
+            }
+            debugInfo.put("headers", headers);
+
+            List<DoctorDto> doctors = getDoctorUseCase.getAll(null);
+            debugInfo.put("allDoctorsInDb", doctors);
+
+            if (userIdStr != null && !userIdStr.isBlank()) {
+                UUID userId = UUID.fromString(userIdStr);
+                debugInfo.put("searchUserId", userId);
+                boolean exists = doctorRepository.existsByUserId(userId);
+                debugInfo.put("existsByUserId", exists);
+                
+                try {
+                    DoctorProfileResponse profile = getDoctorProfileUseCase.execute(userId);
+                    debugInfo.put("profileFound", profile);
+                } catch (Exception ex) {
+                    debugInfo.put("profileSearchError", ex.getClass().getName() + ": " + ex.getMessage());
+                    java.io.StringWriter sw = new java.io.StringWriter();
+                    ex.printStackTrace(new java.io.PrintWriter(sw));
+                    debugInfo.put("profileSearchStackTrace", sw.toString());
+                }
+            }
+        } catch (Exception ex) {
+            debugInfo.put("error", ex.getClass().getName() + ": " + ex.getMessage());
+            java.io.StringWriter sw = new java.io.StringWriter();
+            ex.printStackTrace(new java.io.PrintWriter(sw));
+            debugInfo.put("stackTrace", sw.toString());
+        }
+        return ResponseEntity.ok(debugInfo);
+    }
 
     @GetMapping("/me")
-    public ResponseEntity<DoctorProfileResponse> getMyProfile(
-            @org.springframework.web.bind.annotation.RequestHeader(value = "X-User-Id") String userIdHeader) {
-        UUID userId = UUID.fromString(userIdHeader);
+    @RequireRole("DOCTOR")
+    public ResponseEntity<DoctorProfileResponse> getMyProfile() {
+        UUID userId = CurrentUserHolder.require().userId();
         DoctorProfileResponse profile = getDoctorProfileUseCase.execute(userId);
         return ResponseEntity.ok(profile);
     }
 
     @PutMapping("/me")
+    @RequireRole("DOCTOR")
     public ResponseEntity<DoctorProfileResponse> updateMyProfile(
-            @org.springframework.web.bind.annotation.RequestHeader(value = "X-User-Id") String userIdHeader,
             @Valid @RequestBody UpdateProfileRequest request) {
-        UUID userId = UUID.fromString(userIdHeader);
+        UUID userId = CurrentUserHolder.require().userId();
         DoctorProfileResponse updated = updateDoctorProfileUseCase.execute(userId, request);
         return ResponseEntity.ok(updated);
     }
 
     @PostMapping
+    @RequireRole("ADMIN")
     public ResponseEntity<DoctorDto> createDoctor(@Valid @RequestBody CreateDoctorRequest request) {
         DoctorDto created = createDoctorUseCase.execute(request);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
+    @RequireRole("ADMIN")
     public ResponseEntity<DoctorDto> updateDoctor(
             @PathVariable("id") UUID id,
             @Valid @RequestBody UpdateDoctorRequest request) {
@@ -92,6 +137,7 @@ public class DoctorController {
     }
 
     @DeleteMapping("/{id}")
+    @RequireRole("ADMIN")
     public ResponseEntity<Void> deleteDoctor(@PathVariable("id") UUID id) {
         deleteDoctorUseCase.execute(id);
         return ResponseEntity.noContent().build();

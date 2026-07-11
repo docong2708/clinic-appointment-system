@@ -24,9 +24,10 @@ public class KeycloakUserHeaderGatewayFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         return exchange.getPrincipal()
+                .filter(principal -> principal instanceof JwtAuthenticationToken)
                 .cast(JwtAuthenticationToken.class)
                 .flatMap(authentication -> chain.filter(exchange.mutate().request(withUserHeaders(exchange.getRequest(), authentication.getToken())).build()))
-                .switchIfEmpty(chain.filter(exchange));
+                .switchIfEmpty(Mono.defer(() -> chain.filter(exchange)));
     }
 
     @Override

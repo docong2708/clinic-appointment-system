@@ -27,10 +27,12 @@ import com.group01.doctor.application.usecase.ViewScheduleUseCase;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/doctors/{doctorId}/slots")
 @RequiredArgsConstructor
+@Slf4j
 public class ScheduleController {
 
     private final ViewScheduleUseCase viewScheduleUseCase;
@@ -52,6 +54,8 @@ public class ScheduleController {
     public ResponseEntity<DoctorDto> addSlot(
             @PathVariable("doctorId") UUID doctorId,
             @Valid @RequestBody AddSlotRequest request) {
+        log.info("Add slot requested doctorId={} startTime={} endTime={}",
+                doctorId, request == null ? null : request.getStartTime(), request == null ? null : request.getEndTime());
         DoctorDto updatedDoctor = updateAvailabilityUseCase.execute(doctorId, request);
         return ResponseEntity.ok(updatedDoctor);
     }
@@ -60,6 +64,11 @@ public class ScheduleController {
     public ResponseEntity<DoctorDto> generateSchedule(
             @PathVariable("doctorId") UUID doctorId,
             @Valid @RequestBody GenerateScheduleRequest request) {
+        log.info("Generate schedule requested doctorId={} startTime={} endTime={} slotDurationMinutes={}",
+                doctorId,
+                request == null ? null : request.getStartTime(),
+                request == null ? null : request.getEndTime(),
+                request == null ? null : request.getSlotDurationMinutes());
         DoctorDto updatedDoctor = generateScheduleUseCase.execute(doctorId, request);
         return ResponseEntity.ok(updatedDoctor);
     }
