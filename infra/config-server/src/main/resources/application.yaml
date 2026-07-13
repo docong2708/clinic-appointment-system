@@ -11,7 +11,7 @@ spring:
     config:
       server:
         native:
-          search-locations: file:../../clinic-config-repo
+          search-locations: file:/home/docong2708/Documents/microservices/git_repo
 
 encrypt:
   key: ${ENCRYPT_KEY:default_key}
