@@ -6,11 +6,11 @@ import com.group01.notification.domain.entity.NotificationDelivery;
 import com.group01.notification.domain.vo.NotificationChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Primary;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-@Primary
 @Component
+@ConditionalOnProperty(name = "notification.sender.mock", havingValue = "true", matchIfMissing = true)
 public class MockNotificationSenderAdapter implements NotificationSenderPort {
 
     private static final Logger log = LoggerFactory.getLogger(MockNotificationSenderAdapter.class);

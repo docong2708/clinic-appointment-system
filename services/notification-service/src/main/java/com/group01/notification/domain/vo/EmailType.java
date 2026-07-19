@@ -15,6 +15,10 @@ public class EmailType {
     public static final String LICENSE_DELIVERY = "LICENSE_DELIVERY";
     public static final String APP_APPROVED = "APP_APPROVED";
     public static final String APP_REJECTED = "APP_REJECTED";
+    public static final String APPOINTMENT_CREATED = "APPOINTMENT_CREATED";
+    public static final String APPOINTMENT_CONFIRMED = "APPOINTMENT_CONFIRMED";
+    public static final String APPOINTMENT_CANCELED = "APPOINTMENT_CANCELED";
+    public static final String APPOINTMENT_UPDATED = "APPOINTMENT_UPDATED";
 
     public EmailType(String value) {
         if (value == null || value.isBlank()) {
@@ -30,7 +34,11 @@ public class EmailType {
             type.equals(PURCHASE_CONFIRMATION) ||
             type.equals(LICENSE_DELIVERY) ||
             type.equals(APP_APPROVED) ||
-            type.equals(APP_REJECTED)
+            type.equals(APP_REJECTED) ||
+            type.equals(APPOINTMENT_CREATED) ||
+            type.equals(APPOINTMENT_CONFIRMED) ||
+            type.equals(APPOINTMENT_CANCELED) ||
+            type.equals(APPOINTMENT_UPDATED)
         );
     }
 
@@ -42,6 +50,10 @@ public class EmailType {
             case LICENSE_DELIVERY -> "license-delivery";
             case APP_APPROVED -> "app-approved";
             case APP_REJECTED -> "app-rejected";
+            case APPOINTMENT_CREATED -> "appointment-created";
+            case APPOINTMENT_CONFIRMED -> "appointment-confirmed";
+            case APPOINTMENT_CANCELED -> "appointment-canceled";
+            case APPOINTMENT_UPDATED -> "appointment-updated";
             default -> null;
         };
     }

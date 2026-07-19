@@ -1,5 +1,5 @@
-INSERT INTO doctor_slots (id, doctor_id, start_time, end_time, status)
-SELECT slots.id, slots.doctor_id, slots.start_time, slots.end_time, 'AVAILABLE'
+INSERT INTO doctor_slots (id, doctor_id, start_time, end_time, is_booked)
+SELECT slots.id, slots.doctor_id, slots.start_time, slots.end_time, FALSE
 FROM (
     VALUES
         ('d1000000-0000-0000-0000-000000000001'::uuid, '0e7048a6-e6df-4391-aa38-8ab456dae678'::uuid, '2026-07-08 08:00:00'::timestamp, '2026-07-08 08:30:00'::timestamp),

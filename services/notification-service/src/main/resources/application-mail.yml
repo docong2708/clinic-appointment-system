@@ -19,9 +19,16 @@ spring:
 
 # Email service configuration
 mail:
-  from: 
-  from-name: 
+  from: ${MAIL_FROM:noreply@clinic.local}
+  from-name: ${MAIL_FROM_NAME:MSS Clinic}
   provider: SMTP
+
+notification:
+  sender:
+    mock: false
+  email:
+    templates:
+      location: classpath:email-templates
 
 # Logging for email debugging
 logging:

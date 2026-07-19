@@ -3,17 +3,18 @@ package com.group01.notification.application.usecase.impl;
 import com.group01.notification.api.dto.SendEmailRequest;
 import com.group01.notification.api.dto.SendEmailResponse;
 import com.group01.notification.application.usecase.SendEmailUseCase;
-import com.group01.notification.domain.aggregate.NotificationAggregate;
 import com.group01.notification.domain.aggregate.NotificationTemplate;
-import com.group01.notification.domain.repository.NotificationRepository;
 import com.group01.notification.domain.repository.NotificationTemplateRepository;
 import com.group01.notification.domain.vo.EmailType;
 import com.group01.notification.infrastructure.sender.EmailSenderService;
 import com.group01.notification.infrastructure.sender.EmailTemplateRenderer;
+import com.group01.notification.infrastructure.sender.FileEmailTemplateService;
+import com.group01.notification.infrastructure.sender.FileEmailTemplateService.EmailTemplateContent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -26,7 +27,7 @@ import java.util.UUID;
 public class SendEmailUseCaseImpl implements SendEmailUseCase {
 
     private final NotificationTemplateRepository templateRepository;
-    private final NotificationRepository notificationRepository;
+    private final FileEmailTemplateService fileEmailTemplateService;
     private final EmailTemplateRenderer templateRenderer;
     private final EmailSenderService emailSenderService;
 
@@ -44,13 +45,11 @@ public class SendEmailUseCaseImpl implements SendEmailUseCase {
         // Get template key
         String templateKey = new EmailType(request.getEventType()).getTemplateKey();
 
-        // Load template using findByKeyAndActiveTrue
-        NotificationTemplate template = templateRepository.findByKeyAndActiveTrue(templateKey)
-            .orElseThrow(() -> new RuntimeException("Template not found: " + templateKey));
+        EmailTemplateContent template = resolveTemplate(templateKey);
 
         // Render subject and body
-        String renderedSubject = templateRenderer.render(template.getSubject(), request.getPayload());
-        String renderedBody = templateRenderer.render(template.getBody(), request.getPayload());
+        String renderedSubject = templateRenderer.render(template.subject(), request.getPayload());
+        String renderedBody = templateRenderer.render(template.body(), request.getPayload());
 
         // Send email
         String notificationId = UUID.randomUUID().toString();
@@ -58,11 +57,19 @@ public class SendEmailUseCaseImpl implements SendEmailUseCase {
         String message;
         
         try {
-            emailSenderService.sendEmail(
-                request.getRecipientEmail(),
-                renderedSubject,
-                renderedBody
-            );
+            if (template.html()) {
+                emailSenderService.sendHtmlEmail(
+                    request.getRecipientEmail(),
+                    renderedSubject,
+                    renderedBody
+                );
+            } else {
+                emailSenderService.sendEmail(
+                    request.getRecipientEmail(),
+                    renderedSubject,
+                    renderedBody
+                );
+            }
             status = "SENT";
             message = "Email queued for delivery";
             log.info("Email {} for type {}: {}", notificationId, request.getEventType(), status);
@@ -77,5 +84,16 @@ public class SendEmailUseCaseImpl implements SendEmailUseCase {
             .status(status)
             .message(message)
             .build();
+    }
+
+    private EmailTemplateContent resolveTemplate(String templateKey) {
+        Optional<EmailTemplateContent> fileTemplate = fileEmailTemplateService.findByKey(templateKey);
+        if (fileTemplate.isPresent()) {
+            return fileTemplate.get();
+        }
+
+        NotificationTemplate databaseTemplate = templateRepository.findByKeyAndActiveTrue(templateKey)
+            .orElseThrow(() -> new RuntimeException("Template not found: " + templateKey));
+        return new EmailTemplateContent(databaseTemplate.getSubject(), databaseTemplate.getBody(), false);
     }
 }

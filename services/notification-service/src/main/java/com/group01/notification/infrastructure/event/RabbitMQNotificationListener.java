@@ -82,8 +82,8 @@ public class RabbitMQNotificationListener {
             CreateNotificationCommand command = CreateNotificationCommand.builder()
                     .recipientUserId(recipientId)
                     .type(eventType)
-                    .title("Appointment Notification: " + eventType)
-                    .body("Your appointment has been " + eventType.toLowerCase().replace("_", " "))
+                    .title(titleFor(eventType))
+                    .body(bodyFor(eventType, payload))
                     .priority((short) 1)
                     .channel("EMAIL")
                     .destination("phudinh193@gmail.com")
@@ -91,7 +91,7 @@ public class RabbitMQNotificationListener {
                     .sourceEventId(eventId)
                     .dedupeKey(eventType)
                     .aggregateType("Appointment")
-                    .aggregateId(eventId)
+                    .aggregateId(aggregateId(payload, eventId))
                     .sourceInboxEventId(inboxEvent.getId())
                     .build();
 
@@ -115,5 +115,110 @@ public class RabbitMQNotificationListener {
         } catch (Exception e) {
             return "{}";
         }
+    }
+
+    private String titleFor(String eventType) {
+        return switch (eventType) {
+            case "APPOINTMENT_CREATED" -> "Appointment request received";
+            case "APPOINTMENT_CONFIRMED" -> "Appointment confirmed";
+            case "APPOINTMENT_CANCELED" -> "Appointment canceled";
+            case "APPOINTMENT_UPDATED" -> "Appointment updated";
+            default -> "Appointment notification";
+        };
+    }
+
+    private String bodyFor(String eventType, Object payload) {
+        if (payload instanceof AppointmentCreatedEvent event) {
+            return """
+                    Your appointment request has been created.
+
+                    Appointment ID: %s
+                    Doctor ID: %s
+                    Time: %s - %s
+                    Status: %s
+                    Reason: %s
+                    """.formatted(
+                    event.appointmentId(),
+                    event.doctorId(),
+                    event.startTime(),
+                    event.endTime(),
+                    event.status(),
+                    event.reason() == null ? "" : event.reason()
+            ).trim();
+        }
+
+        if (payload instanceof AppointmentConfirmedEvent event) {
+            return """
+                    Your appointment has been confirmed.
+
+                    Appointment ID: %s
+                    Doctor ID: %s
+                    Time: %s - %s
+                    Status: %s
+                    Payment status: %s
+                    """.formatted(
+                    event.appointmentId(),
+                    event.doctorId(),
+                    event.startTime(),
+                    event.endTime(),
+                    event.status(),
+                    event.paymentStatus()
+            ).trim();
+        }
+
+        if (payload instanceof AppointmentCanceledEvent event) {
+            return """
+                    Your appointment has been canceled.
+
+                    Appointment ID: %s
+                    Doctor ID: %s
+                    Status: %s
+                    Cancel reason: %s
+                    Canceled by: %s
+                    """.formatted(
+                    event.appointmentId(),
+                    event.doctorId(),
+                    event.status(),
+                    event.cancelReason() == null ? "" : event.cancelReason(),
+                    event.cancelledByRole() == null ? "" : event.cancelledByRole()
+            ).trim();
+        }
+
+        if (payload instanceof AppointmentUpdatedEvent event) {
+            return """
+                    Your appointment has been updated.
+
+                    Appointment ID: %s
+                    Doctor ID: %s
+                    Time: %s - %s
+                    Status: %s
+                    Reason: %s
+                    """.formatted(
+                    event.appointmentId(),
+                    event.doctorId(),
+                    event.startTime(),
+                    event.endTime(),
+                    event.status(),
+                    event.reason() == null ? "" : event.reason()
+            ).trim();
+        }
+
+        return "Your appointment has been " + eventType.toLowerCase().replace("_", " ") + ".";
+    }
+
+    private java.util.UUID aggregateId(Object payload, java.util.UUID fallback) {
+        if (payload instanceof AppointmentCreatedEvent event) {
+            return event.appointmentId();
+        }
+        if (payload instanceof AppointmentConfirmedEvent event) {
+            return event.appointmentId();
+        }
+        if (payload instanceof AppointmentCanceledEvent event) {
+            return event.appointmentId();
+        }
+        if (payload instanceof AppointmentUpdatedEvent event) {
+            return event.appointmentId();
+        }
+        return fallback;
     }
 }
