@@ -1,8 +1,37 @@
-FROM eclipse-temurin:21-jre-jammy
+FROM maven:3.9-eclipse-temurin-21 AS builder
 WORKDIR /app
 
-COPY target/*.jar ./
+COPY pom.xml ./
+COPY services/user-service/pom.xml services/user-service/
+COPY services/patient-service/pom.xml services/patient-service/
+COPY services/doctor-service/pom.xml services/doctor-service/
+COPY services/notification-service/pom.xml services/notification-service/
+COPY services/appointment-service/pom.xml services/appointment-service/
+COPY infra/api-gateway/pom.xml infra/api-gateway/
+COPY infra/config-server/pom.xml infra/config-server/
+COPY infra/eureka-server/pom.xml infra/eureka-server/
+COPY shared/common-events/pom.xml shared/common-events/
+COPY shared/common-security/pom.xml shared/common-security/
+COPY shared/common-web/pom.xml shared/common-web/
 
-RUN rm -f *-plain.jar && mv *.jar app.jar
+RUN set -eux; \
+    for attempt in 1 2 3 4 5; do \
+      mvn -B -Dmaven.wagon.http.retryHandler.count=5 -Dmaven.wagon.http.pool=false dependency:go-offline -pl services/appointment-service -am && break; \
+      find /root/.m2/repository -name "*.lastUpdated" -delete || true; \
+      rm -rf /root/.m2/repository/com/github/luben/zstd-jni; \
+      if [ "${attempt}" -eq 5 ]; then exit 1; fi; \
+      sleep $((attempt * 5)); \
+    done
+
+COPY services/appointment-service/src services/appointment-service/src
+COPY shared/common-security/src shared/common-security/src
+COPY shared/common-events/src shared/common-events/src
+
+RUN mvn -B clean package -pl services/appointment-service -am -DskipTests
+
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+
+COPY --from=builder /app/services/appointment-service/target/*.jar ./app.jar
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
