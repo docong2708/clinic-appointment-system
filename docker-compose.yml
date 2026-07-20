@@ -124,7 +124,7 @@ services:
     container_name: rabbitmq_clinic
     environment:
       RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: admin_password
+      RABBITMQ_DEFAULT_PASS: admin
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -173,13 +173,14 @@ services:
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
-    command: start-dev
+    command: start-dev --import-realm
     ports:
       - "9080:8080"
     networks:
       - clinic-network
     volumes:
       - keycloak-data:/opt/keycloak/data
+      - ./infra/keycloak/realm-export:/opt/keycloak/data/import:ro
 
   # ==========================================
   # 3. SPRING CLOUD INFRASTRUCTURE
@@ -258,7 +259,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=postgres_password
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_USERNAME=admin
-      - SPRING_RABBITMQ_PASSWORD=admin_password
+      - SPRING_RABBITMQ_PASSWORD=admin
       - DOCTOR_SERVICE_URL=http://doctor-service:8082
       - PATIENT_SERVICE_URL=http://patient-service:8084
       - NOTIFICATION_SERVICE_URL=http://notification-service:8083
@@ -285,7 +286,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=postgres_password
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_USERNAME=admin
-      - SPRING_RABBITMQ_PASSWORD=admin_password
+      - SPRING_RABBITMQ_PASSWORD=admin
     networks:
       - clinic-network
     depends_on:
@@ -309,7 +310,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=postgres_password
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_USERNAME=admin
-      - SPRING_RABBITMQ_PASSWORD=admin_password
+      - SPRING_RABBITMQ_PASSWORD=admin
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     networks:
       - clinic-network
@@ -336,7 +337,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=postgres_password
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_USERNAME=admin
-      - SPRING_RABBITMQ_PASSWORD=admin_password
+      - SPRING_RABBITMQ_PASSWORD=admin
     networks:
       - clinic-network
     depends_on:
@@ -360,7 +361,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=postgres_password
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_USERNAME=admin
-      - SPRING_RABBITMQ_PASSWORD=admin_password
+      - SPRING_RABBITMQ_PASSWORD=admin
       - KEYCLOAK_SERVER_URL=http://keycloak:8080
     networks:
       - clinic-network
