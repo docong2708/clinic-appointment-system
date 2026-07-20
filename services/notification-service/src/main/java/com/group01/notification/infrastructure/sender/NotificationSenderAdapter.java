@@ -14,7 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Component
-@ConditionalOnProperty(name = "notification.sender.mock", havingValue = "false")
+@ConditionalOnProperty(name = "notification.sender.mock", havingValue = "false", matchIfMissing = true)
 public class NotificationSenderAdapter implements NotificationSenderPort {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationSenderAdapter.class);

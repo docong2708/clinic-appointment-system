@@ -14,13 +14,14 @@ public final class AppointmentEventMapper {
     private AppointmentEventMapper() {
     }
 
-    public static AppointmentCreatedEvent created(AppointmentAggregate appointment) {
+    public static AppointmentCreatedEvent created(AppointmentAggregate appointment, String patientEmail) {
         LocalDateTime occurredAt = LocalDateTime.now();
 
         return new AppointmentCreatedEvent(
                 UUID.randomUUID(),
                 appointment.getAppointmentId().value(),
                 appointment.getPatientId().value(),
+                patientEmail,
                 appointment.getDoctorId().value(),
                 appointment.getSlotId(),
                 appointment.getAppointmentTime().startTime(),

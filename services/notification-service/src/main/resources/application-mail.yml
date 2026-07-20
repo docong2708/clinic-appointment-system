@@ -1,25 +1,8 @@
-# Email configuration for MVP email system
-spring:
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: 
-    password: 
-    protocol: smtp
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-          connectiontimeout: 5000
-          timeout: 3000
-          writetimeout: 5000
-    default-encoding: UTF-8
+# SMTP connection settings are loaded from Config Server under spring.mail.*.
 
 # Email service configuration
 mail:
-  from: ${MAIL_FROM:noreply@clinic.local}
+  from: ${spring.mail.username:noreply@clinic.local}
   from-name: ${MAIL_FROM_NAME:MSS Clinic}
   provider: SMTP
 

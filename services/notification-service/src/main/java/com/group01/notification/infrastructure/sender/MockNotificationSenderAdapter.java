@@ -10,7 +10,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConditionalOnProperty(name = "notification.sender.mock", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "notification.sender.mock", havingValue = "true")
 public class MockNotificationSenderAdapter implements NotificationSenderPort {
 
     private static final Logger log = LoggerFactory.getLogger(MockNotificationSenderAdapter.class);

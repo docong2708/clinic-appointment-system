@@ -86,7 +86,7 @@ public class RabbitMQNotificationListener {
                     .body(bodyFor(eventType, payload))
                     .priority((short) 1)
                     .channel("EMAIL")
-                    .destination("phudinh193@gmail.com")
+                    .destination(destinationFor(payload))
                     .sourceService("appointment-service")
                     .sourceEventId(eventId)
                     .dedupeKey(eventType)
@@ -204,6 +204,18 @@ public class RabbitMQNotificationListener {
         }
 
         return "Your appointment has been " + eventType.toLowerCase().replace("_", " ") + ".";
+    }
+
+    private String destinationFor(Object payload) {
+        if (payload instanceof AppointmentCreatedEvent event && hasText(event.patientEmail())) {
+            return event.patientEmail();
+        }
+        throw new IllegalStateException("Notification destination email is missing for payload type: "
+                + payload.getClass().getSimpleName());
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 
     private java.util.UUID aggregateId(Object payload, java.util.UUID fallback) {

@@ -7,6 +7,7 @@ public record AppointmentCreatedEvent(
         UUID eventId,
         UUID appointmentId,
         UUID patientId,
+        String patientEmail,
         UUID doctorId,
         UUID slotId,
         LocalDateTime startTime,

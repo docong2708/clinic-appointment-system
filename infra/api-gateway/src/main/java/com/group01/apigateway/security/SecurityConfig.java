@@ -1,7 +1,6 @@
 package com.group01.apigateway.security;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.core.io.Resource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -11,15 +10,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.converter.RsaKeyConverters;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.web.server.ServerOAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
-import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
-import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.jwt.ReactiveJwtDecoders;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 import org.springframework.security.web.server.SecurityWebFilterChain;
@@ -32,7 +28,6 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.security.interfaces.RSAPublicKey;
 import java.util.Set;
 
 @Configuration
@@ -126,18 +121,9 @@ public class SecurityConfig {
 
     @Bean
     ReactiveJwtDecoder keycloakJwtDecoder(
-            @Value("${spring.security.oauth2.resourceserver.jwt.public-key-location}") Resource publicKeyResource,
             @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}") String issuerUri
-    ) throws Exception {
-        RSAPublicKey publicKey;
-        try (var inputStream = publicKeyResource.getInputStream()) {
-            publicKey = RsaKeyConverters.x509().convert(inputStream);
-        }
-
-        NimbusReactiveJwtDecoder jwtDecoder = NimbusReactiveJwtDecoder.withPublicKey(publicKey).build();
-        OAuth2TokenValidator<Jwt> validator = JwtValidators.createDefaultWithIssuer(issuerUri);
-        jwtDecoder.setJwtValidator(validator);
-        return jwtDecoder;
+    ) {
+        return ReactiveJwtDecoders.fromIssuerLocation(issuerUri);
     }
 
     @Bean

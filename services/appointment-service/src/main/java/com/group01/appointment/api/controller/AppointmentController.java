@@ -55,7 +55,8 @@ public class AppointmentController {
                 request.rescheduledFromAppointmentId(),
                 request.reason(),
                 request.bookingSource(),
-                currentUser.userId()
+                currentUser.userId(),
+                currentUser.email()
         ));
 
         return ResponseEntity

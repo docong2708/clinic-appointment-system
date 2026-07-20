@@ -96,7 +96,7 @@ public class AuthController {
                         profile.id(),
                         profile.patientId(),
                         email,
-                        rolesFromProfile(profile, jwtRoles)
+                        jwtRoles
                 )))
                 .onErrorResume(WebClientResponseException.NotFound.class, exception -> Mono.just(ResponseEntity.ok(
                         new CurrentUserResponse(jwt.getSubject(), null, null, email, jwtRoles)
@@ -323,17 +323,6 @@ public class AuthController {
         return authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .map(role -> role.startsWith("ROLE_") ? role.substring("ROLE_".length()) : role)
-                .toList();
-    }
-
-    private List<String> rolesFromProfile(UserProfileResponse profile, List<String> fallbackRoles) {
-        if (profile.roles() == null || profile.roles().isEmpty()) {
-            return fallbackRoles;
-        }
-        return profile.roles().stream()
-                .map(RoleResponse::name)
-                .filter(role -> role != null && !role.isBlank())
-                .distinct()
                 .toList();
     }
 

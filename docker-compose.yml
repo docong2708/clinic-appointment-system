@@ -311,6 +311,7 @@ services:
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_USERNAME=admin
       - SPRING_RABBITMQ_PASSWORD=admin
+      - NOTIFICATION_SENDER_MOCK=false
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     networks:
       - clinic-network

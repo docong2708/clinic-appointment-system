@@ -14,6 +14,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
@@ -21,6 +22,12 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    void handleClientAbort(AsyncRequestNotUsableException exception, HttpServletRequest request) {
+        log.debug("Client disconnected before response completed path={} reason={}",
+                request.getRequestURI(), exception.getMessage());
+    }
+
     @ExceptionHandler(UserNotFoundException.class)
     ResponseEntity<ErrorResponse> handleNotFound(RuntimeException exception, HttpServletRequest request) {
         return error(HttpStatus.NOT_FOUND, exception.getMessage(), request);

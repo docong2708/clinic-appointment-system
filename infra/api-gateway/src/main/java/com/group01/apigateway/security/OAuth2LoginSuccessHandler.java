@@ -30,7 +30,6 @@ import java.util.Set;
 public class OAuth2LoginSuccessHandler implements ServerAuthenticationSuccessHandler {
 
     private static final String SESSION_COOKIE_NAME = "SESSION";
-    private static final String DEFAULT_OAUTH2_ROLE = "PATIENT";
     private static final Set<String> DOMAIN_ROLES = Set.of("ADMIN", "DOCTOR", "PATIENT");
 
     private final ServerOAuth2AuthorizedClientRepository authorizedClientRepository;
@@ -74,11 +73,16 @@ public class OAuth2LoginSuccessHandler implements ServerAuthenticationSuccessHan
     }
 
     private Mono<Void> syncUserProfile(Jwt jwt) {
+        Set<String> roles = resolveDomainRoles(jwt);
+        if (roles.isEmpty()) {
+            return Mono.error(new IllegalStateException("OAuth2 access token does not contain a domain role"));
+        }
+
         OAuth2UserSyncRequest request = new OAuth2UserSyncRequest(
                 jwt.getSubject(),
                 resolveEmail(jwt),
                 resolveFullName(jwt),
-                resolveDomainRoles(jwt)
+                roles
         );
 
         return webClient.post()
@@ -230,10 +234,6 @@ public class OAuth2LoginSuccessHandler implements ServerAuthenticationSuccessHan
                     addDomainRoles(roles, clientAccessMap.get("roles"));
                 }
             }
-        }
-
-        if (roles.isEmpty()) {
-            roles.add(DEFAULT_OAUTH2_ROLE);
         }
         return roles;
     }

@@ -83,7 +83,7 @@ public class CreateAppointmentUseCase {
         AppointmentAggregate savedAppointment = appointmentRepository.save(appointment);
 
         appointmentLogRepository.saveAll(appointment.getLogs());
-        notificationPort.publishAppointmentCreated(AppointmentEventMapper.created(savedAppointment));
+        notificationPort.publishAppointmentCreated(AppointmentEventMapper.created(savedAppointment, command.patientEmail()));
 
         return AppointmentResultMapper.from(savedAppointment);
     }

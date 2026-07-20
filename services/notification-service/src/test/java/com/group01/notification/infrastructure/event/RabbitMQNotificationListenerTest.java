@@ -8,6 +8,7 @@ import com.group01.notification.domain.repository.NotificationInboxEventReposito
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -15,9 +16,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 public class RabbitMQNotificationListenerTest {
@@ -47,6 +46,7 @@ public class RabbitMQNotificationListenerTest {
                 eventId,
                 appointmentId,
                 patientId,
+                "patient@example.com",
                 doctorId,
                 slotId,
                 LocalDateTime.now(),
@@ -63,7 +63,9 @@ public class RabbitMQNotificationListenerTest {
 
         verify(inboxEventRepository, times(2)).save(any(NotificationInboxEvent.class));
         verify(inboxEventRepository).existsBySourceEventId(eventId);
-        verify(createNotificationUseCase).handle(any(CreateNotificationCommand.class));
+        ArgumentCaptor<CreateNotificationCommand> commandCaptor = ArgumentCaptor.forClass(CreateNotificationCommand.class);
+        verify(createNotificationUseCase).handle(commandCaptor.capture());
+        org.assertj.core.api.Assertions.assertThat(commandCaptor.getValue().getDestination()).isEqualTo("patient@example.com");
     }
 
     @Test
@@ -78,6 +80,7 @@ public class RabbitMQNotificationListenerTest {
                 eventId,
                 appointmentId,
                 patientId,
+                "patient@example.com",
                 doctorId,
                 slotId,
                 LocalDateTime.now(),

@@ -2,6 +2,8 @@ package com.group01.notification.infrastructure.sender;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import jakarta.mail.internet.AddressException;
+import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
@@ -19,7 +21,6 @@ import java.nio.charset.StandardCharsets;
 @Service
 @RequiredArgsConstructor
 public class EmailSenderService {
-
     private final JavaMailSender mailSender;
 
     @Value("${mail.from:noreply@example.com}")
@@ -40,7 +41,7 @@ public class EmailSenderService {
     public String sendEmail(String recipientEmail, String subject, String body) throws Exception {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
+            message.setFrom(fromAddress());
             message.setTo(recipientEmail);
             message.setSubject(subject);
             message.setText(body);
@@ -69,11 +70,7 @@ public class EmailSenderService {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, false, StandardCharsets.UTF_8.name());
-            if (fromName == null || fromName.isBlank()) {
-                helper.setFrom(fromEmail);
-            } else {
-                helper.setFrom(fromEmail, fromName);
-            }
+            helper.setFrom(fromInternetAddress());
             helper.setTo(recipientEmail);
             helper.setSubject(subject);
             helper.setText(htmlBody, true);
@@ -87,5 +84,26 @@ public class EmailSenderService {
             log.error("Failed to send HTML email to: {}", recipientEmail, e);
             throw new Exception("Email send failed: " + e.getMessage(), e);
         }
+    }
+
+    private String fromAddress() throws AddressException {
+        if (!hasText(fromEmail)) {
+            throw new AddressException("mail.from is blank");
+        }
+
+        InternetAddress address = new InternetAddress(fromEmail.trim(), true);
+        address.validate();
+        return address.getAddress();
+    }
+
+    private InternetAddress fromInternetAddress() throws Exception {
+        String address = fromAddress();
+        return hasText(fromName)
+                ? new InternetAddress(address, fromName, StandardCharsets.UTF_8.name())
+                : new InternetAddress(address, true);
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 }

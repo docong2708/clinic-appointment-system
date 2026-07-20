@@ -9,6 +9,7 @@ public record CreateAppointmentCommand(
         UUID rescheduledFromAppointmentId,
         String reason,
         String bookingSource,
-        UUID createdBy
+        UUID createdBy,
+        String patientEmail
 ) {
 }
