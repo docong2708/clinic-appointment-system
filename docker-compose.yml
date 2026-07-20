@@ -196,7 +196,7 @@ services:
     environment:
       - SPRING_CLOUD_CONFIG_SERVER_GIT_URI=https://github.com/docong2708/clinic-appointment-repo.git
       - SPRING_CLOUD_CONFIG_SERVER_GIT_USERNAME=docong2708
-      - SPRING_CLOUD_CONFIG_SERVER_GIT_PASSWORD=access-token
+      - SPRING_CLOUD_CONFIG_SERVER_GIT_PASSWORD=abc
     networks:
       - clinic-network
     healthcheck:
