@@ -13,9 +13,6 @@ volumes:
   patient-db-data:
   user-db-data:
   rabbitmq-data:
-  zookeeper-data:
-  kafka-data:
-  keycloak-data:
 
 services:
   # ==========================================
@@ -117,7 +114,7 @@ services:
       retries: 5
 
   # ==========================================
-  # 2. MESSAGE BROKERS & IDENTITY PROVIDER
+  # 2. MESSAGE BROKERS
   # ==========================================
   rabbitmq:
     image: rabbitmq:3-management-alpine
@@ -138,50 +135,6 @@ services:
       timeout: 5s
       retries: 5
 
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.6.1
-    container_name: zookeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    ports:
-      - "2181:2181"
-    networks:
-      - clinic-network
-
-  kafka:
-    image: confluentinc/cp-kafka:7.6.1
-    container_name: kafka
-    depends_on:
-      - zookeeper
-    ports:
-      - "9092:9092"
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-    networks:
-      - clinic-network
-
-  keycloak:
-    image: quay.io/keycloak/keycloak:26.0
-    container_name: keycloak
-    environment:
-      KC_BOOTSTRAP_ADMIN_USERNAME: admin
-      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
-    command: start-dev --import-realm
-    ports:
-      - "9080:8080"
-    networks:
-      - clinic-network
-    volumes:
-      - keycloak-data:/opt/keycloak/data
-      - ./infra/keycloak/realm-export:/opt/keycloak/data/import:ro
-
   # ==========================================
   # 3. SPRING CLOUD INFRASTRUCTURE
   # ==========================================
@@ -194,9 +147,10 @@ services:
     volumes:
       - ./clinic-config-repo:/config-repo
     environment:
-      - SPRING_CLOUD_CONFIG_SERVER_GIT_URI=https://github.com/docong2708/clinic-appointment-repo.git
-      - SPRING_CLOUD_CONFIG_SERVER_GIT_USERNAME=docong2708
-      - SPRING_CLOUD_CONFIG_SERVER_GIT_PASSWORD=access-token
+      - CONFIG_REPO_URI=${CONFIG_REPO_URI:?CONFIG_REPO_URI is required}
+      - GIT_USERNAME=${GIT_USERNAME:?GIT_USERNAME is required}
+      - GIT_TOKEN=${GIT_TOKEN:?GIT_TOKEN is required}
+      - ENCRYPT_KEY=${ENCRYPT_KEY:?ENCRYPT_KEY is required for decrypting config secrets}
     networks:
       - clinic-network
     healthcheck:
@@ -235,8 +189,8 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
       - EUREKA_URL=http://eureka-server:8761/eureka/
-      - KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/clinic-appointment
-      - KEYCLOAK_TOKEN_URI=http://keycloak:8080/realms/clinic-appointment/protocol/openid-connect/token
+      - JWT_ISSUER=clinic-appointment-system
+      - USER_SERVICE_URI=http://user-service:8085
     networks:
       - clinic-network
     depends_on:
@@ -312,7 +266,6 @@ services:
       - RABBITMQ_USERNAME=admin
       - SPRING_RABBITMQ_PASSWORD=admin
       - NOTIFICATION_SENDER_MOCK=false
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     networks:
       - clinic-network
     depends_on:
@@ -322,8 +275,6 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-      kafka:
-        condition: service_started
 
   patient-service:
     build:
@@ -363,7 +314,9 @@ services:
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_USERNAME=admin
       - SPRING_RABBITMQ_PASSWORD=admin
-      - KEYCLOAK_SERVER_URL=http://keycloak:8080
+      - JWT_ISSUER=clinic-appointment-system
+      - DOCTOR_SERVICE_URL=http://doctor-service:8082
+      - PATIENT_SERVICE_URL=http://patient-service:8084
     networks:
       - clinic-network
     depends_on:

@@ -14,6 +14,7 @@ import com.group01.user.domain.vo.RoleName;
 import com.group01.user.domain.vo.UserStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,19 +28,13 @@ import java.util.stream.Collectors;
 public class CreateUserUseCase {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public User execute(CreateUserCommand command) {
-        log.info("Create local user requested keycloakUserId={} email={} roles={}",
-                command.keycloakUserId(), command.email(), command.roles());
+        log.info("Create local user requested email={} roles={}", command.email(), command.roles());
         Email email = new Email(command.email());
         PhoneNumber phoneNumber = new PhoneNumber(command.phoneNumber());
-        if (command.keycloakUserId() == null || command.keycloakUserId().isBlank()) {
-            throw new IllegalArgumentException("Keycloak user id is required");
-        }
-        if (userRepository.existsByKeycloakUserId(command.keycloakUserId())) {
-            throw new EmailAlreadyExistsException("Keycloak user already mapped: " + command.keycloakUserId());
-        }
         if (userRepository.existsByEmail(email.value())) {
             throw new EmailAlreadyExistsException("Email already exists: " + email.value());
         }
@@ -47,16 +42,16 @@ public class CreateUserUseCase {
             throw new PhoneAlreadyExistsException("Phone number already exists: " + phoneNumber.value());
         }
         User user = User.builder()
-                .keycloakUserId(command.keycloakUserId())
                 .email(email)
+                .passwordHash(passwordEncoder.encode(requirePassword(command.password())))
                 .fullName(requireFullName(command.fullName()))
                 .phoneNumber(phoneNumber)
                 .status(UserStatus.ACTIVE)
                 .roles(resolveRoles(command.roles()))
                 .build();
         User savedUser = userRepository.save(user);
-        log.info("Create local user completed userId={} keycloakUserId={} email={} status={}",
-                savedUser.getId(), savedUser.getKeycloakUserId(), savedUser.getEmail().value(), savedUser.getStatus());
+        log.info("Create local user completed userId={} email={} status={}",
+                savedUser.getId(), savedUser.getEmail().value(), savedUser.getStatus());
         return savedUser;
     }
 
@@ -76,5 +71,12 @@ public class CreateUserUseCase {
             throw new IllegalArgumentException("Full name is required");
         }
         return fullName.trim();
+    }
+
+    private String requirePassword(String password) {
+        if (password == null || password.isBlank()) {
+            throw new IllegalArgumentException("Password is required");
+        }
+        return password;
     }
 }

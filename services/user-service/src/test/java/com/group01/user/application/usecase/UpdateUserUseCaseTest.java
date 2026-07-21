@@ -31,7 +31,6 @@ class UpdateUserUseCaseTest {
         UUID userId = UUID.randomUUID();
         User existing = User.builder()
                 .id(userId)
-                .keycloakUserId("kc-user-id")
                 .email(new Email("john@example.com"))
                 .fullName("John Doe")
                 .phoneNumber(new PhoneNumber("111"))

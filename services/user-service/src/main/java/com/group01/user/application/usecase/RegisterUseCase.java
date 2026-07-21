@@ -14,7 +14,6 @@ import java.util.Set;
 @RequiredArgsConstructor
 @Slf4j
 public class RegisterUseCase {
-    private final IdentityProviderClient identityProviderClient;
     private final CreateUserUseCase createUserUseCase;
     private final ProfileProvisioningClient profileProvisioningClient;
 
@@ -22,10 +21,9 @@ public class RegisterUseCase {
     public User execute(RegisterCommand command) {
         String role = command.role() == null || command.role().isBlank() ? "PATIENT" : command.role().trim().toUpperCase();
         log.info("Register user requested email={} role={}", command.email(), role);
-        String keycloakUserId = identityProviderClient.createUser(command.email(), command.password(), command.fullName(), role);
         User user = createUserUseCase.execute(new CreateUserCommand(
-                keycloakUserId,
                 command.email(),
+                command.password(),
                 command.fullName(),
                 command.phoneNumber(),
                 Set.of(role)
@@ -33,8 +31,8 @@ public class RegisterUseCase {
 
         provisionRoleProfile(user, command, role);
 
-        log.info("Register user completed userId={} keycloakUserId={} email={} role={}",
-                user.getId(), user.getKeycloakUserId(), user.getEmail().value(), role);
+        log.info("Register user completed userId={} email={} role={}",
+                user.getId(), user.getEmail().value(), role);
         return user;
     }
 

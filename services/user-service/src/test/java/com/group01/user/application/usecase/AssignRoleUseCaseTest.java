@@ -37,7 +37,6 @@ class AssignRoleUseCaseTest {
         UUID userId = UUID.randomUUID();
         User user = User.builder()
                 .id(userId)
-                .keycloakUserId("kc-user-id")
                 .email(new Email("doctor@example.com"))
                 .fullName("Doctor One")
                 .status(UserStatus.ACTIVE)

@@ -4,46 +4,30 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "app.auth")
 public record AuthProperties(
-        String tokenUri,
-        String clientId,
-        String clientSecret,
-        String accessTokenCookieName,
-        String refreshTokenCookieName,
-        boolean cookieSecure,
-        long cookieMaxAgeSeconds,
-        long refreshTokenCookieMaxAgeSeconds,
-        String frontendOrigin,
-        String userServiceBaseUrl
+        String jwtIssuer,
+        String jwtSecret,
+        long accessTokenMaxAgeSeconds,
+        long refreshTokenMaxAgeSeconds,
+        String frontendOrigin
 ) {
-
     public AuthProperties {
-        if (tokenUri == null || tokenUri.isBlank()) {
-            tokenUri = "http://localhost:9080/realms/clinic-appointment/protocol/openid-connect/token";
+        if (jwtIssuer == null || jwtIssuer.isBlank()) {
+            jwtIssuer = "clinic-appointment-system";
         }
-        if (clientId == null || clientId.isBlank()) {
-            clientId = "clinic-web";
+        if (jwtSecret == null || jwtSecret.isBlank()) {
+            throw new IllegalArgumentException("app.auth.jwt-secret is required");
         }
-        if (isBlankOrUnresolvedPlaceholder(accessTokenCookieName)) {
-            accessTokenCookieName = "ACCESS_TOKEN";
+        if (jwtSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalArgumentException("app.auth.jwt-secret must be at least 32 bytes for HS256");
         }
-        if (isBlankOrUnresolvedPlaceholder(refreshTokenCookieName)) {
-            refreshTokenCookieName = "REFRESH_TOKEN";
+        if (accessTokenMaxAgeSeconds <= 0) {
+            accessTokenMaxAgeSeconds = 3600;
         }
-        if (cookieMaxAgeSeconds <= 0) {
-            cookieMaxAgeSeconds = 3600;
-        }
-        if (refreshTokenCookieMaxAgeSeconds <= 0) {
-            refreshTokenCookieMaxAgeSeconds = 604800;
+        if (refreshTokenMaxAgeSeconds <= 0) {
+            refreshTokenMaxAgeSeconds = 604800;
         }
         if (frontendOrigin == null || frontendOrigin.isBlank()) {
             frontendOrigin = "http://localhost:5173";
         }
-        if (userServiceBaseUrl == null || userServiceBaseUrl.isBlank()) {
-            userServiceBaseUrl = "http://localhost:8085";
-        }
-    }
-
-    private static boolean isBlankOrUnresolvedPlaceholder(String value) {
-        return value == null || value.isBlank() || (value.startsWith("${") && value.endsWith("}"));
     }
 }

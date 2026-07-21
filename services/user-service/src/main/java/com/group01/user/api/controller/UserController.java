@@ -3,7 +3,6 @@ package com.group01.user.api.controller;
 import com.group01.user.api.dto.request.AssignRoleRequest;
 import com.group01.user.api.dto.request.ChangeUserStatusRequest;
 import com.group01.user.api.dto.request.CreateUserRequest;
-import com.group01.user.api.dto.request.OAuth2UserSyncRequest;
 import com.group01.user.api.dto.request.RegisterRequest;
 import com.group01.user.api.dto.request.UpdateUserRequest;
 import com.group01.user.api.dto.response.RoleResponse;
@@ -18,11 +17,9 @@ import com.group01.user.application.usecase.ChangeUserStatusUseCase;
 import com.group01.user.application.usecase.CreateUserUseCase;
 import com.group01.user.application.usecase.DeleteUserUseCase;
 import com.group01.user.application.usecase.GetAllUsersUseCase;
-import com.group01.user.application.usecase.GetUserByKeycloakIdUseCase;
 import com.group01.user.application.usecase.GetUserByIdUseCase;
 import com.group01.user.application.usecase.ProfileLookupClient;
 import com.group01.user.application.usecase.RegisterUseCase;
-import com.group01.user.application.usecase.SyncOAuth2UserUseCase;
 import com.group01.user.application.usecase.UpdateUserUseCase;
 import com.group01.user.domain.aggregate.Role;
 import com.group01.user.domain.aggregate.User;
@@ -50,9 +47,7 @@ import java.util.stream.Collectors;
 public class UserController {
     private final RegisterUseCase registerUseCase;
     private final CreateUserUseCase createUserUseCase;
-    private final SyncOAuth2UserUseCase syncOAuth2UserUseCase;
     private final ProfileLookupClient profileLookupClient;
-    private final GetUserByKeycloakIdUseCase getUserByKeycloakIdUseCase;
     private final GetUserByIdUseCase getUserByIdUseCase;
     private final GetAllUsersUseCase getAllUsersUseCase;
     private final UpdateUserUseCase updateUserUseCase;
@@ -80,24 +75,12 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponse createUser(@Valid @RequestBody CreateUserRequest request) {
         return toResponse(createUserUseCase.execute(new CreateUserCommand(
-                request.keycloakUserId(), request.email(), request.fullName(), request.phoneNumber(), request.roles())));
-    }
-
-    @PostMapping("/oauth2/sync")
-    public UserResponse syncOAuth2User(@Valid @RequestBody OAuth2UserSyncRequest request) {
-        User user = syncOAuth2UserUseCase.execute(
-                request.keycloakUserId(),
                 request.email(),
+                request.password(),
                 request.fullName(),
+                request.phoneNumber(),
                 request.roles()
-        );
-        return toResponse(user, resolvePatientId(user));
-    }
-
-    @GetMapping("/keycloak/{keycloakUserId}")
-    public UserResponse getUserByKeycloakId(@PathVariable("keycloakUserId") String keycloakUserId) {
-        User user = getUserByKeycloakIdUseCase.execute(keycloakUserId);
-        return toResponse(user, resolvePatientId(user));
+        )));
     }
 
     @GetMapping("/{id}")
@@ -137,7 +120,6 @@ public class UserController {
     private UserResponse toResponse(User user, UUID patientId) {
         return new UserResponse(
                 user.getId(),
-                user.getKeycloakUserId(),
                 patientId,
                 user.getEmail().value(),
                 user.getFullName(),

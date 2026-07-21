@@ -1,155 +1,114 @@
-# Security Architecture - Keycloak
+# Security Architecture - Local JWT
 
-## Responsibilities
+The system now uses local account security instead of Google login or Keycloak.
 
-`Keycloak`
+## Runtime Flow
 
-- Single Identity Provider for the system.
-- Issues access tokens.
-- Owns credentials, login, password policy, and refresh token lifecycle.
-- Defines realm roles: `ADMIN`, `DOCTOR`, `PATIENT`.
+1. Client calls `POST /auth/login` through `api-gateway`.
+2. Gateway routes `/auth/**` to `user-service`.
+3. `user-service` validates the local user password with BCrypt.
+4. `user-service` returns:
+   - short-lived JWT access token
+   - opaque refresh token
+5. Gateway verifies the JWT signature and issuer on protected requests.
+6. Gateway injects user context into downstream services, including `GET /auth/me`:
+   - `X-User-Id`
+   - `X-User-Email`
+   - `X-User-Roles`
 
-`infra/api-gateway`
+Downstream services continue to read the current user from `common-security`.
 
-- Validates Keycloak JWT using Spring Security OAuth2 Resource Server.
-- Extracts claims from the validated token.
-- Injects downstream identity headers:
-  - `X-User-Id`
-  - `X-User-Email`
-  - `X-User-Roles`
-- Performs coarse role authorization.
-- Does not create JWT and does not access `user_db`.
+## Token Claims
 
-`shared/common-security`
+Access tokens are signed with HS256 using `app.auth.jwt-secret`.
 
-- Provides `CurrentUser`, `CurrentUserHolder`, and `CurrentUserHeaderFilter`.
-- Downstream services use it to read `X-User-*` headers.
-- Does not parse JWT, create JWT, or access any database.
+Claims:
 
-`services/user-service`
-
-- Does not create JWT.
-- Does not login users.
-- Manages local user profile data and maps each profile to `keycloak_user_id`.
-- Optional public registration endpoint can create a Keycloak user through Keycloak Admin API, then persist the local profile mapping.
-
-Downstream services
-
-- Do not parse JWT.
-- Do not create JWT.
-- Do not query `user_db`.
-- Read current user from `CurrentUserHolder` and enforce business ownership rules locally.
-
-## Local Keycloak
-
-Start Keycloak:
-
-```powershell
-cd infra/keycloak
-docker compose up -d
+```json
+{
+  "iss": "clinic-appointment-system",
+  "sub": "<local users.id UUID>",
+  "type": "access",
+  "email": "user@example.com",
+  "roles": ["PATIENT"]
+}
 ```
 
-Admin console:
+`sub` is the local `users.id`, not a Keycloak subject.
 
-```text
-http://localhost:9080
-admin / admin
+## Endpoints
+
+The auth endpoints are implemented by `user-service` and exposed through the gateway route `/auth/**`.
+
+```http
+POST /auth/login
+Content-Type: application/json
+
+{
+  "email": "patient@example.com",
+  "password": "secret123"
+}
 ```
 
-Realm:
+```http
+POST /auth/refresh
+Content-Type: application/json
 
-```text
-clinic-appointment
+{
+  "refreshToken": "<refresh-token>"
+}
 ```
 
-Issuer used by API Gateway:
+```http
+POST /auth/logout
+Content-Type: application/json
 
-```text
-http://localhost:9080/realms/clinic-appointment
+{
+  "refreshToken": "<refresh-token>"
+}
 ```
 
-Gateway config:
+```http
+GET /auth/me
+Authorization: Bearer <access-token>
+```
+
+## Configuration
+
+Set the same secret on `api-gateway` and `user-service` from the Spring Cloud Config repository.
+Do not keep the JWT secret in each service's local `application.yml`.
+
+`api-gateway.yaml`:
 
 ```yaml
-spring:
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:9080/realms/clinic-appointment}
+app:
+  auth:
+    jwt-issuer: ${JWT_ISSUER:clinic-appointment-system}
+    jwt-secret: '{cipher}<encrypted-jwt-secret>'
+    access-token-max-age-seconds: ${ACCESS_TOKEN_MAX_AGE_SECONDS:3600}
+    refresh-token-max-age-seconds: ${REFRESH_TOKEN_MAX_AGE_SECONDS:604800}
 ```
 
-## Token Example
+`user-service.yaml`:
 
-```powershell
-curl.exe -X POST http://localhost:9080/realms/clinic-appointment/protocol/openid-connect/token `
-  -H "Content-Type: application/x-www-form-urlencoded" `
-  -d "grant_type=password" `
-  -d "client_id=clinic-web" `
-  -d "username=admin@clinic.local" `
-  -d "password=admin123"
+```yaml
+app:
+  auth:
+    jwt-issuer: ${JWT_ISSUER:clinic-appointment-system}
+    jwt-secret: '{cipher}<encrypted-jwt-secret>'
+    access-token-max-age-seconds: ${ACCESS_TOKEN_MAX_AGE_SECONDS:3600}
+    refresh-token-max-age-seconds: ${REFRESH_TOKEN_MAX_AGE_SECONDS:604800}
 ```
 
-Call gateway:
+The encrypted value must be produced with the same `ENCRYPT_KEY` used by `config-server`.
 
-```powershell
-curl.exe http://localhost:8080/auth/me `
-  -H "Authorization: Bearer <access_token>"
-```
+## Database
 
-## Optional Registration Through user-service
+`user-service` stores:
 
-Endpoint:
+- `users.password_hash`
+- `refresh_tokens.token_hash`
+- `refresh_tokens.expires_at`
+- `refresh_tokens.revoked_at`
 
-```text
-POST /api/users/register
-```
-
-This endpoint creates a Keycloak user and then creates the local profile mapping.
-
-```powershell
-curl.exe -X POST http://localhost:8080/api/users/register `
-  -H "Content-Type: application/json" `
-  -d "{\"email\":\"patient1@example.com\",\"password\":\"password123\",\"fullName\":\"Patient One\",\"phoneNumber\":\"0900000001\",\"role\":\"PATIENT\"}"
-```
-
-For this to work, the Keycloak client `clinic-user-service` must have service-account permissions to manage users:
-
-- `realm-management` client role `manage-users`
-- `realm-management` client role `view-users`
-- `realm-management` client role `view-realm`
-
-## Header Contract
-
-API Gateway injects:
-
-```text
-X-User-Id: <keycloak subject>
-X-User-Email: <email or preferred_username>
-X-User-Roles: ADMIN,DOCTOR,PATIENT
-```
-
-Downstream services use:
-
-```java
-CurrentUser currentUser = CurrentUserHolder.require();
-```
-
-## Important Boundary
-
-Correct flow:
-
-```text
-Keycloak issues token
-API Gateway validates token
-API Gateway forwards X-User-* headers
-Services read CurrentUserHolder
-```
-
-Incorrect flow:
-
-```text
-user-service creates JWT
-services parse JWT directly
-services query user_db for authentication
-```
+Refresh tokens are never stored in plaintext. A new refresh token is issued on every refresh, and the old token is revoked.

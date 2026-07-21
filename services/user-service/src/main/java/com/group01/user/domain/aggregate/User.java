@@ -17,8 +17,8 @@ import java.util.UUID;
 @AllArgsConstructor
 public class User {
     private UUID id;
-    private String keycloakUserId;
     private Email email;
+    private String passwordHash;
     private String fullName;
     private PhoneNumber phoneNumber;
     private UserStatus status;

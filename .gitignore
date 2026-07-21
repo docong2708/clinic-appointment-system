@@ -38,6 +38,7 @@ build/
 ### Mac OS ###
 .DS_Store
 
-.ai-content
+context
+.run-logs/
 
 .env

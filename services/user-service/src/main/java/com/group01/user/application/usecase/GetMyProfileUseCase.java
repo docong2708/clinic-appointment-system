@@ -17,12 +17,11 @@ public class GetMyProfileUseCase {
 
     @Transactional(readOnly = true)
     public User execute() {
-        String keycloakUserId = CurrentUserHolder.require().userId().toString();
-        log.info("Get my profile requested keycloakUserId={}", keycloakUserId);
-        User user = userRepository.findByKeycloakUserId(keycloakUserId)
-                .orElseThrow(() -> new UserNotFoundException("User profile not found for Keycloak user: " + keycloakUserId));
-        log.info("Get my profile completed userId={} keycloakUserId={} email={}",
-                user.getId(), user.getKeycloakUserId(), user.getEmail().value());
+        var userId = CurrentUserHolder.require().userId();
+        log.info("Get my profile requested userId={}", userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User profile not found: " + userId));
+        log.info("Get my profile completed userId={} email={}", user.getId(), user.getEmail().value());
         return user;
     }
 }
