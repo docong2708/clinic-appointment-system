@@ -53,7 +53,7 @@ public class GlobalExceptionHandler {
                 details.put(violation.getPropertyPath().toString(), violation.getMessage())
         );
 
-        return buildResponse(HttpStatus.BAD_REQUEST, "Validation failed", request, details);
+        return buildResponse(HttpStatus.BAD_REQUEST, "Dữ liệu không hợp lệ", request, details);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -66,7 +66,7 @@ public class GlobalExceptionHandler {
                 details.put(fieldError.getField(), fieldError.getDefaultMessage())
         );
 
-        return buildResponse(HttpStatus.BAD_REQUEST, "Validation failed", request, details);
+        return buildResponse(HttpStatus.BAD_REQUEST, "Dữ liệu không hợp lệ", request, details);
     }
 
     @ExceptionHandler(Exception.class)
@@ -76,7 +76,7 @@ public class GlobalExceptionHandler {
     ) {
         log.error("Unexpected error: {}", ex.getMessage(), ex);
 
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", request, null);
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi hệ thống không xác định", request, null);
     }
 
     private ResponseEntity<ErrorResponse> buildResponse(
@@ -88,12 +88,20 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(status.value())
-                .error(status.getReasonPhrase())
+                .error(reasonPhrase(status))
                 .message(message)
                 .path(request.getDescription(false).replace("uri=", ""))
                 .details(details)
                 .build();
 
         return ResponseEntity.status(status).body(errorResponse);
+    }
+
+    private String reasonPhrase(HttpStatus status) {
+        return switch (status) {
+            case BAD_REQUEST -> "Yêu cầu không hợp lệ";
+            case INTERNAL_SERVER_ERROR -> "Lỗi hệ thống";
+            default -> status.getReasonPhrase();
+        };
     }
 }

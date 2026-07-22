@@ -26,7 +26,7 @@ public class ViewScheduleUseCase {
     @Transactional(readOnly = true)
     public List<SlotDto> execute(UUID doctorId) {
         Doctor doctor = doctorRepository.findById(DoctorId.of(doctorId))
-                .orElseThrow(() -> new DoctorNotFoundException("Doctor with ID " + doctorId + " not found"));
+                .orElseThrow(() -> new DoctorNotFoundException("Không tìm thấy bác sĩ với mã " + doctorId));
 
         LocalDateTime now = LocalDateTime.now();
 

@@ -17,7 +17,7 @@ public class DeleteNotificationUseCaseImpl implements DeleteNotificationUseCase 
     @Override
     public void handle(NotificationId notificationId) {
         notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new RuntimeException("Notification not found: " + notificationId.value()));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông báo: " + notificationId.value()));
         
         notificationRepository.deleteById(notificationId);
     }

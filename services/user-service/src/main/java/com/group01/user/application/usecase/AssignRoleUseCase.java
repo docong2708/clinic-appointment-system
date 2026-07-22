@@ -25,16 +25,16 @@ public class AssignRoleUseCase {
     @Transactional
     public User execute(AssignRoleCommand command) {
         User user = userRepository.findById(command.userId())
-                .orElseThrow(() -> new UserNotFoundException("User not found: " + command.userId()));
+                .orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng: " + command.userId()));
         if (command.roles() == null || command.roles().isEmpty()) {
-            throw new RoleNotFoundException("At least one role is required");
+            throw new RoleNotFoundException("Cần chọn ít nhất một vai trò");
         }
         Set<String> names = command.roles().stream()
                 .map(role -> RoleName.from(role).name())
                 .collect(Collectors.toSet());
         Set<Role> roles = new HashSet<>(roleRepository.findByNames(names));
         if (roles.size() != names.size()) {
-            throw new RoleNotFoundException("One or more roles do not exist");
+            throw new RoleNotFoundException("Một hoặc nhiều vai trò không tồn tại");
         }
         user.assignRoles(roles);
         return userRepository.save(user);

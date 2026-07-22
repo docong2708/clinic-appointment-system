@@ -74,7 +74,7 @@ public class GlobalExceptionHandler {
                 details.put(error.getField(), error.getDefaultMessage())
         );
 
-        return buildResponse(HttpStatus.BAD_REQUEST, "Validation failed", request, details);
+        return buildResponse(HttpStatus.BAD_REQUEST, "Dữ liệu không hợp lệ", request, details);
     }
 
     @ExceptionHandler(Exception.class)
@@ -83,7 +83,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         log.error("Unhandled exception path={} rootCause={}", request.getRequestURI(), rootCauseMessage(exception), exception);
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected server error", request, null);
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi hệ thống không xác định", request, null);
     }
 
     private ResponseEntity<ErrorResponse> buildResponse(
@@ -95,7 +95,7 @@ public class GlobalExceptionHandler {
         ErrorResponse response = new ErrorResponse(
                 LocalDateTime.now(),
                 status.value(),
-                status.getReasonPhrase(),
+                reasonPhrase(status),
                 message,
                 request.getRequestURI(),
                 details
@@ -109,5 +109,16 @@ public class GlobalExceptionHandler {
         return rootCause == null || rootCause.getMessage() == null || rootCause.getMessage().isBlank()
                 ? exception.getClass().getSimpleName()
                 : rootCause.getMessage();
+    }
+
+    private String reasonPhrase(HttpStatus status) {
+        return switch (status) {
+            case BAD_REQUEST -> "Yêu cầu không hợp lệ";
+            case NOT_FOUND -> "Không tìm thấy";
+            case CONFLICT -> "Xung đột dữ liệu";
+            case SERVICE_UNAVAILABLE -> "Dịch vụ tạm thời không khả dụng";
+            case INTERNAL_SERVER_ERROR -> "Lỗi hệ thống";
+            default -> status.getReasonPhrase();
+        };
     }
 }

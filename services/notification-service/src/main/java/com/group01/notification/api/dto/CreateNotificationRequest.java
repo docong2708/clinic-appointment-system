@@ -12,24 +12,24 @@ import jakarta.validation.constraints.NotNull;
 @AllArgsConstructor
 @Builder
 public class CreateNotificationRequest {
-    @NotNull(message = "recipientUserId cannot be null")
+    @NotNull(message = "Mã người nhận không được để trống")
     private java.util.UUID recipientUserId;
 
-    @NotBlank(message = "type cannot be blank")
+    @NotBlank(message = "Loại thông báo không được để trống")
     private String type;
 
-    @NotBlank(message = "title cannot be blank")
+    @NotBlank(message = "Tiêu đề không được để trống")
     private String title;
 
-    @NotBlank(message = "body cannot be blank")
+    @NotBlank(message = "Nội dung thông báo không được để trống")
     private String body;
 
-    @NotNull(message = "priority cannot be null")
+    @NotNull(message = "Mức ưu tiên không được để trống")
     private Short priority;
 
-    @NotBlank(message = "channel cannot be blank")
+    @NotBlank(message = "Kênh gửi không được để trống")
     private String channel;
 
-    @NotBlank(message = "destination cannot be blank")
+    @NotBlank(message = "Địa chỉ nhận không được để trống")
     private String destination;
 }

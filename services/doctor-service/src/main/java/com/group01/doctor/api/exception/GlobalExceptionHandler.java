@@ -60,12 +60,12 @@ public class GlobalExceptionHandler {
             MethodArgumentNotValidException ex,
             HttpServletRequest request
     ) {
-        log.warn("Validation failed: {}", ex.getMessage());
+        log.warn("Dữ liệu không hợp lệ: {}", ex.getMessage());
         Map<String, String> details = new LinkedHashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(fieldError ->
                 details.put(fieldError.getField(), fieldError.getDefaultMessage())
         );
-        return buildResponse(HttpStatus.BAD_REQUEST, "Validation failed", request, details);
+        return buildResponse(HttpStatus.BAD_REQUEST, "Dữ liệu không hợp lệ", request, details);
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -73,7 +73,7 @@ public class GlobalExceptionHandler {
             MethodArgumentTypeMismatchException ex,
             HttpServletRequest request
     ) {
-        String message = "Invalid value for '" + ex.getName() + "': " + ex.getValue();
+        String message = "Giá trị không hợp lệ cho '" + ex.getName() + "': " + ex.getValue();
         log.warn("Path/query parameter type mismatch: {}", message);
         return buildResponse(HttpStatus.BAD_REQUEST, message, request, null);
     }
@@ -85,7 +85,7 @@ public class GlobalExceptionHandler {
     ) {
         String rootCause = rootCauseMessage(ex);
         log.warn("Request body is invalid: {}", rootCause);
-        return buildResponse(HttpStatus.BAD_REQUEST, "Request body is invalid: " + rootCause, request, null);
+        return buildResponse(HttpStatus.BAD_REQUEST, "Nội dung yêu cầu không hợp lệ: " + rootCause, request, null);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
@@ -95,7 +95,7 @@ public class GlobalExceptionHandler {
     ) {
         String rootCause = rootCauseMessage(ex);
         log.error("Database integrity violation: {}", rootCause, ex);
-        return buildResponse(HttpStatus.CONFLICT, "Database constraint violation: " + rootCause, request, null);
+        return buildResponse(HttpStatus.CONFLICT, "Dữ liệu vi phạm ràng buộc trong cơ sở dữ liệu: " + rootCause, request, null);
     }
 
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
@@ -105,7 +105,7 @@ public class GlobalExceptionHandler {
     ) {
         String rootCause = rootCauseMessage(ex);
         log.error("Optimistic locking failure: {}", rootCause, ex);
-        return buildResponse(HttpStatus.CONFLICT, "Data was modified by another request. Please reload and try again.", request, null);
+        return buildResponse(HttpStatus.CONFLICT, "Dữ liệu đã được thay đổi bởi yêu cầu khác. Vui lòng tải lại và thử lại.", request, null);
     }
 
     @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
@@ -129,7 +129,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex, HttpServletRequest request) {
         log.error("Unhandled exception rootCause={}", rootCauseMessage(ex), ex);
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", request, null);
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi hệ thống không xác định", request, null);
     }
 
     private ResponseEntity<ErrorResponse> buildResponse(
@@ -141,7 +141,7 @@ public class GlobalExceptionHandler {
         ErrorResponse error = new ErrorResponse(
                 LocalDateTime.now(),
                 status.value(),
-                status.getReasonPhrase(),
+                reasonPhrase(status.value()),
                 message,
                 request.getRequestURI(),
                 details
@@ -151,7 +151,18 @@ public class GlobalExceptionHandler {
 
     private String reasonPhrase(int statusCode) {
         HttpStatus status = HttpStatus.resolve(statusCode);
-        return status == null ? "HTTP " + statusCode : status.getReasonPhrase();
+        if (status == null) {
+            return "HTTP " + statusCode;
+        }
+        return switch (status) {
+            case BAD_REQUEST -> "Yêu cầu không hợp lệ";
+            case UNAUTHORIZED -> "Chưa xác thực";
+            case FORBIDDEN -> "Không có quyền truy cập";
+            case NOT_FOUND -> "Không tìm thấy";
+            case CONFLICT -> "Xung đột dữ liệu";
+            case INTERNAL_SERVER_ERROR -> "Lỗi hệ thống";
+            default -> status.getReasonPhrase();
+        };
     }
 
     private String rootCauseMessage(Throwable ex) {

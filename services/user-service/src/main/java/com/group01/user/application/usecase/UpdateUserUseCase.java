@@ -18,10 +18,10 @@ public class UpdateUserUseCase {
     @Transactional
     public User execute(UpdateUserCommand command) {
         User user = userRepository.findById(command.userId())
-                .orElseThrow(() -> new UserNotFoundException("User not found: " + command.userId()));
+                .orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng: " + command.userId()));
         PhoneNumber phoneNumber = new PhoneNumber(command.phoneNumber());
         if (phoneNumber.value() != null && userRepository.existsByPhoneNumberAndIdNot(phoneNumber.value(), command.userId())) {
-            throw new PhoneAlreadyExistsException("Phone number already exists: " + phoneNumber.value());
+            throw new PhoneAlreadyExistsException("Số điện thoại đã tồn tại: " + phoneNumber.value());
         }
         user.updateProfile(command.fullName(), phoneNumber);
         return userRepository.save(user);

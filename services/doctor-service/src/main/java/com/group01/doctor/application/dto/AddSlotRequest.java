@@ -11,9 +11,9 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AddSlotRequest {
-    @NotNull(message = "Start time is required")
+    @NotNull(message = "Thời gian bắt đầu không được để trống")
     private LocalDateTime startTime;
 
-    @NotNull(message = "End time is required")
+    @NotNull(message = "Thời gian kết thúc không được để trống")
     private LocalDateTime endTime;
 }

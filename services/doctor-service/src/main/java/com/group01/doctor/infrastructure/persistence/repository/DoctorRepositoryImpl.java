@@ -1,14 +1,19 @@
 package com.group01.doctor.infrastructure.persistence.repository;
 
+import com.group01.doctor.domain.model.AssignedSlot;
+import com.group01.doctor.domain.model.AvailableSlot;
 import com.group01.doctor.domain.model.Doctor;
+import com.group01.doctor.domain.model.SlotStatus;
 import com.group01.doctor.domain.repository.DoctorRepository;
 import com.group01.doctor.domain.valueobject.DoctorId;
 import com.group01.doctor.infrastructure.persistence.entity.DoctorJpaEntity;
 import com.group01.doctor.infrastructure.persistence.entity.SlotJpaEntity;
 import com.group01.doctor.infrastructure.persistence.mapper.DoctorPersistenceMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,6 +50,51 @@ public class DoctorRepositoryImpl implements DoctorRepository {
         return jpaRepository.findBySpecializationContainingIgnoreCase(specialization).stream()
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<AvailableSlot> findAvailableSlotsBySpecialization(
+            String specialization,
+            LocalDateTime from,
+            LocalDateTime to
+    ) {
+        return jpaRepository.findAvailableSlotsBySpecialization(specialization, from, to);
+    }
+
+    @Override
+    public Optional<AssignedSlot> assignAvailableSlot(
+            String specialization,
+            LocalDateTime startTime,
+            LocalDateTime endTime
+    ) {
+        List<SlotJpaEntity> slots = jpaRepository.findAssignableSlots(
+                specialization,
+                startTime,
+                endTime,
+                PageRequest.of(0, 1)
+        );
+
+        if (slots.isEmpty()) {
+            return Optional.empty();
+        }
+
+        SlotJpaEntity slot = slots.get(0);
+        slot.setStatus(SlotStatus.BOOKED);
+        DoctorJpaEntity doctor = slot.getDoctor();
+
+        return Optional.of(new AssignedSlot(
+                slot.getId(),
+                doctor.getId(),
+                doctor.getUserId(),
+                doctor.getName(),
+                doctor.getSpecialization(),
+                doctor.getPhoneNumber(),
+                doctor.getEmail(),
+                slot.getStartTime(),
+                slot.getEndTime(),
+                true,
+                slot.getStatus().name()
+        ));
     }
 
     @Override
@@ -120,7 +170,7 @@ public class DoctorRepositoryImpl implements DoctorRepository {
     }
 
     @Override
-    public int releaseExpiredSlots(java.time.LocalDateTime cutoffTime) {
+    public int releaseExpiredSlots(LocalDateTime cutoffTime) {
         return jpaRepository.releaseExpiredReservations(cutoffTime);
     }
 }

@@ -9,7 +9,7 @@ public class RecipientId {
 
     private RecipientId(UUID value) {
         if (value == null) {
-            throw new IllegalArgumentException("RecipientId cannot be null");
+            throw new IllegalArgumentException("Mã người nhận không được để trống");
         }
         this.value = value;
     }

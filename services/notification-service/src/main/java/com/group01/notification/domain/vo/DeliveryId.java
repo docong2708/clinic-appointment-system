@@ -9,7 +9,7 @@ public class DeliveryId {
 
     private DeliveryId(UUID value) {
         if (value == null) {
-            throw new IllegalArgumentException("DeliveryId cannot be null");
+            throw new IllegalArgumentException("Mã lượt gửi thông báo không được để trống");
         }
         this.value = value;
     }

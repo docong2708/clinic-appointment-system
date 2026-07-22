@@ -21,7 +21,7 @@ public class GetDoctorProfileUseCase {
     @Transactional(readOnly = true)
     public DoctorProfileResponse execute(UUID userId) {
         Doctor doctor = doctorRepository.findByUserId(userId)
-                .orElseThrow(() -> new DoctorNotFoundException("Doctor profile not found for user ID " + userId));
+                .orElseThrow(() -> new DoctorNotFoundException("Không tìm thấy hồ sơ bác sĩ cho mã người dùng " + userId));
         return mapper.toProfileResponse(doctor);
     }
 }

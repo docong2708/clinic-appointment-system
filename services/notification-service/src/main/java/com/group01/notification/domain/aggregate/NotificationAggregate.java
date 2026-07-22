@@ -52,7 +52,7 @@ public class NotificationAggregate {
             UUID sourceInboxEventId
     ) {
         if (body == null || body.isBlank()) {
-            throw new IllegalArgumentException("Body cannot be blank");
+            throw new IllegalArgumentException("Nội dung thông báo không được để trống");
         }
 
         NotificationAggregate notification = new NotificationAggregate();
@@ -131,7 +131,7 @@ public class NotificationAggregate {
 
     public void markAsReady() {
         if (this.status != NotificationStatus.CREATED) {
-            throw new IllegalStateException("Can only mark CREATED notifications as READY");
+            throw new IllegalStateException("Chỉ có thể chuyển thông báo ở trạng thái CREATED sang READY");
         }
         this.status = NotificationStatus.READY;
         this.updatedAt = LocalDateTime.now();
@@ -159,7 +159,7 @@ public class NotificationAggregate {
 
     public void updateContent(NotificationTitle title, String body) {
         if (body == null || body.isBlank()) {
-            throw new IllegalArgumentException("Body cannot be blank");
+            throw new IllegalArgumentException("Nội dung thông báo không được để trống");
         }
         this.title = title;
         this.body = body;

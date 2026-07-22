@@ -9,15 +9,15 @@ public record AppointmentTime(
 
     public AppointmentTime {
         if (startTime == null) {
-            throw new IllegalArgumentException("Start time must not be null");
+            throw new IllegalArgumentException("Thời gian bắt đầu không được để trống");
         }
 
         if (endTime == null) {
-            throw new IllegalArgumentException("End time must not be null");
+            throw new IllegalArgumentException("Thời gian kết thúc không được để trống");
         }
 
         if (!endTime.isAfter(startTime)) {
-            throw new IllegalArgumentException("End time must be after start time");
+            throw new IllegalArgumentException("Thời gian kết thúc phải sau thời gian bắt đầu");
         }
     }
 

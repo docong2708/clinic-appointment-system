@@ -25,19 +25,19 @@ public class RefreshTokenUseCase {
     @Transactional
     public AuthTokenResult execute(String refreshToken) {
         if (refreshToken == null || refreshToken.isBlank()) {
-            throw new AuthenticationFailedException("Invalid refresh token");
+            throw new AuthenticationFailedException("Refresh token không hợp lệ");
         }
         LocalDateTime now = LocalDateTime.now();
         RefreshToken storedToken = refreshTokenRepository.findByTokenHash(tokenHashService.hash(refreshToken))
-                .orElseThrow(() -> new AuthenticationFailedException("Invalid refresh token"));
+                .orElseThrow(() -> new AuthenticationFailedException("Refresh token không hợp lệ"));
         if (!storedToken.isUsable(now)) {
-            throw new AuthenticationFailedException("Invalid refresh token");
+            throw new AuthenticationFailedException("Refresh token không hợp lệ");
         }
 
         User user = userRepository.findById(storedToken.getUserId())
-                .orElseThrow(() -> new UserNotFoundException("User not found: " + storedToken.getUserId()));
+                .orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng: " + storedToken.getUserId()));
         if (user.getStatus() != UserStatus.ACTIVE) {
-            throw new AuthenticationFailedException("Invalid refresh token");
+            throw new AuthenticationFailedException("Refresh token không hợp lệ");
         }
 
         storedToken.revoke(now);

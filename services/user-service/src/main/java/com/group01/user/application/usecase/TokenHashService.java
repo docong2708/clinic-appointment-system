@@ -11,13 +11,13 @@ import java.util.Base64;
 public class TokenHashService {
     public String hash(String token) {
         if (token == null || token.isBlank()) {
-            throw new IllegalArgumentException("Token is required");
+            throw new IllegalArgumentException("Token không được để trống");
         }
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8));
             return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
         } catch (NoSuchAlgorithmException exception) {
-            throw new IllegalStateException("SHA-256 is not available", exception);
+            throw new IllegalStateException("Thuật toán SHA-256 không khả dụng", exception);
         }
     }
 }

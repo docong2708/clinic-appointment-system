@@ -23,7 +23,7 @@ public class UpdateDoctorUseCase {
     @Transactional
     public DoctorDto execute(UUID doctorId, UpdateDoctorRequest request) {
         Doctor doctor = doctorRepository.findById(DoctorId.of(doctorId))
-                .orElseThrow(() -> new DoctorNotFoundException("Doctor with ID " + doctorId + " not found"));
+                .orElseThrow(() -> new DoctorNotFoundException("Không tìm thấy bác sĩ với mã " + doctorId));
 
         doctor.updateDetails(
                 request.getName(),

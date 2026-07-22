@@ -25,8 +25,8 @@ public class EmailEventPublisher {
             log.info("Email event published: eventType={}, recipient={}", 
                 request.getEventType(), request.getRecipientEmail());
         } catch (Exception e) {
-            log.error("Failed to publish email event", e);
-            throw new RuntimeException("Failed to publish email event", e);
+            log.error("Không thể phát sự kiện gửi email", e);
+            throw new RuntimeException("Không thể phát sự kiện gửi email", e);
         }
     }
 }

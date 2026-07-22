@@ -38,7 +38,7 @@ public class Doctor {
 
     public static Doctor create(UUID userId, String name, String specialization, String phoneNumber, String email) {
         if (userId == null) {
-            throw new IllegalArgumentException("User id is required");
+            throw new IllegalArgumentException("Mã người dùng không được để trống");
         }
         return new Doctor(DoctorId.generate(), userId, name, specialization, phoneNumber, email, true, null, null, null, new ArrayList<>());
     }
@@ -63,12 +63,12 @@ public class Doctor {
 
     public void addSlot(Slot newSlot) {
         if (!this.active) {
-            throw new IllegalStateException("Cannot add a slot to an inactive doctor");
+            throw new IllegalStateException("Không thể thêm khung giờ cho bác sĩ đang ngừng hoạt động");
         }
         for (Slot existingSlot : slots) {
             if (existingSlot.overlapsWith(newSlot)) {
-                throw new SlotOverlapException("New slot [" + newSlot.getStartTime() + " - " + newSlot.getEndTime() + 
-                                               "] overlaps with an existing slot [" + existingSlot.getStartTime() + " - " + existingSlot.getEndTime() + "]");
+                throw new SlotOverlapException("Khung giờ mới [" + newSlot.getStartTime() + " - " + newSlot.getEndTime() +
+                                               "] bị trùng với khung giờ đã có [" + existingSlot.getStartTime() + " - " + existingSlot.getEndTime() + "]");
             }
         }
         this.slots.add(newSlot);

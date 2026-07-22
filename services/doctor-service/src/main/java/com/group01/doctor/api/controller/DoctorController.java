@@ -1,8 +1,10 @@
 package com.group01.doctor.api.controller;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,13 +18,18 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.group01.commonsecurity.currentuser.CurrentUserHolder;
+import com.group01.doctor.application.dto.AssignSlotRequest;
+import com.group01.doctor.application.dto.AssignedSlotDto;
+import com.group01.doctor.application.dto.AvailableSlotDto;
 import com.group01.doctor.application.dto.CreateDoctorRequest;
 import com.group01.doctor.application.dto.DoctorDto;
 import com.group01.doctor.application.dto.DoctorProfileResponse;
 import com.group01.doctor.application.dto.UpdateDoctorRequest;
 import com.group01.doctor.application.dto.UpdateProfileRequest;
+import com.group01.doctor.application.usecase.AssignSlotUseCase;
 import com.group01.doctor.application.usecase.CreateDoctorUseCase;
 import com.group01.doctor.application.usecase.DeleteDoctorUseCase;
+import com.group01.doctor.application.usecase.GetAvailableSlotsUseCase;
 import com.group01.doctor.application.usecase.GetDoctorUseCase;
 import com.group01.doctor.application.usecase.UpdateDoctorUseCase;
 import com.group01.doctor.application.usecase.GetDoctorProfileUseCase;
@@ -43,6 +50,8 @@ public class DoctorController {
     private final DeleteDoctorUseCase deleteDoctorUseCase;
     private final GetDoctorProfileUseCase getDoctorProfileUseCase;
     private final UpdateDoctorProfileUseCase updateDoctorProfileUseCase;
+    private final GetAvailableSlotsUseCase getAvailableSlotsUseCase;
+    private final AssignSlotUseCase assignSlotUseCase;
     private final com.group01.doctor.domain.repository.DoctorRepository doctorRepository;
 
     @GetMapping("/debug")
@@ -127,6 +136,18 @@ public class DoctorController {
     @GetMapping("/specializations")
     public ResponseEntity<List<String>> getSpecializations() {
         return ResponseEntity.ok(getDoctorUseCase.getSpecializations());
+    }
+
+    @GetMapping("/available-slots")
+    public ResponseEntity<List<AvailableSlotDto>> getAvailableSlots(
+            @RequestParam("specialization") String specialization,
+            @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return ResponseEntity.ok(getAvailableSlotsUseCase.execute(specialization, date));
+    }
+
+    @PostMapping("/assign-slot")
+    public ResponseEntity<AssignedSlotDto> assignSlot(@Valid @RequestBody AssignSlotRequest request) {
+        return ResponseEntity.ok(assignSlotUseCase.execute(request));
     }
 
     @GetMapping

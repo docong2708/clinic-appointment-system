@@ -85,7 +85,7 @@ class RefreshTokenUseCaseTest {
 
         assertThatThrownBy(() -> useCase.execute("refresh-1"))
                 .isInstanceOf(AuthenticationFailedException.class)
-                .hasMessage("Invalid refresh token");
+                .hasMessage("Refresh token không hợp lệ");
         verify(refreshTokenRepository, never()).save(storedToken);
         verifyNoInteractions(userRepository, authTokenIssuer);
     }
@@ -117,7 +117,7 @@ class RefreshTokenUseCaseTest {
 
         assertThatThrownBy(() -> useCase.execute("refresh-1"))
                 .isInstanceOf(AuthenticationFailedException.class)
-                .hasMessage("Invalid refresh token");
+                .hasMessage("Refresh token không hợp lệ");
         verify(refreshTokenRepository, never()).save(storedToken);
         verifyNoInteractions(authTokenIssuer);
     }

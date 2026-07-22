@@ -60,13 +60,13 @@ public class GlobalExceptionHandler {
         exception.getBindingResult().getFieldErrors().forEach(fieldError ->
                 details.put(fieldError.getField(), fieldError.getDefaultMessage())
         );
-        return error(HttpStatus.BAD_REQUEST, "Validation failed", request, details);
+        return error(HttpStatus.BAD_REQUEST, "Dữ liệu không hợp lệ", request, details);
     }
 
     @ExceptionHandler(Exception.class)
     ResponseEntity<ErrorResponse> handleUnexpected(Exception exception, HttpServletRequest request) {
         log.error("Unexpected exception", exception);
-        return error(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected server error", request, null);
+        return error(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi hệ thống không xác định", request, null);
     }
 
     private ResponseEntity<ErrorResponse> error(
@@ -78,10 +78,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(new ErrorResponse(
                 LocalDateTime.now(),
                 status.value(),
-                status.getReasonPhrase(),
+                reasonPhrase(status),
                 message,
                 request.getRequestURI(),
                 details
         ));
+    }
+
+    private String reasonPhrase(HttpStatus status) {
+        return switch (status) {
+            case BAD_REQUEST -> "Yêu cầu không hợp lệ";
+            case UNAUTHORIZED -> "Chưa xác thực";
+            case NOT_FOUND -> "Không tìm thấy";
+            case CONFLICT -> "Xung đột dữ liệu";
+            case SERVICE_UNAVAILABLE -> "Dịch vụ tạm thời không khả dụng";
+            case INTERNAL_SERVER_ERROR -> "Lỗi hệ thống";
+            default -> status.getReasonPhrase();
+        };
     }
 }

@@ -49,9 +49,9 @@ public class SecurityConfig {
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
                 .exceptionHandling(exceptionHandling -> exceptionHandling
                         .authenticationEntryPoint((exchange, exception) ->
-                                writeError(exchange, objectMapper, HttpStatus.UNAUTHORIZED, "Unauthorized"))
+                                writeError(exchange, objectMapper, HttpStatus.UNAUTHORIZED, "Bạn cần đăng nhập để tiếp tục"))
                         .accessDeniedHandler((exchange, exception) ->
-                                writeError(exchange, objectMapper, HttpStatus.FORBIDDEN, "Forbidden")))
+                                writeError(exchange, objectMapper, HttpStatus.FORBIDDEN, "Bạn không có quyền thực hiện thao tác này")))
                 .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -65,21 +65,42 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.POST, "/api/users/register").permitAll()
                         .pathMatchers(HttpMethod.GET,
                                 "/api/doctors",
+                                "/api/doctors/available-slots",
                                 "/api/doctors/*",
                                 "/api/doctors/*/slots",
                                 "/api/doctors/specializations")
                         .permitAll()
 
+                        .pathMatchers(HttpMethod.POST, "/api/doctors/assign-slot").denyAll()
                         .pathMatchers(HttpMethod.GET, "/api/doctors/me", "/api/doctors/me/**").hasRole("DOCTOR")
                         .pathMatchers(HttpMethod.PUT, "/api/doctors/me", "/api/doctors/me/**").hasRole("DOCTOR")
                         .pathMatchers(HttpMethod.POST, "/api/doctors/*/slots", "/api/doctors/*/slots/**").hasAnyRole("DOCTOR", "ADMIN")
                         .pathMatchers(HttpMethod.DELETE, "/api/doctors/*/slots/**").hasAnyRole("DOCTOR", "ADMIN")
 
+                        .pathMatchers(HttpMethod.GET, "/api/users/me").authenticated()
+                        .pathMatchers(HttpMethod.PUT, "/api/users/me").authenticated()
                         .pathMatchers("/api/users/**").hasRole("ADMIN")
 
                         .pathMatchers(HttpMethod.POST, "/api/appointments").hasRole("PATIENT")
-                        .pathMatchers(HttpMethod.GET, "/api/appointments/my").hasRole("PATIENT")
+                        .pathMatchers(HttpMethod.GET, "/api/appointments/me").hasRole("PATIENT")
+                        .pathMatchers(HttpMethod.GET, "/api/appointments/*/reschedule-options").hasAnyRole("PATIENT", "DOCTOR", "ADMIN")
+                        .pathMatchers(HttpMethod.POST,
+                                "/api/appointments/*/payment-awaiting",
+                                "/api/appointments/*/payment-paid",
+                                "/api/appointments/*/payment-failed",
+                                "/api/appointments/*/payment-deferred")
+                        .denyAll()
+                        .pathMatchers(HttpMethod.POST,
+                                "/api/appointments/*/cancel",
+                                "/api/appointments/*/reschedule")
+                        .hasAnyRole("PATIENT", "DOCTOR", "ADMIN")
+                        .pathMatchers(HttpMethod.POST, "/api/appointments/*/complete").hasAnyRole("DOCTOR", "ADMIN")
                         .pathMatchers(HttpMethod.GET, "/api/appointments/doctor/**").hasRole("DOCTOR")
+
+                        .pathMatchers(HttpMethod.POST, "/api/payments").hasRole("PATIENT")
+                        .pathMatchers(HttpMethod.GET, "/api/payments/**").authenticated()
+                        .pathMatchers(HttpMethod.POST, "/api/payments/*/confirm-paid")
+                        .hasAnyRole("PATIENT", "ADMIN")
 
                         .pathMatchers("/api/patients/**").hasAnyRole("ADMIN", "PATIENT")
                         .pathMatchers("/api/notifications/**").authenticated()
@@ -150,7 +171,7 @@ public class SecurityConfig {
         GatewayErrorResponse body = new GatewayErrorResponse(
                 LocalDateTime.now(),
                 status.value(),
-                status.getReasonPhrase(),
+                reasonPhrase(status),
                 message,
                 exchange.getRequest().getPath().value(),
                 null
@@ -162,5 +183,13 @@ public class SecurityConfig {
         } catch (JsonProcessingException exception) {
             return Mono.error(exception);
         }
+    }
+
+    private String reasonPhrase(HttpStatus status) {
+        return switch (status) {
+            case UNAUTHORIZED -> "Chưa xác thực";
+            case FORBIDDEN -> "Không có quyền truy cập";
+            default -> status.getReasonPhrase();
+        };
     }
 }

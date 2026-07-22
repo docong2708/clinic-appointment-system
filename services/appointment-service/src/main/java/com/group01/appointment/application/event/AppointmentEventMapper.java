@@ -1,6 +1,7 @@
 package com.group01.appointment.application.event;
 
 import com.group01.appointment.domain.aggregate.AppointmentAggregate;
+import com.group01.appointment.application.port.DoctorClientPort.DoctorProfile;
 import com.group01.commonevents.appointment.AppointmentCanceledEvent;
 import com.group01.commonevents.appointment.AppointmentConfirmedEvent;
 import com.group01.commonevents.appointment.AppointmentCreatedEvent;
@@ -14,15 +15,23 @@ public final class AppointmentEventMapper {
     private AppointmentEventMapper() {
     }
 
-    public static AppointmentCreatedEvent created(AppointmentAggregate appointment, String patientEmail) {
+    public static AppointmentCreatedEvent created(
+            AppointmentAggregate appointment,
+            String patientEmail,
+            UUID patientUserId,
+            DoctorProfile doctor
+    ) {
         LocalDateTime occurredAt = LocalDateTime.now();
 
         return new AppointmentCreatedEvent(
                 UUID.randomUUID(),
                 appointment.getAppointmentId().value(),
+                patientUserId,
                 appointment.getPatientId().value(),
                 patientEmail,
                 appointment.getDoctorId().value(),
+                doctor.name(),
+                doctor.specialization(),
                 appointment.getSlotId(),
                 appointment.getAppointmentTime().startTime(),
                 appointment.getAppointmentTime().endTime(),
@@ -34,14 +43,23 @@ public final class AppointmentEventMapper {
         );
     }
 
-    public static AppointmentCanceledEvent canceled(AppointmentAggregate appointment) {
+    public static AppointmentCanceledEvent canceled(
+            AppointmentAggregate appointment,
+            AppointmentNotificationDetails details
+    ) {
         LocalDateTime occurredAt = LocalDateTime.now();
 
         return new AppointmentCanceledEvent(
                 UUID.randomUUID(),
                 appointment.getAppointmentId().value(),
+                details.patientUserId(),
                 appointment.getPatientId().value(),
+                details.patientEmail(),
                 appointment.getDoctorId().value(),
+                details.doctorName(),
+                details.doctorSpecialization(),
+                appointment.getAppointmentTime().startTime(),
+                appointment.getAppointmentTime().endTime(),
                 appointment.getCancelReason() == null
                         ? null
                         : appointment.getCancelReason().value(),
@@ -74,14 +92,27 @@ public final class AppointmentEventMapper {
         );
     }
 
-    public static AppointmentUpdatedEvent updated(AppointmentAggregate appointment) {
+    public static AppointmentUpdatedEvent updated(
+            AppointmentAggregate appointment,
+            AppointmentNotificationDetails details,
+            UUID previousSlotId,
+            LocalDateTime previousStartTime,
+            LocalDateTime previousEndTime
+    ) {
         LocalDateTime occurredAt = LocalDateTime.now();
 
         return new AppointmentUpdatedEvent(
                 UUID.randomUUID(),
                 appointment.getAppointmentId().value(),
+                details.patientUserId(),
                 appointment.getPatientId().value(),
+                details.patientEmail(),
                 appointment.getDoctorId().value(),
+                details.doctorName(),
+                details.doctorSpecialization(),
+                previousSlotId,
+                previousStartTime,
+                previousEndTime,
                 appointment.getSlotId(),
                 appointment.getRescheduledFromAppointmentId(),
                 appointment.getAppointmentTime().startTime(),

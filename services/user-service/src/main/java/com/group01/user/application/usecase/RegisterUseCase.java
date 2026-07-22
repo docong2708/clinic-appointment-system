@@ -29,14 +29,14 @@ public class RegisterUseCase {
                 Set.of(role)
         ));
 
-        provisionRoleProfile(user, command, role);
+        provisionDoctorProfile(user, command, role);
 
         log.info("Register user completed userId={} email={} role={}",
                 user.getId(), user.getEmail().value(), role);
         return user;
     }
 
-    private void provisionRoleProfile(User user, RegisterCommand command, String role) {
+    private void provisionDoctorProfile(User user, RegisterCommand command, String role) {
         if ("DOCTOR".equals(role)) {
             profileProvisioningClient.createDoctorProfile(
                     user.getId(),
@@ -44,21 +44,6 @@ public class RegisterUseCase {
                     command.specialization(),
                     command.phoneNumber(),
                     command.email()
-            );
-            return;
-        }
-
-        if ("PATIENT".equals(role)) {
-            String contactInformation = command.contactInformation() == null || command.contactInformation().isBlank()
-                    ? command.phoneNumber()
-                    : command.contactInformation();
-
-            profileProvisioningClient.createPatientProfile(
-                    user.getId(),
-                    command.fullName(),
-                    command.dateOfBirth(),
-                    command.gender(),
-                    contactInformation
             );
         }
     }
