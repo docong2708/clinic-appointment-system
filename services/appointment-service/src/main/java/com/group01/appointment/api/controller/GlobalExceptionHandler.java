@@ -2,6 +2,7 @@ package com.group01.appointment.api.controller;
 
 import com.group01.appointment.api.dto.ErrorResponse;
 import com.group01.appointment.application.exception.ExternalServiceException;
+import com.group01.appointment.application.exception.ForbiddenAppointmentActionException;
 import com.group01.appointment.application.exception.ResourceNotFoundException;
 import com.group01.appointment.domain.exception.DomainException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,6 +35,14 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         return buildResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(ForbiddenAppointmentActionException.class)
+    public ResponseEntity<ErrorResponse> handleForbidden(
+            ForbiddenAppointmentActionException exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(HttpStatus.FORBIDDEN, exception.getMessage(), request, null);
     }
 
     @ExceptionHandler({

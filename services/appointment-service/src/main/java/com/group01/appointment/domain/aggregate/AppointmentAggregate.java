@@ -106,8 +106,8 @@ public class AppointmentAggregate {
                 appointmentTime,
                 appointmentReason,
                 null,
-                AppointmentStatus.PENDING_PAYMENT,
-                PaymentStatus.PENDING,
+                AppointmentStatus.PENDING_DOCTOR_CONFIRMATION,
+                PaymentStatus.NOT_REQUIRED,
                 null,
                 null,
                 null,
@@ -124,8 +124,8 @@ public class AppointmentAggregate {
         aggregate.addLog(
                 AppointmentLogAction.CREATE,
                 null,
-                AppointmentStatus.PENDING_PAYMENT,
-                "Create appointment",
+                AppointmentStatus.PENDING_DOCTOR_CONFIRMATION,
+                "Create appointment waiting for doctor confirmation",
                 actorId,
                 ActorRole.PATIENT
         );
@@ -186,6 +186,172 @@ public class AppointmentAggregate {
             UUID cancelledBy,
             ActorRole cancelledByRole
     ) {
+        validateCancellationArguments(cancelReason, cancelledBy, cancelledByRole);
+
+        if (isCancelledStatus(this.status)) {
+            throw new IllegalStateException("Appointment already cancelled");
+        }
+
+        if (isCompletedStatus(this.status)) {
+            throw new IllegalStateException("Completed appointment cannot be cancelled");
+        }
+
+        transitionToCancelled(AppointmentStatus.CANCELLED, AppointmentLogAction.CANCEL, cancelReason, cancelledBy, cancelledByRole);
+    }
+
+    public void cancelByDoctor(
+            CancelReason cancelReason,
+            UUID cancelledBy
+    ) {
+        validateCancellationArguments(cancelReason, cancelledBy, ActorRole.DOCTOR);
+
+        if (isCancelledStatus(this.status)) {
+            throw new IllegalStateException("Appointment already cancelled");
+        }
+
+        if (isCompletedStatus(this.status)) {
+            throw new IllegalStateException("Completed appointment cannot be cancelled");
+        }
+
+        transitionToCancelled(
+                AppointmentStatus.CANCELLED_BY_DOCTOR,
+                AppointmentLogAction.DOCTOR_CANCEL,
+                cancelReason,
+                cancelledBy,
+                ActorRole.DOCTOR
+        );
+    }
+
+    public void validateNotStarted(LocalDateTime currentTime) {
+        if (currentTime == null) {
+            throw new IllegalArgumentException("Current time must not be null");
+        }
+
+        if (!currentTime.isBefore(this.appointmentTime.startTime())) {
+            throw new IllegalStateException("Appointment slot is already in the past or has started");
+        }
+    }
+
+    public boolean canDoctorCancel(LocalDateTime currentTime) {
+        if (currentTime == null) {
+            throw new IllegalArgumentException("Current time must not be null");
+        }
+
+        return !currentTime.isAfter(this.appointmentTime.startTime().minusHours(5));
+    }
+
+    public void confirmByDoctor(UUID performedBy) {
+        validateActor(performedBy, ActorRole.DOCTOR);
+
+        if (this.status != AppointmentStatus.PENDING_DOCTOR_CONFIRMATION) {
+            throw new IllegalStateException("Only doctor-pending appointment can be confirmed");
+        }
+
+        AppointmentStatus oldStatus = this.status;
+        this.status = AppointmentStatus.CONFIRMED;
+        this.confirmedAt = LocalDateTime.now();
+        this.updatedBy = performedBy;
+        this.updatedAt = LocalDateTime.now();
+
+        addLog(
+                AppointmentLogAction.DOCTOR_CONFIRM,
+                oldStatus,
+                AppointmentStatus.CONFIRMED,
+                "Doctor confirmed appointment",
+                performedBy,
+                ActorRole.DOCTOR
+        );
+    }
+
+    public void markNotCheckIn(UUID performedBy, ActorRole performedByRole, LocalDateTime currentTime) {
+        validateActor(performedBy, performedByRole);
+
+        if (this.status != AppointmentStatus.CONFIRMED) {
+            throw new IllegalStateException("Only confirmed appointment can be marked as not check-in");
+        }
+
+        if (currentTime == null) {
+            throw new IllegalArgumentException("Current time must not be null");
+        }
+
+        if (currentTime.isBefore(this.appointmentTime.startTime())) {
+            throw new IllegalStateException("Cannot mark not check-in before appointment start time");
+        }
+
+        transitionStatus(
+                AppointmentStatus.NOT_CHECKIN,
+                AppointmentLogAction.MARK_NOT_CHECKIN,
+                "Patient did not arrive at the clinic",
+                performedBy,
+                performedByRole
+        );
+    }
+
+    public void checkIn(UUID performedBy, ActorRole performedByRole, LocalDateTime currentTime) {
+        validateActor(performedBy, performedByRole);
+
+        if (this.status != AppointmentStatus.CONFIRMED) {
+            throw new IllegalStateException("Only confirmed appointment can be checked in");
+        }
+
+        if (currentTime == null) {
+            throw new IllegalArgumentException("Current time must not be null");
+        }
+
+        if (currentTime.isBefore(this.appointmentTime.startTime())) {
+            throw new IllegalStateException("Cannot check in before appointment start time");
+        }
+
+        LocalDateTime checkInDeadline = this.appointmentTime.startTime().plusMinutes(10);
+        if (currentTime.isAfter(checkInDeadline)) {
+            throw new IllegalStateException("Cannot check in after the first 10 minutes from appointment start time");
+        }
+
+        AppointmentStatus oldStatus = this.status;
+
+        this.status = AppointmentStatus.CHECKIN_SUCCESS;
+        this.updatedBy = performedBy;
+        this.updatedAt = LocalDateTime.now();
+
+        addLog(
+                AppointmentLogAction.CHECK_IN,
+                oldStatus,
+                AppointmentStatus.CHECKIN_SUCCESS,
+                "Doctor started consultation",
+                performedBy,
+                performedByRole
+        );
+    }
+
+    public void checkout(UUID performedBy, ActorRole performedByRole) {
+        validateActor(performedBy, performedByRole);
+
+        if (this.status != AppointmentStatus.CHECKIN_SUCCESS) {
+            throw new IllegalStateException("Only checked-in appointment can be checked out");
+        }
+
+        AppointmentStatus oldStatus = this.status;
+
+        this.status = AppointmentStatus.CHECKOUT_SUCCESS;
+        this.completedAt = LocalDateTime.now();
+        this.updatedBy = performedBy;
+        this.updatedAt = LocalDateTime.now();
+
+        addLog(
+                AppointmentLogAction.CHECK_OUT,
+                oldStatus,
+                AppointmentStatus.CHECKOUT_SUCCESS,
+                "Doctor completed consultation and medical record was saved",
+                performedBy,
+                performedByRole
+        );
+    }
+
+    private void validateCancellationArguments(
+            CancelReason cancelReason,
+            UUID cancelledBy,
+            ActorRole cancelledByRole
+    ) {
         if (cancelReason == null) {
             throw new IllegalArgumentException("Cancel reason must not be null");
         }
@@ -197,18 +363,28 @@ public class AppointmentAggregate {
         if (cancelledByRole == null) {
             throw new IllegalArgumentException("Cancelled by role must not be null");
         }
+    }
 
-        if (this.status == AppointmentStatus.CANCELLED) {
-            throw new IllegalStateException("Appointment already cancelled");
+    private void validateActor(UUID performedBy, ActorRole performedByRole) {
+        if (performedBy == null) {
+            throw new IllegalArgumentException("Performed by must not be null");
         }
 
-        if (this.status == AppointmentStatus.COMPLETED) {
-            throw new IllegalStateException("Completed appointment cannot be cancelled");
+        if (performedByRole == null) {
+            throw new IllegalArgumentException("Performed by role must not be null");
         }
+    }
 
+    private void transitionToCancelled(
+            AppointmentStatus cancelledStatus,
+            AppointmentLogAction logAction,
+            CancelReason cancelReason,
+            UUID cancelledBy,
+            ActorRole cancelledByRole
+    ) {
         AppointmentStatus oldStatus = this.status;
 
-        this.status = AppointmentStatus.CANCELLED;
+        this.status = cancelledStatus;
         this.cancelReason = cancelReason;
         this.cancelledBy = cancelledBy;
         this.cancelledByRole = cancelledByRole;
@@ -217,13 +393,36 @@ public class AppointmentAggregate {
         this.updatedAt = LocalDateTime.now();
 
         addLog(
-                AppointmentLogAction.CANCEL,
+                logAction,
                 oldStatus,
-                AppointmentStatus.CANCELLED,
+                cancelledStatus,
                 cancelReason.value(),
                 cancelledBy,
                 cancelledByRole
         );
+    }
+
+    private void transitionStatus(
+            AppointmentStatus newStatus,
+            AppointmentLogAction logAction,
+            String reason,
+            UUID performedBy,
+            ActorRole performedByRole
+    ) {
+        AppointmentStatus oldStatus = this.status;
+        this.status = newStatus;
+        this.updatedBy = performedBy;
+        this.updatedAt = LocalDateTime.now();
+
+        addLog(logAction, oldStatus, newStatus, reason, performedBy, performedByRole);
+    }
+
+    private boolean isCancelledStatus(AppointmentStatus status) {
+        return status == AppointmentStatus.CANCELLED || status == AppointmentStatus.CANCELLED_BY_DOCTOR;
+    }
+
+    private boolean isCompletedStatus(AppointmentStatus status) {
+        return status == AppointmentStatus.COMPLETED || status == AppointmentStatus.CHECKOUT_SUCCESS;
     }
 
     public void markPaymentPaid(UUID performedBy, ActorRole performedByRole) {

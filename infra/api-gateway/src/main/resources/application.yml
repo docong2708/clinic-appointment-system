@@ -12,3 +12,11 @@ spring:
               uri: ${USER_SERVICE_URI:http://localhost:8085}
               predicates:
                 - Path=/auth/**
+            - id: appointment-service-doctor
+              uri: ${APPOINTMENT_SERVICE_URI:http://localhost:8081}
+              predicates:
+                - Path=/api/doctor/appointments,/api/doctor/appointments/**
+            - id: appointment-service
+              uri: ${APPOINTMENT_SERVICE_URI:http://localhost:8081}
+              predicates:
+                - Path=/api/appointments,/api/appointments/**

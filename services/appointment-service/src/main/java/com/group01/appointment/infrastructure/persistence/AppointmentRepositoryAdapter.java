@@ -5,7 +5,12 @@ import com.group01.appointment.domain.repository.AppointmentRepository;
 import com.group01.appointment.domain.vo.AppointmentId;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public class AppointmentRepositoryAdapter implements AppointmentRepository {
@@ -31,6 +36,22 @@ public class AppointmentRepositoryAdapter implements AppointmentRepository {
     @Override
     public Optional<AppointmentAggregate> findById(AppointmentId appointmentId) {
         return appointmentJpaRepository.findById(appointmentId.value())
+                .map(appointmentMapper::toAggregate);
+    }
+
+    @Override
+    public List<AppointmentAggregate> findDoctorAppointmentsBetween(UUID doctorId, LocalDate fromDate, LocalDate toDate) {
+        OffsetDateTime fromTime = fromDate.atStartOfDay().atOffset(ZoneOffset.UTC);
+        OffsetDateTime toTime = toDate.plusDays(1).atStartOfDay().atOffset(ZoneOffset.UTC);
+        return appointmentJpaRepository.findDoctorAppointmentsBetween(doctorId, fromTime, toTime).stream()
+                .map(appointmentMapper::toAggregate)
+                .toList();
+    }
+
+    @Override
+    public Optional<AppointmentAggregate> findByDoctorIdAndSlotId(UUID doctorId, UUID slotId) {
+        return appointmentJpaRepository.findByDoctorIdAndSlotId(doctorId, slotId).stream()
+                .findFirst()
                 .map(appointmentMapper::toAggregate);
     }
 

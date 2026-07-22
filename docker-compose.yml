@@ -140,7 +140,8 @@ services:
   # ==========================================
   config-server:
     build:
-      context: ./infra/config-server
+      context: .
+      dockerfile: infra/config-server/Dockerfile
     container_name: config-server
     ports:
       - "8888:8888"
@@ -161,7 +162,8 @@ services:
 
   eureka-server:
     build:
-      context: ./infra/eureka-server
+      context: .
+      dockerfile: infra/eureka-server/Dockerfile
     container_name: eureka-server
     ports:
       - "8761:8761"
@@ -181,7 +183,8 @@ services:
 
   api-gateway:
     build:
-      context: ./infra/api-gateway
+      context: .
+      dockerfile: infra/api-gateway/Dockerfile
     container_name: api-gateway
     ports:
       - "8080:8080"
@@ -202,7 +205,8 @@ services:
   # ==========================================
   appointment-service:
     build:
-      context: ./services/appointment-service
+      context: .
+      dockerfile: services/appointment-service/Dockerfile
     container_name: appointment-service
     environment:
       - SPRING_PROFILES_ACTIVE=docker
@@ -229,7 +233,8 @@ services:
 
   doctor-service:
     build:
-      context: ./services/doctor-service
+      context: .
+      dockerfile: services/doctor-service/Dockerfile
     container_name: doctor-service
     environment:
       - SPRING_PROFILES_ACTIVE=docker
@@ -253,7 +258,8 @@ services:
 
   notification-service:
     build:
-      context: ./services/notification-service
+      context: .
+      dockerfile: services/notification-service/Dockerfile
     container_name: notification-service
     environment:
       - SPRING_PROFILES_ACTIVE=docker
@@ -278,7 +284,8 @@ services:
 
   patient-service:
     build:
-      context: ./services/patient-service
+      context: .
+      dockerfile: services/patient-service/Dockerfile
     container_name: patient-service
     environment:
       - SPRING_PROFILES_ACTIVE=docker
@@ -302,7 +309,8 @@ services:
 
   user-service:
     build:
-      context: ./services/user-service
+      context: .
+      dockerfile: services/user-service/Dockerfile
     container_name: user-service
     environment:
       - SPRING_PROFILES_ACTIVE=docker

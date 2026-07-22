@@ -6,5 +6,10 @@ public enum AppointmentLogAction {
     RESCHEDULE,
     PAYMENT_SUCCESS,
     PAYMENT_FAILED,
-    COMPLETE
+    COMPLETE,
+    DOCTOR_CONFIRM,
+    DOCTOR_CANCEL,
+    CHECK_IN,
+    CHECK_OUT,
+    MARK_NOT_CHECKIN
 }
