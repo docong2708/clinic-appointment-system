@@ -4,5 +4,5 @@ import jakarta.validation.constraints.NotEmpty;
 
 import java.util.Set;
 
-public record AssignRoleRequest(@NotEmpty Set<String> roles) {
+public record AssignRoleRequest(@NotEmpty(message = "Danh sách vai trò không được để trống") Set<String> roles) {
 }

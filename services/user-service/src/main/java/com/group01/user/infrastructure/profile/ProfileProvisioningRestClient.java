@@ -48,7 +48,7 @@ public class ProfileProvisioningRestClient implements ProfileProvisioningClient,
                     .retrieve()
                     .toBodilessEntity();
         } catch (RestClientException exception) {
-            throw new ProfileProvisioningException("Could not create doctor profile", exception);
+            throw new ProfileProvisioningException("Không thể tạo hồ sơ bác sĩ", exception);
         }
     }
 
@@ -77,7 +77,7 @@ public class ProfileProvisioningRestClient implements ProfileProvisioningClient,
                     .retrieve()
                     .toBodilessEntity();
         } catch (RestClientException exception) {
-            throw new ProfileProvisioningException("Could not create patient profile", exception);
+            throw new ProfileProvisioningException("Không thể tạo hồ sơ bệnh nhân", exception);
         }
     }
 
@@ -88,11 +88,11 @@ public class ProfileProvisioningRestClient implements ProfileProvisioningClient,
                     .uri("/api/patients/by-user/{userId}", userId)
                     .retrieve()
                     .body(PatientProfileResponse.class);
-            return response == null ? Optional.empty() : Optional.of(response.id());
+            return response == null ? Optional.empty() : Optional.ofNullable(response.id());
         } catch (HttpClientErrorException.NotFound exception) {
             return Optional.empty();
         } catch (RestClientException exception) {
-            throw new ProfileProvisioningException("Could not fetch patient profile", exception);
+            throw new ProfileProvisioningException("Không thể lấy hồ sơ bệnh nhân", exception);
         }
     }
 

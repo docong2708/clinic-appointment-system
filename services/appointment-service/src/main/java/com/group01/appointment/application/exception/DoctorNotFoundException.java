@@ -5,6 +5,6 @@ import java.util.UUID;
 public class DoctorNotFoundException extends ResourceNotFoundException {
 
     public DoctorNotFoundException(UUID doctorId) {
-        super("Doctor not found: " + doctorId);
+        super("Không tìm thấy bác sĩ: " + doctorId);
     }
 }

@@ -20,7 +20,7 @@ public class GetMyProfileUseCase {
         var userId = CurrentUserHolder.require().userId();
         log.info("Get my profile requested userId={}", userId);
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User profile not found: " + userId));
+                .orElseThrow(() -> new UserNotFoundException("Không tìm thấy hồ sơ người dùng: " + userId));
         log.info("Get my profile completed userId={} email={}", user.getId(), user.getEmail().value());
         return user;
     }

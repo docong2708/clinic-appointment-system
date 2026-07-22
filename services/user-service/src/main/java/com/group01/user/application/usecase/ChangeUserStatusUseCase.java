@@ -17,10 +17,10 @@ public class ChangeUserStatusUseCase {
     @Transactional
     public User execute(ChangeUserStatusCommand command) {
         if (command.status() == null) {
-            throw new InvalidUserStatusException("User status is required");
+            throw new InvalidUserStatusException("Trạng thái người dùng không được để trống");
         }
         User user = userRepository.findById(command.userId())
-                .orElseThrow(() -> new UserNotFoundException("User not found: " + command.userId()));
+                .orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng: " + command.userId()));
         user.changeStatus(command.status());
         return userRepository.save(user);
     }

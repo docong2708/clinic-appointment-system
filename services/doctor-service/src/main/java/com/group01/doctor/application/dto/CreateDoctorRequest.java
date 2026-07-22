@@ -13,19 +13,19 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateDoctorRequest {
-    @NotNull(message = "User id is required")
+    @NotNull(message = "Mã người dùng không được để trống")
     private UUID userId;
 
-    @NotBlank(message = "Name is required")
+    @NotBlank(message = "Tên bác sĩ không được để trống")
     private String name;
 
-    @NotBlank(message = "Specialization is required")
+    @NotBlank(message = "Chuyên khoa không được để trống")
     private String specialization;
 
-    @NotBlank(message = "Phone number is required")
+    @NotBlank(message = "Số điện thoại không được để trống")
     private String phoneNumber;
 
-    @Email(message = "Invalid email format")
-    @NotBlank(message = "Email is required")
+    @Email(message = "Email không đúng định dạng")
+    @NotBlank(message = "Email không được để trống")
     private String email;
 }

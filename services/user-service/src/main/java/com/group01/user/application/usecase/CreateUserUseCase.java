@@ -36,10 +36,10 @@ public class CreateUserUseCase {
         Email email = new Email(command.email());
         PhoneNumber phoneNumber = new PhoneNumber(command.phoneNumber());
         if (userRepository.existsByEmail(email.value())) {
-            throw new EmailAlreadyExistsException("Email already exists: " + email.value());
+            throw new EmailAlreadyExistsException("Email đã tồn tại: " + email.value());
         }
         if (phoneNumber.value() != null && userRepository.existsByPhoneNumber(phoneNumber.value())) {
-            throw new PhoneAlreadyExistsException("Phone number already exists: " + phoneNumber.value());
+            throw new PhoneAlreadyExistsException("Số điện thoại đã tồn tại: " + phoneNumber.value());
         }
         User user = User.builder()
                 .email(email)
@@ -61,21 +61,21 @@ public class CreateUserUseCase {
                 : requestedRoles.stream().map(role -> RoleName.from(role).name()).collect(Collectors.toSet());
         Set<Role> roles = new HashSet<>(roleRepository.findByNames(roleNames));
         if (roles.size() != roleNames.size()) {
-            throw new RoleNotFoundException("One or more roles do not exist");
+            throw new RoleNotFoundException("Một hoặc nhiều vai trò không tồn tại");
         }
         return roles;
     }
 
     private String requireFullName(String fullName) {
         if (fullName == null || fullName.isBlank()) {
-            throw new IllegalArgumentException("Full name is required");
+            throw new IllegalArgumentException("Họ tên không được để trống");
         }
         return fullName.trim();
     }
 
     private String requirePassword(String password) {
         if (password == null || password.isBlank()) {
-            throw new IllegalArgumentException("Password is required");
+            throw new IllegalArgumentException("Mật khẩu không được để trống");
         }
         return password;
     }

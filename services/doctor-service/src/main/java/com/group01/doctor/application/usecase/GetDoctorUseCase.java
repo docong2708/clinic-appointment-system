@@ -25,7 +25,7 @@ public class GetDoctorUseCase {
     public DoctorDto getById(UUID id) {
         return doctorRepository.findById(DoctorId.of(id))
                 .map(doctor -> mapper.toDto(doctor))
-                .orElseThrow(() -> new DoctorNotFoundException("Doctor with ID " + id + " not found"));
+                .orElseThrow(() -> new DoctorNotFoundException("Không tìm thấy bác sĩ với mã " + id));
     }
 
     @Transactional(readOnly = true)

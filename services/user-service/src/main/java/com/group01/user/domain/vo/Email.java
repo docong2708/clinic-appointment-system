@@ -7,7 +7,7 @@ public record Email(String value) {
 
     public Email {
         if (value == null || value.isBlank() || !EMAIL_PATTERN.matcher(value.trim()).matches()) {
-            throw new IllegalArgumentException("Invalid email address");
+            throw new IllegalArgumentException("Email không hợp lệ");
         }
         value = value.trim().toLowerCase();
     }

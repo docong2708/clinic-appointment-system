@@ -16,10 +16,10 @@ public class Slot {
 
     public Slot(SlotId id, DoctorId doctorId, LocalDateTime startTime, LocalDateTime endTime, SlotStatus status) {
         if (startTime == null || endTime == null) {
-            throw new IllegalArgumentException("Start time and End time must not be null");
+            throw new IllegalArgumentException("Thời gian bắt đầu và kết thúc không được để trống");
         }
         if (!startTime.isBefore(endTime)) {
-            throw new IllegalArgumentException("Start time must be before End time");
+            throw new IllegalArgumentException("Thời gian bắt đầu phải trước thời gian kết thúc");
         }
         this.id = id;
         this.doctorId = doctorId;
@@ -43,14 +43,14 @@ public class Slot {
 
     public void book() {
         if (this.status == SlotStatus.BOOKED) {
-            throw new IllegalStateException("Slot is already booked");
+            throw new IllegalStateException("Khung giờ đã được đặt");
         }
         this.status = SlotStatus.BOOKED;
     }
 
     public void reserve() {
         if (this.status != SlotStatus.AVAILABLE) {
-            throw new IllegalStateException("Slot is not available to reserve");
+            throw new IllegalStateException("Khung giờ không còn trống để giữ chỗ");
         }
         this.status = SlotStatus.RESERVED;
     }

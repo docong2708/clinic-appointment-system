@@ -6,11 +6,11 @@ public record CancelReason(String value) {
 
     public CancelReason {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("Cancel reason must not be blank");
+            throw new IllegalArgumentException("Lý do hủy không được để trống");
         }
 
         if (value.length() > MAX_LENGTH) {
-            throw new IllegalArgumentException("Cancel reason must not exceed 500 characters");
+            throw new IllegalArgumentException("Lý do hủy không được vượt quá 500 ký tự");
         }
     }
 

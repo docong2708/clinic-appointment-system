@@ -22,7 +22,7 @@ public class UpdateDoctorProfileUseCase {
     @Transactional
     public DoctorProfileResponse execute(UUID userId, UpdateProfileRequest request) {
         Doctor doctor = doctorRepository.findByUserId(userId)
-                .orElseThrow(() -> new DoctorNotFoundException("Doctor profile not found for user ID " + userId));
+                .orElseThrow(() -> new DoctorNotFoundException("Không tìm thấy hồ sơ bác sĩ cho mã người dùng " + userId));
 
         doctor.updateProfile(
                 request.getName(),

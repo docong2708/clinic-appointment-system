@@ -13,17 +13,17 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UpdateProfileRequest {
 
-    @NotBlank(message = "Name is required")
+    @NotBlank(message = "Tên bác sĩ không được để trống")
     private String name;
 
-    @NotBlank(message = "Specialization is required")
+    @NotBlank(message = "Chuyên khoa không được để trống")
     private String specialization;
 
-    @NotBlank(message = "Phone number is required")
+    @NotBlank(message = "Số điện thoại không được để trống")
     private String phoneNumber;
 
-    @NotBlank(message = "Email is required")
-    @Email(message = "Email is invalid")
+    @NotBlank(message = "Email không được để trống")
+    @Email(message = "Email không đúng định dạng")
     private String email;
 
     private String biography;

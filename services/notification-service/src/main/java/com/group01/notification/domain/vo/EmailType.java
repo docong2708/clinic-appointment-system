@@ -22,7 +22,7 @@ public class EmailType {
 
     public EmailType(String value) {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("Email type cannot be empty");
+            throw new IllegalArgumentException("Loại email không được để trống");
         }
         this.value = value;
     }

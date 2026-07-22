@@ -7,6 +7,7 @@ COPY services/patient-service/pom.xml services/patient-service/
 COPY services/doctor-service/pom.xml services/doctor-service/
 COPY services/notification-service/pom.xml services/notification-service/
 COPY services/appointment-service/pom.xml services/appointment-service/
+COPY services/payment-service/pom.xml services/payment-service/
 COPY infra/api-gateway/pom.xml infra/api-gateway/
 COPY infra/config-server/pom.xml infra/config-server/
 COPY infra/eureka-server/pom.xml infra/eureka-server/

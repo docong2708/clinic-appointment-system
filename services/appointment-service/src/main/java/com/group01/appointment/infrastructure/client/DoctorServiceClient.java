@@ -5,6 +5,8 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,13 +16,22 @@ import java.util.UUID;
 public interface DoctorServiceClient {
 
     @GetMapping("/api/doctors/{doctorId}")
-    void getDoctorById(@PathVariable("doctorId") UUID doctorId);
+    DoctorResponse getDoctorById(@PathVariable("doctorId") UUID doctorId);
 
     @GetMapping("/api/doctors/internal/by-user/{userId}")
     DoctorIdentityResponse getDoctorByUserId(@PathVariable("userId") UUID userId);
 
     @GetMapping("/api/doctors/{doctorId}/slots")
     List<DoctorSlotResponse> getSlots(@PathVariable("doctorId") UUID doctorId);
+
+    @GetMapping("/api/doctors/available-slots")
+    List<AvailableSlotResponse> getAvailableSlots(
+            @RequestParam("specialization") String specialization,
+            @RequestParam("date") String date
+    );
+
+    @PostMapping("/api/doctors/assign-slot")
+    AssignedSlotResponse assignSlot(@RequestBody AssignSlotRequest request);
 
     @PostMapping("/api/doctors/{doctorId}/slots/{slotId}/book")
     DoctorSlotResponse bookSlot(
@@ -45,7 +56,52 @@ public interface DoctorServiceClient {
             UUID doctorId,
             LocalDateTime startTime,
             LocalDateTime endTime,
-            boolean booked
+            boolean booked,
+            String status
+    ) {
+    }
+
+    record AssignSlotRequest(
+            String specialization,
+            LocalDateTime startTime,
+            LocalDateTime endTime
+    ) {
+    }
+
+    record AvailableSlotResponse(
+            LocalDateTime startTime,
+            LocalDateTime endTime,
+            Long availableCount
+    ) {
+    }
+
+    record AssignedSlotResponse(
+            UUID id,
+            UUID doctorId,
+            UUID doctorUserId,
+            String doctorName,
+            String specialization,
+            String doctorPhoneNumber,
+            String doctorEmail,
+            LocalDateTime startTime,
+            LocalDateTime endTime,
+            boolean booked,
+            String status
+    ) {
+    }
+
+    record DoctorResponse(
+            UUID id,
+            UUID userId,
+            String name,
+            String specialization,
+            String phoneNumber,
+            String email,
+            boolean active,
+            String biography,
+            String qualifications,
+            String avatarUrl,
+            List<DoctorSlotResponse> slots
     ) {
     }
 

@@ -12,8 +12,8 @@ public class AppointmentAggregate {
 
     private final AppointmentId appointmentId;
     private final PatientId patientId;
-    private final DoctorId doctorId;
-    private final UUID slotId;
+    private DoctorId doctorId;
+    private UUID slotId;
     private final UUID rescheduledFromAppointmentId;
 
     private AppointmentTime appointmentTime;
@@ -106,8 +106,8 @@ public class AppointmentAggregate {
                 appointmentTime,
                 appointmentReason,
                 null,
-                AppointmentStatus.PENDING_DOCTOR_CONFIRMATION,
-                PaymentStatus.NOT_REQUIRED,
+                AppointmentStatus.PENDING,
+                PaymentStatus.PENDING,
                 null,
                 null,
                 null,
@@ -124,8 +124,8 @@ public class AppointmentAggregate {
         aggregate.addLog(
                 AppointmentLogAction.CREATE,
                 null,
-                AppointmentStatus.PENDING_DOCTOR_CONFIRMATION,
-                "Create appointment waiting for doctor confirmation",
+                AppointmentStatus.PENDING,
+                "Create appointment",
                 actorId,
                 ActorRole.PATIENT
         );
@@ -196,7 +196,13 @@ public class AppointmentAggregate {
             throw new IllegalStateException("Completed appointment cannot be cancelled");
         }
 
-        transitionToCancelled(AppointmentStatus.CANCELLED, AppointmentLogAction.CANCEL, cancelReason, cancelledBy, cancelledByRole);
+        transitionToCancelled(
+                AppointmentStatus.CANCELLED,
+                AppointmentLogAction.CANCEL,
+                cancelReason,
+                cancelledBy,
+                cancelledByRole
+        );
     }
 
     public void cancelByDoctor(
@@ -307,16 +313,9 @@ public class AppointmentAggregate {
             throw new IllegalStateException("Cannot check in after the first 10 minutes from appointment start time");
         }
 
-        AppointmentStatus oldStatus = this.status;
-
-        this.status = AppointmentStatus.CHECKIN_SUCCESS;
-        this.updatedBy = performedBy;
-        this.updatedAt = LocalDateTime.now();
-
-        addLog(
-                AppointmentLogAction.CHECK_IN,
-                oldStatus,
+        transitionStatus(
                 AppointmentStatus.CHECKIN_SUCCESS,
+                AppointmentLogAction.CHECK_IN,
                 "Doctor started consultation",
                 performedBy,
                 performedByRole
@@ -353,15 +352,19 @@ public class AppointmentAggregate {
             ActorRole cancelledByRole
     ) {
         if (cancelReason == null) {
-            throw new IllegalArgumentException("Cancel reason must not be null");
+            throw new IllegalArgumentException("Lý do hủy không được để trống");
         }
 
         if (cancelledBy == null) {
-            throw new IllegalArgumentException("Cancelled by must not be null");
+            throw new IllegalArgumentException("Người hủy lịch không được để trống");
         }
 
         if (cancelledByRole == null) {
-            throw new IllegalArgumentException("Cancelled by role must not be null");
+            throw new IllegalArgumentException("Vai trò người hủy lịch không được để trống");
+        }
+
+        if (this.status == AppointmentStatus.PAYMENT_EXPIRED) {
+            throw new IllegalStateException("Khong the huy lich hen da qua han thanh toan");
         }
     }
 
@@ -402,6 +405,101 @@ public class AppointmentAggregate {
         );
     }
 
+    public void reschedule(
+            DoctorId newDoctorId,
+            UUID newSlotId,
+            AppointmentTime newAppointmentTime,
+            String reason,
+            UUID updatedBy,
+            ActorRole updatedByRole
+    ) {
+        if (newDoctorId == null) {
+            throw new IllegalArgumentException("Mã bác sĩ mới không được để trống");
+        }
+
+        if (newSlotId == null) {
+            throw new IllegalArgumentException("Mã khung giờ mới không được để trống");
+        }
+
+        if (newAppointmentTime == null) {
+            throw new IllegalArgumentException("Thời gian lịch hẹn mới không được để trống");
+        }
+
+        if (updatedBy == null) {
+            throw new IllegalArgumentException("Người đổi lịch không được để trống");
+        }
+
+        if (updatedByRole == null) {
+            throw new IllegalArgumentException("Vai trò người đổi lịch không được để trống");
+        }
+
+        if (this.status == AppointmentStatus.PAYMENT_EXPIRED) {
+            throw new IllegalStateException("Khong the doi lich hen da qua han thanh toan");
+        }
+
+        if (isCancelledStatus(this.status)) {
+            throw new IllegalStateException("Không thể đổi lịch hẹn đã hủy");
+        }
+
+        if (isCompletedStatus(this.status)) {
+            throw new IllegalStateException("Không thể đổi lịch hẹn đã hoàn thành");
+        }
+
+        if (newSlotId.equals(this.slotId)) {
+            throw new IllegalStateException("Khung giờ mới phải khác khung giờ hiện tại");
+        }
+
+        AppointmentStatus oldStatus = this.status;
+        this.doctorId = newDoctorId;
+        this.slotId = newSlotId;
+        this.appointmentTime = newAppointmentTime;
+        this.updatedBy = updatedBy;
+        this.updatedAt = LocalDateTime.now();
+
+        addLog(
+                AppointmentLogAction.RESCHEDULE,
+                oldStatus,
+                this.status,
+                reason,
+                updatedBy,
+                updatedByRole
+        );
+    }
+
+    public void markPaymentAwaiting(UUID performedBy, ActorRole performedByRole) {
+        if (isCancelledStatus(this.status)) {
+            throw new IllegalStateException("Khong the cho thanh toan lich hen da huy");
+        }
+
+        if (isCompletedStatus(this.status)) {
+            throw new IllegalStateException("Khong the cho thanh toan lich hen da hoan thanh");
+        }
+
+        if (this.status == AppointmentStatus.PAYMENT_EXPIRED) {
+            throw new IllegalStateException("Khong the cho thanh toan lich hen da qua han thanh toan");
+        }
+
+        if (this.paymentStatus == PaymentStatus.PAID) {
+            throw new IllegalStateException("Lich hen da duoc thanh toan");
+        }
+
+        AppointmentStatus oldStatus = this.status;
+
+        this.paymentStatus = PaymentStatus.PENDING;
+        this.status = AppointmentStatus.AWAITING_PAYMENT;
+        this.updatedBy = performedBy;
+        this.updatedAt = LocalDateTime.now();
+
+        addLog(
+                AppointmentLogAction.PAYMENT_AWAITING,
+                oldStatus,
+                AppointmentStatus.AWAITING_PAYMENT,
+                "Pay now selected",
+                performedBy,
+                performedByRole
+        );
+    }
+
     private void transitionStatus(
             AppointmentStatus newStatus,
             AppointmentLogAction logAction,
@@ -426,8 +524,16 @@ public class AppointmentAggregate {
     }
 
     public void markPaymentPaid(UUID performedBy, ActorRole performedByRole) {
-        if (this.status == AppointmentStatus.CANCELLED) {
-            throw new IllegalStateException("Cancelled appointment cannot be paid");
+        if (isCompletedStatus(this.status)) {
+            throw new IllegalStateException("Khong the thanh toan lich hen da hoan thanh");
+        }
+
+        if (this.status == AppointmentStatus.PAYMENT_EXPIRED) {
+            throw new IllegalStateException("Khong the thanh toan lich hen da qua han thanh toan");
+        }
+
+        if (isCancelledStatus(this.status)) {
+            throw new IllegalStateException("Không thể thanh toán lịch hẹn đã hủy");
         }
 
         AppointmentStatus oldStatus = this.status;
@@ -448,9 +554,44 @@ public class AppointmentAggregate {
         );
     }
 
+    public void markPaymentDeferred(UUID performedBy, ActorRole performedByRole) {
+        if (isCancelledStatus(this.status)) {
+            throw new IllegalStateException("Không thể chọn thanh toán sau cho lịch hẹn đã hủy");
+        }
+
+        if (isCompletedStatus(this.status)) {
+            throw new IllegalStateException("Không thể chọn thanh toán sau cho lịch hẹn đã hoàn thành");
+        }
+
+        if (this.status == AppointmentStatus.PAYMENT_EXPIRED) {
+            throw new IllegalStateException("Khong the chon thanh toan sau cho lich hen da qua han thanh toan");
+        }
+
+        AppointmentStatus oldStatus = this.status;
+
+        this.paymentStatus = PaymentStatus.PENDING;
+        this.status = AppointmentStatus.CONFIRMED;
+        this.confirmedAt = LocalDateTime.now();
+        this.updatedBy = performedBy;
+        this.updatedAt = LocalDateTime.now();
+
+        addLog(
+                AppointmentLogAction.PAYMENT_DEFERRED,
+                oldStatus,
+                AppointmentStatus.CONFIRMED,
+                "Pay later selected",
+                performedBy,
+                performedByRole
+        );
+    }
+
     public void markPaymentFailed(UUID performedBy, ActorRole performedByRole) {
-        if (this.status == AppointmentStatus.CANCELLED) {
-            throw new IllegalStateException("Cancelled appointment cannot update payment");
+        if (isCancelledStatus(this.status)) {
+            throw new IllegalStateException("Không thể cập nhật thanh toán cho lịch hẹn đã hủy");
+        }
+
+        if (this.status == AppointmentStatus.PAYMENT_EXPIRED) {
+            throw new IllegalStateException("Khong the cap nhat thanh toan cho lich hen da qua han thanh toan");
         }
 
         this.paymentStatus = PaymentStatus.FAILED;
@@ -467,13 +608,38 @@ public class AppointmentAggregate {
         );
     }
 
+    public void markPaymentExpired() {
+        if (this.status != AppointmentStatus.AWAITING_PAYMENT) {
+            throw new IllegalStateException("Chi co the qua han lich hen dang cho thanh toan");
+        }
+
+        AppointmentStatus oldStatus = this.status;
+
+        this.paymentStatus = PaymentStatus.EXPIRED;
+        this.status = AppointmentStatus.PAYMENT_EXPIRED;
+        this.updatedAt = LocalDateTime.now();
+
+        addLog(
+                AppointmentLogAction.PAYMENT_EXPIRED,
+                oldStatus,
+                AppointmentStatus.PAYMENT_EXPIRED,
+                "Payment timeout expired",
+                null,
+                ActorRole.SYSTEM
+        );
+    }
+
     public void complete(UUID performedBy, ActorRole performedByRole) {
-        if (this.status == AppointmentStatus.CANCELLED) {
-            throw new IllegalStateException("Cancelled appointment cannot be completed");
+        if (isCancelledStatus(this.status)) {
+            throw new IllegalStateException("Không thể hoàn thành lịch hẹn đã hủy");
+        }
+
+        if (this.status == AppointmentStatus.PAYMENT_EXPIRED) {
+            throw new IllegalStateException("Khong the hoan thanh lich hen da qua han thanh toan");
         }
 
         if (this.status != AppointmentStatus.CONFIRMED) {
-            throw new IllegalStateException("Only confirmed appointment can be completed");
+            throw new IllegalStateException("Chỉ có thể hoàn thành lịch hẹn đã được xác nhận");
         }
 
         AppointmentStatus oldStatus = this.status;

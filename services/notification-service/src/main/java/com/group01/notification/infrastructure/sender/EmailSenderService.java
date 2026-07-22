@@ -53,7 +53,7 @@ public class EmailSenderService {
 
         } catch (Exception e) {
             log.error("Failed to send email to: {}", recipientEmail, e);
-            throw new Exception("Email send failed: " + e.getMessage(), e);
+            throw new Exception("Gửi email thất bại: " + e.getMessage(), e);
         }
     }
 
@@ -82,13 +82,13 @@ public class EmailSenderService {
 
         } catch (Exception e) {
             log.error("Failed to send HTML email to: {}", recipientEmail, e);
-            throw new Exception("Email send failed: " + e.getMessage(), e);
+            throw new Exception("Gửi email HTML thất bại: " + e.getMessage(), e);
         }
     }
 
     private String fromAddress() throws AddressException {
         if (!hasText(fromEmail)) {
-            throw new AddressException("mail.from is blank");
+            throw new AddressException("Cấu hình mail.from không được để trống");
         }
 
         InternetAddress address = new InternetAddress(fromEmail.trim(), true);

@@ -14,10 +14,10 @@ public record AuthTokenProperties(
             jwtIssuer = "clinic-appointment-system";
         }
         if (jwtSecret == null || jwtSecret.isBlank()) {
-            throw new IllegalArgumentException("app.auth.jwt-secret is required");
+            throw new IllegalArgumentException("Thiếu cấu hình app.auth.jwt-secret");
         }
         if (jwtSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8).length < 32) {
-            throw new IllegalArgumentException("app.auth.jwt-secret must be at least 32 bytes for HS256");
+            throw new IllegalArgumentException("Cấu hình app.auth.jwt-secret phải có ít nhất 32 byte cho HS256");
         }
         if (accessTokenMaxAgeSeconds <= 0) {
             accessTokenMaxAgeSeconds = 3600;

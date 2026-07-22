@@ -1,14 +1,23 @@
 package com.group01.appointment.application.port;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface PatientClientPort {
+
+    Optional<UUID> findPatientIdByUserId(UUID userId);
+
+    PatientProfile getPatient(UUID patientId);
+
+    UUID getOrCreatePatientIdByUserId(UUID userId, String contactInformation);
 
     boolean existsById(UUID patientId);
 
     PatientProfile getPatientProfile(UUID patientId);
 
-    java.util.List<MedicalRecord> getMedicalRecords(UUID patientId);
+    List<MedicalRecord> getMedicalRecords(UUID patientId);
 
     MedicalRecord saveMedicalRecord(UUID patientId, SaveMedicalRecordCommand command);
 
@@ -17,7 +26,7 @@ public interface PatientClientPort {
             UUID userId,
             String firstName,
             String lastName,
-            java.time.LocalDate dateOfBirth,
+            LocalDate dateOfBirth,
             String gender,
             String contactInformation
     ) {
@@ -26,11 +35,11 @@ public interface PatientClientPort {
     record MedicalRecord(
             UUID id,
             UUID patientId,
-            java.time.LocalDate recordDate,
+            LocalDate recordDate,
             String diagnosis,
             String treatment,
             String notes,
-            java.util.List<Prescription> prescriptions
+            List<Prescription> prescriptions
     ) {
     }
 
@@ -45,11 +54,11 @@ public interface PatientClientPort {
     }
 
     record SaveMedicalRecordCommand(
-            java.time.LocalDate recordDate,
+            LocalDate recordDate,
             String diagnosis,
             String treatment,
             String notes,
-            java.util.List<PrescriptionCommand> prescriptions
+            List<PrescriptionCommand> prescriptions
     ) {
     }
 

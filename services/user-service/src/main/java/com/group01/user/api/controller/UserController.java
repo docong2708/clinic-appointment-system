@@ -1,5 +1,6 @@
 package com.group01.user.api.controller;
 
+import com.group01.commonsecurity.currentuser.CurrentUserHolder;
 import com.group01.user.api.dto.request.AssignRoleRequest;
 import com.group01.user.api.dto.request.ChangeUserStatusRequest;
 import com.group01.user.api.dto.request.CreateUserRequest;
@@ -17,6 +18,7 @@ import com.group01.user.application.usecase.ChangeUserStatusUseCase;
 import com.group01.user.application.usecase.CreateUserUseCase;
 import com.group01.user.application.usecase.DeleteUserUseCase;
 import com.group01.user.application.usecase.GetAllUsersUseCase;
+import com.group01.user.application.usecase.GetMyProfileUseCase;
 import com.group01.user.application.usecase.GetUserByIdUseCase;
 import com.group01.user.application.usecase.ProfileLookupClient;
 import com.group01.user.application.usecase.RegisterUseCase;
@@ -48,6 +50,7 @@ public class UserController {
     private final RegisterUseCase registerUseCase;
     private final CreateUserUseCase createUserUseCase;
     private final ProfileLookupClient profileLookupClient;
+    private final GetMyProfileUseCase getMyProfileUseCase;
     private final GetUserByIdUseCase getUserByIdUseCase;
     private final GetAllUsersUseCase getAllUsersUseCase;
     private final UpdateUserUseCase updateUserUseCase;
@@ -85,12 +88,27 @@ public class UserController {
 
     @GetMapping("/{id}")
     public UserResponse getUserById(@PathVariable("id") UUID id) {
-        return toResponse(getUserByIdUseCase.execute(id));
+        return toResponseWithPatientId(getUserByIdUseCase.execute(id));
+    }
+
+    @GetMapping("/me")
+    public UserResponse getMe() {
+        return toResponseWithPatientId(getMyProfileUseCase.execute());
     }
 
     @GetMapping
     public List<UserResponse> getAllUsers() {
         return getAllUsersUseCase.execute().stream().map(this::toResponse).toList();
+    }
+
+    @PutMapping("/me")
+    public UserResponse updateMe(@Valid @RequestBody UpdateUserRequest request) {
+        UUID userId = CurrentUserHolder.require().userId();
+        return toResponseWithPatientId(updateUserUseCase.execute(new UpdateUserCommand(
+                userId,
+                request.fullName(),
+                request.phoneNumber()
+        )));
     }
 
     @PutMapping("/{id}")
@@ -115,6 +133,10 @@ public class UserController {
 
     private UserResponse toResponse(User user) {
         return toResponse(user, null);
+    }
+
+    private UserResponse toResponseWithPatientId(User user) {
+        return toResponse(user, resolvePatientId(user));
     }
 
     private UserResponse toResponse(User user, UUID patientId) {

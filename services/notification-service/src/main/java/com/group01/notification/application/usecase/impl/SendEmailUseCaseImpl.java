@@ -39,7 +39,7 @@ public class SendEmailUseCaseImpl implements SendEmailUseCase {
         // Validate email type
         if (!EmailType.isValidEmailType(request.getEventType())) {
             log.warn("Invalid email type: {}", request.getEventType());
-            throw new IllegalArgumentException("Invalid email type: " + request.getEventType());
+            throw new IllegalArgumentException("Loại email không hợp lệ: " + request.getEventType());
         }
 
         // Get template key
@@ -71,11 +71,11 @@ public class SendEmailUseCaseImpl implements SendEmailUseCase {
                 );
             }
             status = "SENT";
-            message = "Email queued for delivery";
+            message = "Email đã được đưa vào hàng đợi gửi";
             log.info("Email {} for type {}: {}", notificationId, request.getEventType(), status);
         } catch (Exception e) {
             status = "FAILED";
-            message = "Email delivery failed: " + e.getMessage();
+            message = "Gửi email thất bại: " + e.getMessage();
             log.error("Email {} for type {}: {}", notificationId, request.getEventType(), status, e);
         }
 
@@ -93,7 +93,7 @@ public class SendEmailUseCaseImpl implements SendEmailUseCase {
         }
 
         NotificationTemplate databaseTemplate = templateRepository.findByKeyAndActiveTrue(templateKey)
-            .orElseThrow(() -> new RuntimeException("Template not found: " + templateKey));
+            .orElseThrow(() -> new RuntimeException("Không tìm thấy mẫu email: " + templateKey));
         return new EmailTemplateContent(databaseTemplate.getSubject(), databaseTemplate.getBody(), false);
     }
 }

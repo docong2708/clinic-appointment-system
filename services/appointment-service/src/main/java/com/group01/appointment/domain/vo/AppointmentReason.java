@@ -6,7 +6,7 @@ public record AppointmentReason(String value) {
 
     public AppointmentReason {
         if (value != null && value.length() > MAX_LENGTH) {
-            throw new IllegalArgumentException("Appointment reason must not exceed 500 characters");
+            throw new IllegalArgumentException("Lý do khám không được vượt quá 500 ký tự");
         }
     }
 

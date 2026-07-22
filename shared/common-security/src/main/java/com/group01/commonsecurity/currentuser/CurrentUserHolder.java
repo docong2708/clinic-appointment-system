@@ -17,7 +17,7 @@ public final class CurrentUserHolder {
     }
 
     public static CurrentUser require() {
-        return get().orElseThrow(() -> new IllegalStateException("Current user is not available"));
+        return get().orElseThrow(() -> new IllegalStateException("Không tìm thấy thông tin người dùng hiện tại"));
     }
 
     public static void clear() {

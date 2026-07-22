@@ -21,19 +21,19 @@ public class LoginUseCase {
     @Transactional
     public AuthTokenResult execute(String email, String password) {
         if (email == null || email.isBlank()) {
-            throw new AuthenticationFailedException("Invalid credentials");
+            throw new AuthenticationFailedException("Email hoặc mật khẩu không đúng");
         }
         if (password == null || password.isBlank()) {
-            throw new AuthenticationFailedException("Invalid credentials");
+            throw new AuthenticationFailedException("Email hoặc mật khẩu không đúng");
         }
         Email normalizedEmail = normalizeEmail(email);
         User user = userRepository.findByEmail(normalizedEmail.value())
-                .orElseThrow(() -> new AuthenticationFailedException("Invalid credentials"));
+                .orElseThrow(() -> new AuthenticationFailedException("Email hoặc mật khẩu không đúng"));
         if (user.getStatus() != UserStatus.ACTIVE) {
-            throw new AuthenticationFailedException("Invalid credentials");
+            throw new AuthenticationFailedException("Email hoặc mật khẩu không đúng");
         }
         if (user.getPasswordHash() == null || !passwordEncoder.matches(password, user.getPasswordHash())) {
-            throw new AuthenticationFailedException("Invalid credentials");
+            throw new AuthenticationFailedException("Email hoặc mật khẩu không đúng");
         }
         return authTokenIssuer.issue(user);
     }
@@ -42,7 +42,7 @@ public class LoginUseCase {
         try {
             return new Email(email);
         } catch (IllegalArgumentException exception) {
-            throw new AuthenticationFailedException("Invalid credentials");
+            throw new AuthenticationFailedException("Email hoặc mật khẩu không đúng");
         }
     }
 }
