@@ -1,7 +1,10 @@
 package com.group01.appointment.application.usecase;
 
 import com.group01.appointment.application.command.CancelAppointmentCommand;
+import com.group01.appointment.application.event.AppointmentEventMapper;
 import com.group01.appointment.application.exception.AppointmentNotFoundException;
+import com.group01.appointment.application.port.DoctorClientPort;
+import com.group01.appointment.application.port.NotificationPort;
 import com.group01.appointment.application.result.AppointmentResult;
 import com.group01.appointment.application.result.AppointmentResultMapper;
 import com.group01.appointment.domain.aggregate.AppointmentAggregate;
@@ -18,13 +21,19 @@ public class CancelAppointmentUseCase {
 
     private final AppointmentRepository appointmentRepository;
     private final AppointmentLogRepository appointmentLogRepository;
+    private final DoctorClientPort doctorClientPort;
+    private final NotificationPort notificationPort;
 
     public CancelAppointmentUseCase(
             AppointmentRepository appointmentRepository,
-            AppointmentLogRepository appointmentLogRepository
+            AppointmentLogRepository appointmentLogRepository,
+            DoctorClientPort doctorClientPort,
+            NotificationPort notificationPort
     ) {
         this.appointmentRepository = appointmentRepository;
         this.appointmentLogRepository = appointmentLogRepository;
+        this.doctorClientPort = doctorClientPort;
+        this.notificationPort = notificationPort;
     }
 
     @Transactional
@@ -42,7 +51,20 @@ public class CancelAppointmentUseCase {
         AppointmentAggregate savedAppointment = appointmentRepository.save(appointment);
 
         appointmentLogRepository.saveAll(appointment.getLogs());
+        cancelSlotBooking(appointment);
+        notificationPort.publishAppointmentCanceled(AppointmentEventMapper.canceled(savedAppointment));
 
         return AppointmentResultMapper.from(savedAppointment);
+    }
+
+    private void cancelSlotBooking(AppointmentAggregate appointment) {
+        if (appointment.getSlotId() == null) {
+            return;
+        }
+
+        doctorClientPort.cancelSlotBooking(
+                appointment.getDoctorId().value(),
+                appointment.getSlotId()
+        );
     }
 }

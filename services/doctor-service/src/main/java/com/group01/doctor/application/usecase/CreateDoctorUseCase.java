@@ -18,7 +18,12 @@ public class CreateDoctorUseCase {
 
     @Transactional
     public DoctorDto execute(CreateDoctorRequest request) {
+        if (doctorRepository.existsByUserId(request.getUserId())) {
+            throw new IllegalArgumentException("Doctor profile already exists for user id: " + request.getUserId());
+        }
+
         Doctor doctor = Doctor.create(
+                request.getUserId(),
                 request.getName(),
                 request.getSpecialization(),
                 request.getPhoneNumber(),

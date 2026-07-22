@@ -14,10 +14,14 @@ import java.util.UUID;
 @AllArgsConstructor
 public class DoctorDto {
     private UUID id;
+    private UUID userId;
     private String name;
     private String specialization;
     private String phoneNumber;
     private String email;
     private boolean active;
+    private String biography;
+    private String qualifications;
+    private String avatarUrl;
     private List<SlotDto> slots;
 }

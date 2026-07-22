@@ -30,7 +30,6 @@ class ChangeUserStatusUseCaseTest {
         UUID userId = UUID.randomUUID();
         User user = User.builder()
                 .id(userId)
-                .keycloakUserId("kc-user-id")
                 .email(new Email("user@example.com"))
                 .fullName("User One")
                 .status(UserStatus.ACTIVE)

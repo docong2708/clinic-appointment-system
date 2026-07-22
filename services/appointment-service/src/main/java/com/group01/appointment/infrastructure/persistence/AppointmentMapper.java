@@ -5,6 +5,7 @@ import com.group01.appointment.domain.vo.AppointmentId;
 import com.group01.appointment.domain.vo.AppointmentReason;
 import com.group01.appointment.domain.vo.AppointmentStatus;
 import com.group01.appointment.domain.vo.AppointmentTime;
+import com.group01.appointment.domain.vo.ActorRole;
 import com.group01.appointment.domain.vo.CancelReason;
 import com.group01.appointment.domain.vo.DoctorId;
 import com.group01.appointment.domain.vo.PatientId;
@@ -38,6 +39,9 @@ public class AppointmentMapper {
                         ? null
                         : aggregate.getPaymentStatus().name())
                 .cancelledBy(aggregate.getCancelledBy())
+                .cancelledByRole(aggregate.getCancelledByRole() == null
+                        ? null
+                        : aggregate.getCancelledByRole().name())
                 .cancelledAt(toOffsetDateTime(aggregate.getCancelledAt()))
                 .bookingSource(aggregate.getBookingSource())
                 .createdBy(aggregate.getCreatedBy())
@@ -69,7 +73,9 @@ public class AppointmentMapper {
                         ? PaymentStatus.NOT_REQUIRED
                         : PaymentStatus.valueOf(entity.getPaymentStatus()),
                 entity.getCancelledBy(),
-                null,
+                entity.getCancelledByRole() == null
+                        ? null
+                        : ActorRole.valueOf(entity.getCancelledByRole()),
                 toLocalDateTime(entity.getCancelledAt()),
                 entity.getBookingSource(),
                 entity.getCreatedBy(),

@@ -1,3 +1,0 @@
-﻿eureka pid=20956
-user-service pid=4508
-api-gateway pid=9184

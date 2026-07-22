@@ -3,10 +3,11 @@ package com.group01.patient.domain.event;
 import com.group01.patient.domain.aggregate.MedicalRecordAggregate;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 public record MedicalRecordCreatedEvent(
-        Long medicalRecordId,
-        Long patientId,
+        UUID medicalRecordId,
+        UUID patientId,
         LocalDate recordDate,
         String diagnosis
 ) {

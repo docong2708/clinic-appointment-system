@@ -17,8 +17,8 @@ import com.group01.user.application.usecase.ChangeUserStatusUseCase;
 import com.group01.user.application.usecase.CreateUserUseCase;
 import com.group01.user.application.usecase.DeleteUserUseCase;
 import com.group01.user.application.usecase.GetAllUsersUseCase;
-import com.group01.user.application.usecase.GetMyProfileUseCase;
 import com.group01.user.application.usecase.GetUserByIdUseCase;
+import com.group01.user.application.usecase.ProfileLookupClient;
 import com.group01.user.application.usecase.RegisterUseCase;
 import com.group01.user.application.usecase.UpdateUserUseCase;
 import com.group01.user.domain.aggregate.Role;
@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 public class UserController {
     private final RegisterUseCase registerUseCase;
     private final CreateUserUseCase createUserUseCase;
-    private final GetMyProfileUseCase getMyProfileUseCase;
+    private final ProfileLookupClient profileLookupClient;
     private final GetUserByIdUseCase getUserByIdUseCase;
     private final GetAllUsersUseCase getAllUsersUseCase;
     private final UpdateUserUseCase updateUserUseCase;
@@ -59,19 +59,28 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponse register(@Valid @RequestBody RegisterRequest request) {
         return toResponse(registerUseCase.execute(new RegisterCommand(
-                request.email(), request.password(), request.fullName(), request.phoneNumber(), request.role())));
+                request.email(),
+                request.password(),
+                request.fullName(),
+                request.phoneNumber(),
+                request.role(),
+                request.specialization(),
+                request.dateOfBirth(),
+                request.gender(),
+                request.contactInformation()
+        )));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponse createUser(@Valid @RequestBody CreateUserRequest request) {
         return toResponse(createUserUseCase.execute(new CreateUserCommand(
-                request.keycloakUserId(), request.email(), request.fullName(), request.phoneNumber(), request.roles())));
-    }
-
-    @GetMapping("/me")
-    public UserResponse getMyProfile() {
-        return toResponse(getMyProfileUseCase.execute());
+                request.email(),
+                request.password(),
+                request.fullName(),
+                request.phoneNumber(),
+                request.roles()
+        )));
     }
 
     @GetMapping("/{id}")
@@ -105,9 +114,13 @@ public class UserController {
     }
 
     private UserResponse toResponse(User user) {
+        return toResponse(user, null);
+    }
+
+    private UserResponse toResponse(User user, UUID patientId) {
         return new UserResponse(
                 user.getId(),
-                user.getKeycloakUserId(),
+                patientId,
                 user.getEmail().value(),
                 user.getFullName(),
                 user.getPhoneNumber() == null ? null : user.getPhoneNumber().value(),
@@ -116,6 +129,15 @@ public class UserController {
                 user.getCreatedAt(),
                 user.getUpdatedAt()
         );
+    }
+
+    private UUID resolvePatientId(User user) {
+        boolean isPatient = user.getRoles().stream()
+                .anyMatch(role -> "PATIENT".equals(role.getName().name()));
+        if (!isPatient) {
+            return null;
+        }
+        return profileLookupClient.findPatientIdByUserId(user.getId()).orElse(null);
     }
 
     private Set<RoleResponse> toRoleResponses(Set<Role> roles) {

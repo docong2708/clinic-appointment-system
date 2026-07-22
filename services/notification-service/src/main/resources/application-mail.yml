@@ -1,0 +1,20 @@
+# SMTP connection settings are loaded from Config Server under spring.mail.*.
+
+# Email service configuration
+mail:
+  from: ${spring.mail.username:noreply@clinic.local}
+  from-name: ${MAIL_FROM_NAME:MSS Clinic}
+  provider: SMTP
+
+notification:
+  sender:
+    mock: false
+  email:
+    templates:
+      location: classpath:email-templates
+
+# Logging for email debugging
+logging:
+  level:
+    com.group01.notification.infrastructure.sender: DEBUG
+    org.springframework.mail: DEBUG

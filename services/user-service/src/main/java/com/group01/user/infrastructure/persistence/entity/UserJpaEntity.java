@@ -37,11 +37,11 @@ public class UserJpaEntity {
     @GeneratedValue
     private UUID id;
 
-    @Column(name = "keycloak_user_id", unique = true, length = 64)
-    private String keycloakUserId;
-
     @Column(nullable = false, unique = true, length = 255)
     private String email;
+
+    @Column(name = "password_hash", length = 255)
+    private String passwordHash;
 
     @Column(name = "full_name", nullable = false, length = 150)
     private String fullName;

@@ -1,32 +1,5 @@
-server:
-  port: 8084
 spring:
   application:
     name: patient-service
-
-  datasource:
-    url: jdbc:postgresql://localhost:5432/patient_db
-    username: postgres
-    password: 123456
-
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: false
-
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
-
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka
-    register-with-eureka: true
-    fetch-registry: true
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
+  config:
+    import: optional:configserver:${SPRING_CLOUD_CONFIG_URI:http://localhost:8888}

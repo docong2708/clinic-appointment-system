@@ -1,3 +1,0 @@
-﻿8761 pid=15840 process=java
-8085 pid=12168 process=java
-8080 pid=21284 process=java

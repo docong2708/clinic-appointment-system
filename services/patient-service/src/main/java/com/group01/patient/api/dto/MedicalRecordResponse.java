@@ -4,10 +4,11 @@ import com.group01.patient.application.result.MedicalRecordResult;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 public record MedicalRecordResponse(
-        Long id,
-        Long patientId,
+        UUID id,
+        UUID patientId,
         LocalDate recordDate,
         String diagnosis,
         String treatment,
@@ -16,8 +17,8 @@ public record MedicalRecordResponse(
 ) {
 
     public record PrescriptionResponse(
-            Long id,
-            Long medicalRecordId,
+            UUID id,
+            UUID medicalRecordId,
             String medicationName,
             String dosage,
             String frequency,

@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Set;
@@ -27,18 +29,18 @@ class CreateUserUseCaseTest {
     private RoleRepository roleRepository;
 
     @Test
-    void createsUserProfileMappedToKeycloakWithDefaultPatientRole() {
-        CreateUserUseCase useCase = new CreateUserUseCase(userRepository, roleRepository);
+    void createsLocalUserWithDefaultPatientRole() {
+        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        CreateUserUseCase useCase = new CreateUserUseCase(userRepository, roleRepository, passwordEncoder);
         Role patient = Role.builder().id(UUID.randomUUID()).name(RoleName.PATIENT).description("Patient user").build();
-        when(userRepository.existsByKeycloakUserId("kc-user-id")).thenReturn(false);
         when(userRepository.existsByEmail("john@example.com")).thenReturn(false);
         when(roleRepository.findByNames(Set.of("PATIENT"))).thenReturn(List.of(patient));
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        User created = useCase.execute(new CreateUserCommand("kc-user-id", "John@Example.com", "John Doe", "0123456789", null));
+        User created = useCase.execute(new CreateUserCommand("John@Example.com", "secret123", "John Doe", "0123456789", null));
 
-        assertThat(created.getKeycloakUserId()).isEqualTo("kc-user-id");
         assertThat(created.getEmail().value()).isEqualTo("john@example.com");
+        assertThat(passwordEncoder.matches("secret123", created.getPasswordHash())).isTrue();
         assertThat(created.getRoles()).extracting(role -> role.getName().name()).containsExactly("PATIENT");
         assertThat(created.getStatus().name()).isEqualTo("ACTIVE");
     }

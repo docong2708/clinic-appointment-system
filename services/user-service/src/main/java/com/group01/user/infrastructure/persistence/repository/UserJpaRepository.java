@@ -13,16 +13,12 @@ public interface UserJpaRepository extends JpaRepository<UserJpaEntity, UUID> {
     Optional<UserJpaEntity> findWithRolesById(UUID id);
 
     @EntityGraph(attributePaths = "roles")
-    Optional<UserJpaEntity> findByKeycloakUserId(String keycloakUserId);
-
-    @EntityGraph(attributePaths = "roles")
     Optional<UserJpaEntity> findByEmail(String email);
 
     @EntityGraph(attributePaths = "roles")
     List<UserJpaEntity> findAll();
 
     boolean existsByEmail(String email);
-    boolean existsByKeycloakUserId(String keycloakUserId);
     boolean existsByPhoneNumber(String phoneNumber);
     boolean existsByPhoneNumberAndIdNot(String phoneNumber, UUID id);
 }

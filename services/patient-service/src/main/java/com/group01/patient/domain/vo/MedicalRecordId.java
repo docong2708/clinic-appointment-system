@@ -1,14 +1,16 @@
 package com.group01.patient.domain.vo;
 
-public record MedicalRecordId(Long value) {
+import java.util.UUID;
+
+public record MedicalRecordId(UUID value) {
 
     public MedicalRecordId {
-        if (value == null || value <= 0) {
-            throw new IllegalArgumentException("Medical record id must be positive");
+        if (value == null) {
+            throw new IllegalArgumentException("Medical record id must not be null");
         }
     }
 
-    public static MedicalRecordId of(Long value) {
+    public static MedicalRecordId of(UUID value) {
         return new MedicalRecordId(value);
     }
 }

@@ -20,11 +20,15 @@ public class DoctorPersistenceMapper {
 
         DoctorJpaEntity jpaEntity = DoctorJpaEntity.builder()
                 .id(domain.getId().value())
+                .userId(domain.getUserId())
                 .name(domain.getName())
                 .specialization(domain.getSpecialization())
                 .phoneNumber(domain.getPhoneNumber())
                 .email(domain.getEmail())
                 .active(domain.isActive())
+                .biography(domain.getBiography())
+                .qualifications(domain.getQualifications())
+                .avatarUrl(domain.getAvatarUrl())
                 .build();
 
         if (domain.getSlots() != null) {
@@ -34,7 +38,7 @@ public class DoctorPersistenceMapper {
                             .doctor(jpaEntity)
                             .startTime(slot.getStartTime())
                             .endTime(slot.getEndTime())
-                            .booked(slot.isBooked())
+                            .status(slot.getStatus())
                             .build())
                     .collect(Collectors.toList());
             jpaEntity.setSlots(slots);
@@ -53,18 +57,22 @@ public class DoctorPersistenceMapper {
                             DoctorId.of(slotEntity.getDoctor().getId()),
                             slotEntity.getStartTime(),
                             slotEntity.getEndTime(),
-                            slotEntity.isBooked()
+                            slotEntity.getStatus()
                     ))
                     .collect(Collectors.toList());
         }
 
         return new Doctor(
                 DoctorId.of(entity.getId()),
+                entity.getUserId(),
                 entity.getName(),
                 entity.getSpecialization(),
                 entity.getPhoneNumber(),
                 entity.getEmail(),
                 entity.isActive(),
+                entity.getBiography(),
+                entity.getQualifications(),
+                entity.getAvatarUrl(),
                 slots
         );
     }

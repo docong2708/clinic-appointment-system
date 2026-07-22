@@ -5,6 +5,8 @@ import com.group01.patient.domain.repository.MedicalRecordRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Service
 public class DeleteMedicalRecordUseCase {
 
@@ -15,7 +17,7 @@ public class DeleteMedicalRecordUseCase {
     }
 
     @Transactional
-    public void execute(Long id) {
+    public void execute(UUID id) {
         if (medicalRecordRepository.findById(id).isEmpty()) {
             throw new MedicalRecordNotFoundException(id);
         }

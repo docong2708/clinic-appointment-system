@@ -1,52 +1,84 @@
 package com.group01.appointment.infrastructure.client;
 
 import com.group01.appointment.application.exception.DoctorServiceUnavailableException;
+import com.group01.appointment.application.exception.SlotNotFoundException;
 import com.group01.appointment.application.port.DoctorClientPort;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
+import feign.FeignException;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
 import java.util.UUID;
 
 @Component
 public class DoctorClientAdapter implements DoctorClientPort {
 
-    private final RestTemplate restTemplate;
-    private final String doctorServiceBaseUrl;
+    private final DoctorServiceClient doctorServiceClient;
 
-    public DoctorClientAdapter(
-            RestTemplate restTemplate,
-            @Value("${clients.doctor-service.base-url}") String doctorServiceBaseUrl
-    ) {
-        this.restTemplate = restTemplate;
-        this.doctorServiceBaseUrl = trimTrailingSlash(doctorServiceBaseUrl);
+    public DoctorClientAdapter(DoctorServiceClient doctorServiceClient) {
+        this.doctorServiceClient = doctorServiceClient;
     }
 
     @Override
     public boolean existsById(UUID doctorId) {
         try {
-            ResponseEntity<Void> response = restTemplate.getForEntity(
-                    doctorServiceBaseUrl + "/doctors/{doctorId}",
-                    Void.class,
-                    doctorId
-            );
-
-            return response.getStatusCode().is2xxSuccessful();
-        } catch (HttpClientErrorException.NotFound exception) {
+            doctorServiceClient.getDoctorById(doctorId);
+            return true;
+        } catch (FeignException.NotFound exception) {
             return false;
-        } catch (RestClientException exception) {
+        } catch (FeignException exception) {
             throw new DoctorServiceUnavailableException(exception);
         }
     }
 
-    private String trimTrailingSlash(String value) {
-        if (value.endsWith("/")) {
-            return value.substring(0, value.length() - 1);
+    @Override
+    public DoctorSlot getSlot(UUID doctorId, UUID slotId) {
+        try {
+            List<DoctorServiceClient.DoctorSlotResponse> slots = doctorServiceClient.getSlots(doctorId);
+            return slots.stream()
+                    .filter(slot -> slot.id().equals(slotId))
+                    .findFirst()
+                    .map(this::toDoctorSlot)
+                    .orElseThrow(() -> new SlotNotFoundException(doctorId, slotId));
+        } catch (FeignException.NotFound exception) {
+            return throwDoctorNotFound(doctorId);
+        } catch (FeignException exception) {
+            throw new DoctorServiceUnavailableException(exception);
         }
+    }
 
-        return value;
+    @Override
+    public DoctorSlot bookSlot(UUID doctorId, UUID slotId) {
+        try {
+            return toDoctorSlot(doctorServiceClient.bookSlot(doctorId, slotId));
+        } catch (FeignException.NotFound exception) {
+            return throwDoctorNotFound(doctorId);
+        } catch (FeignException.BadRequest exception) {
+            throw new IllegalStateException("Slot cannot be booked: " + slotId, exception);
+        } catch (FeignException exception) {
+            throw new DoctorServiceUnavailableException(exception);
+        }
+    }
+
+    @Override
+    public void cancelSlotBooking(UUID doctorId, UUID slotId) {
+        try {
+            doctorServiceClient.cancelSlotBooking(doctorId, slotId);
+        } catch (FeignException exception) {
+            throw new DoctorServiceUnavailableException(exception);
+        }
+    }
+
+    private DoctorSlot toDoctorSlot(DoctorServiceClient.DoctorSlotResponse response) {
+        return new DoctorSlot(
+                response.id(),
+                response.doctorId(),
+                response.startTime(),
+                response.endTime(),
+                response.booked()
+        );
+    }
+
+    private DoctorSlot throwDoctorNotFound(UUID doctorId) {
+        throw new com.group01.appointment.application.exception.DoctorNotFoundException(doctorId);
     }
 }

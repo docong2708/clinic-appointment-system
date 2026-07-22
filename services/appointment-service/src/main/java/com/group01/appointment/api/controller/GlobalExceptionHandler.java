@@ -5,18 +5,28 @@ import com.group01.appointment.application.exception.ExternalServiceException;
 import com.group01.appointment.application.exception.ResourceNotFoundException;
 import com.group01.appointment.domain.exception.DomainException;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.NestedExceptionUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    public void handleClientAbort(AsyncRequestNotUsableException exception, HttpServletRequest request) {
+        log.debug("Client disconnected before response completed path={} reason={}",
+                request.getRequestURI(), rootCauseMessage(exception));
+    }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFound(
@@ -67,6 +77,15 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, "Validation failed", request, details);
     }
 
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleUnexpected(
+            Exception exception,
+            HttpServletRequest request
+    ) {
+        log.error("Unhandled exception path={} rootCause={}", request.getRequestURI(), rootCauseMessage(exception), exception);
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected server error", request, null);
+    }
+
     private ResponseEntity<ErrorResponse> buildResponse(
             HttpStatus status,
             String message,
@@ -83,5 +102,12 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(status).body(response);
+    }
+
+    private String rootCauseMessage(Throwable exception) {
+        Throwable rootCause = NestedExceptionUtils.getMostSpecificCause(exception);
+        return rootCause == null || rootCause.getMessage() == null || rootCause.getMessage().isBlank()
+                ? exception.getClass().getSimpleName()
+                : rootCause.getMessage();
     }
 }

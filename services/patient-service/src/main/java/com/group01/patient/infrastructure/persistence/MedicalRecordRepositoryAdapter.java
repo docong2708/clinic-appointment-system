@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public class MedicalRecordRepositoryAdapter implements MedicalRecordRepository {
@@ -29,13 +30,13 @@ public class MedicalRecordRepositoryAdapter implements MedicalRecordRepository {
     }
 
     @Override
-    public Optional<MedicalRecordAggregate> findById(Long id) {
+    public Optional<MedicalRecordAggregate> findById(UUID id) {
         return medicalRecordJpaRepository.findById(id)
                 .map(medicalRecordMapper::toAggregate);
     }
 
     @Override
-    public List<MedicalRecordAggregate> findByPatientId(Long patientId) {
+    public List<MedicalRecordAggregate> findByPatientId(UUID patientId) {
         return medicalRecordJpaRepository.findByPatientId(patientId)
                 .stream()
                 .map(medicalRecordMapper::toAggregate)
@@ -43,7 +44,7 @@ public class MedicalRecordRepositoryAdapter implements MedicalRecordRepository {
     }
 
     @Override
-    public void deleteById(Long id) {
+    public void deleteById(UUID id) {
         medicalRecordJpaRepository.deleteById(id);
     }
 }
