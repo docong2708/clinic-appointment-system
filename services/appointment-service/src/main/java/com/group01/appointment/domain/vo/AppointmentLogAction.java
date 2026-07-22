@@ -10,4 +10,10 @@ public enum AppointmentLogAction {
     PAYMENT_EXPIRED,
     PAYMENT_DEFERRED,
     COMPLETE
+    COMPLETE,
+    DOCTOR_CONFIRM,
+    DOCTOR_CANCEL,
+    CHECK_IN,
+    CHECK_OUT,
+    MARK_NOT_CHECKIN
 }

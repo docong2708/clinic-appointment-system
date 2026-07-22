@@ -1,8 +1,10 @@
 package com.group01.doctor.application.mapper;
 
 import com.group01.doctor.application.dto.DoctorDto;
+import com.group01.doctor.application.dto.DoctorLeaveDto;
 import com.group01.doctor.application.dto.DoctorProfileResponse;
 import com.group01.doctor.application.dto.SlotDto;
+import com.group01.doctor.domain.model.DoctorLeave;
 import com.group01.doctor.domain.model.Doctor;
 import com.group01.doctor.domain.model.Slot;
 import org.springframework.stereotype.Component;
@@ -61,6 +63,18 @@ public class DoctorAppMapper {
                 .endTime(slot.getEndTime())
                 .booked(slot.isBooked())
                 .status(slot.getStatus() != null ? slot.getStatus().name() : null)
+                .build();
+    }
+
+    public DoctorLeaveDto toDto(DoctorLeave doctorLeave) {
+        if (doctorLeave == null) return null;
+        return DoctorLeaveDto.builder()
+                .id(doctorLeave.getId().value())
+                .doctorId(doctorLeave.getDoctorId().value())
+                .startDate(doctorLeave.getStartDate())
+                .endDate(doctorLeave.getEndDate())
+                .reason(doctorLeave.getReason())
+                .status(doctorLeave.getStatus().name())
                 .build();
     }
 }

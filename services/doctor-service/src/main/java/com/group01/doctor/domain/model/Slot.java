@@ -62,4 +62,18 @@ public class Slot {
     public void cancelBooking() {
         this.status = SlotStatus.AVAILABLE;
     }
+
+    public void block() {
+        if (this.status == SlotStatus.BOOKED) {
+            throw new IllegalStateException("Booked slot cannot be blocked");
+        }
+        this.status = SlotStatus.BLOCKED;
+    }
+
+    public void makeAvailable() {
+        if (this.status == SlotStatus.BOOKED) {
+            throw new IllegalStateException("Booked slot cannot be changed to available");
+        }
+        this.status = SlotStatus.AVAILABLE;
+    }
 }

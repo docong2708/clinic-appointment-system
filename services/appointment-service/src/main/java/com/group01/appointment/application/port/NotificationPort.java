@@ -14,4 +14,17 @@ public interface NotificationPort {
     void publishAppointmentCanceled(AppointmentCanceledEvent event);
 
     void publishAppointmentUpdated(AppointmentUpdatedEvent event);
+
+    void sendDoctorCancellationEmail(DoctorCancellationNotification notification);
+
+    record DoctorCancellationNotification(
+            java.util.UUID appointmentId,
+            java.util.UUID patientId,
+            String patientEmail,
+            String patientName,
+            java.time.LocalDateTime appointmentStartTime,
+            java.time.LocalDateTime appointmentEndTime,
+            String cancelReason
+    ) {
+    }
 }

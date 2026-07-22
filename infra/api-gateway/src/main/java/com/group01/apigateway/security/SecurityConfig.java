@@ -96,6 +96,8 @@ public class SecurityConfig {
                         .hasAnyRole("PATIENT", "DOCTOR", "ADMIN")
                         .pathMatchers(HttpMethod.POST, "/api/appointments/*/complete").hasAnyRole("DOCTOR", "ADMIN")
                         .pathMatchers(HttpMethod.GET, "/api/appointments/doctor/**").hasRole("DOCTOR")
+                        .pathMatchers(HttpMethod.GET, "/api/doctor/appointments", "/api/doctor/appointments/**").hasRole("DOCTOR")
+                        .pathMatchers(HttpMethod.POST, "/api/doctor/appointments/**").hasRole("DOCTOR")
 
                         .pathMatchers(HttpMethod.POST, "/api/payments").hasRole("PATIENT")
                         .pathMatchers(HttpMethod.GET, "/api/payments/**").authenticated()

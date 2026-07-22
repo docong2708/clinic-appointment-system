@@ -30,6 +30,8 @@ public interface SpringDataDoctorRepository extends JpaRepository<DoctorJpaEntit
     List<String> findDistinctActiveSpecializations();
 
     java.util.Optional<DoctorJpaEntity> findByUserId(UUID userId);
+    @Query("select d.id from DoctorJpaEntity d where d.userId = :userId")
+    java.util.Optional<UUID> findIdByUserId(@Param("userId") UUID userId);
     List<DoctorJpaEntity> findBySpecializationContainingIgnoreCase(String specialization);
 
     @Query("""

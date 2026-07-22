@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.group01.doctor.application.dto.SlotDto;
 import com.group01.doctor.application.mapper.DoctorAppMapper;
+import com.group01.doctor.domain.exception.BadRequestException;
 import com.group01.doctor.domain.exception.DoctorNotFoundException;
 import com.group01.doctor.domain.exception.DomainException;
 import com.group01.doctor.domain.model.Doctor;
@@ -15,6 +16,8 @@ import com.group01.doctor.domain.repository.DoctorRepository;
 import com.group01.doctor.domain.valueobject.DoctorId;
 
 import lombok.RequiredArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +35,10 @@ public class ReserveSlotUseCase {
                 .filter(s -> s.getId().value().equals(slotId))
                 .findFirst()
                 .orElseThrow(() -> new DomainException("Không tìm thấy khung giờ với mã " + slotId));
+
+        if (!slot.getStartTime().isAfter(LocalDateTime.now())) {
+            throw new BadRequestException("Không thể chọn hoặc đặt slot khám trong quá khứ");
+        }
 
         slot.reserve();
 

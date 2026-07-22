@@ -10,6 +10,7 @@ public interface DoctorClientPort {
     boolean existsById(UUID doctorId);
 
     DoctorProfile getDoctor(UUID doctorId);
+    UUID getDoctorIdByUserId(UUID userId);
 
     DoctorSlot getSlot(UUID doctorId, UUID slotId);
 
@@ -20,6 +21,8 @@ public interface DoctorClientPort {
     DoctorSlot bookSlot(UUID doctorId, UUID slotId);
 
     void cancelSlotBooking(UUID doctorId, UUID slotId);
+
+    void deleteSlot(UUID doctorId, UUID slotId);
 
     record DoctorSlot(
             UUID id,

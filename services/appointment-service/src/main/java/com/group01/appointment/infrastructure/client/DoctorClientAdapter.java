@@ -32,16 +32,27 @@ public class DoctorClientAdapter implements DoctorClientPort {
         }
     }
 
-    @Override
-    public DoctorProfile getDoctor(UUID doctorId) {
-        try {
-            return toDoctorProfile(doctorServiceClient.getDoctorById(doctorId));
-        } catch (FeignException.NotFound exception) {
-            throw new com.group01.appointment.application.exception.DoctorNotFoundException(doctorId);
-        } catch (FeignException exception) {
-            throw new DoctorServiceUnavailableException(exception);
-        }
+@Override
+public DoctorProfile getDoctor(UUID doctorId) {
+    try {
+        return toDoctorProfile(doctorServiceClient.getDoctorById(doctorId));
+    } catch (FeignException.NotFound exception) {
+        throw new com.group01.appointment.application.exception.DoctorNotFoundException(doctorId);
+    } catch (FeignException exception) {
+        throw new DoctorServiceUnavailableException(exception);
     }
+}
+
+@Override
+public UUID getDoctorIdByUserId(UUID userId) {
+    try {
+        return doctorServiceClient.getDoctorByUserId(userId).doctorId();
+    } catch (FeignException.NotFound exception) {
+        throw new com.group01.appointment.application.exception.DoctorNotFoundException(userId);
+    } catch (FeignException exception) {
+        throw new DoctorServiceUnavailableException(exception);
+    }
+}
 
     @Override
     public DoctorSlot getSlot(UUID doctorId, UUID slotId) {
@@ -105,6 +116,15 @@ public class DoctorClientAdapter implements DoctorClientPort {
     public void cancelSlotBooking(UUID doctorId, UUID slotId) {
         try {
             doctorServiceClient.cancelSlotBooking(doctorId, slotId);
+        } catch (FeignException exception) {
+            throw new DoctorServiceUnavailableException(exception);
+        }
+    }
+
+    @Override
+    public void deleteSlot(UUID doctorId, UUID slotId) {
+        try {
+            doctorServiceClient.deleteSlot(doctorId, slotId);
         } catch (FeignException exception) {
             throw new DoctorServiceUnavailableException(exception);
         }

@@ -158,7 +158,7 @@ public class Appointment {
                 bookingSource,
                 actorId,
                 actorId,
-                null,
+                now,
                 null,
                 null,
                 now,

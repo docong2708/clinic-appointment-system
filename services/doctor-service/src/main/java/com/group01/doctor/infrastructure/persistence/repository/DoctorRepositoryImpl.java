@@ -33,6 +33,17 @@ public class DoctorRepositoryImpl implements DoctorRepository {
     }
 
     @Override
+    public boolean existsById(DoctorId id) {
+        return jpaRepository.existsById(id.value());
+    }
+
+    @Override
+    public Optional<DoctorId> findIdByUserId(UUID userId) {
+        return jpaRepository.findIdByUserId(userId)
+                .map(DoctorId::of);
+    }
+
+    @Override
     public Optional<Doctor> findByUserId(UUID userId) {
         return jpaRepository.findByUserId(userId)
                 .map(mapper::toDomain);

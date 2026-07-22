@@ -22,7 +22,7 @@ public class ProfileProvisioningRestClient implements ProfileProvisioningClient,
     public ProfileProvisioningRestClient(
             RestClient.Builder restClientBuilder,
             @Value("${clients.doctor-service.base-url:http://localhost:8082}") String doctorServiceBaseUrl,
-            @Value("${clients.patient-service.base-url:http://localhost:8084}") String patientServiceBaseUrl
+            @Value("${clients.patient-service.base-url:http://localhost:8080}") String patientServiceBaseUrl
     ) {
         this.doctorClient = restClientBuilder.clone().baseUrl(doctorServiceBaseUrl).build();
         this.patientClient = restClientBuilder.clone().baseUrl(patientServiceBaseUrl).build();

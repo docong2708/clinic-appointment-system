@@ -12,6 +12,8 @@ import java.util.UUID;
 
 public interface DoctorRepository {
     Optional<Doctor> findById(DoctorId id);
+    boolean existsById(DoctorId id);
+    Optional<DoctorId> findIdByUserId(UUID userId);
     Optional<Doctor> findByUserId(UUID userId);
     List<Doctor> findAll();
     List<Doctor> findBySpecialization(String specialization);

@@ -7,9 +7,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
-@FeignClient(name = "patient-service-client", url = "${clients.patient-service.base-url}")
+@FeignClient(name = "patient-service-client", url = "${clients.patient-service.base-url:${PATIENT_SERVICE_URL:http://localhost:8084}}")
 public interface PatientServiceClient {
 
     @GetMapping("/api/patients/by-user/{userId}")
@@ -20,6 +21,15 @@ public interface PatientServiceClient {
 
     @PostMapping("/api/patients")
     PatientResponse createPatient(@RequestBody CreatePatientRequest request);
+
+    @GetMapping("/api/internal/patients/{patientId}/doctor-view")
+    PatientConsultationResponse getPatientConsultationView(@PathVariable("patientId") UUID patientId);
+
+    @PostMapping("/api/internal/patients/{patientId}/consultations")
+    MedicalRecordResponse createConsultationRecord(
+            @PathVariable("patientId") UUID patientId,
+            @RequestBody CreateConsultationMedicalRecordRequest request
+    );
 
     record CreatePatientRequest(
             UUID userId,
@@ -39,6 +49,50 @@ public interface PatientServiceClient {
             LocalDate dateOfBirth,
             String gender,
             String contactInformation
+    ) {
+    }
+
+    record PatientConsultationResponse(
+            PatientResponse patient,
+            List<MedicalRecordResponse> medicalRecords
+    ) {
+    }
+
+    record MedicalRecordResponse(
+            UUID id,
+            UUID patientId,
+            LocalDate recordDate,
+            String diagnosis,
+            String treatment,
+            String notes,
+            List<PrescriptionResponse> prescriptions
+    ) {
+    }
+
+    record PrescriptionResponse(
+            UUID id,
+            UUID medicalRecordId,
+            String medicationName,
+            String dosage,
+            String frequency,
+            String duration
+    ) {
+    }
+
+    record CreateConsultationMedicalRecordRequest(
+            LocalDate recordDate,
+            String diagnosis,
+            String treatment,
+            String notes,
+            List<PrescriptionRequest> prescriptions
+    ) {
+    }
+
+    record PrescriptionRequest(
+            String medicationName,
+            String dosage,
+            String frequency,
+            String duration
     ) {
     }
 }
