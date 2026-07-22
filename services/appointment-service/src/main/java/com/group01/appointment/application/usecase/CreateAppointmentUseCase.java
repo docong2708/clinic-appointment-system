@@ -2,6 +2,7 @@ package com.group01.appointment.application.usecase;
 
 import com.group01.appointment.application.command.CreateAppointmentCommand;
 import com.group01.appointment.application.event.AppointmentEventMapper;
+import com.group01.appointment.application.exception.BadRequestException;
 import com.group01.appointment.application.exception.DoctorNotFoundException;
 import com.group01.appointment.application.exception.PatientNotFoundException;
 import com.group01.appointment.application.port.DoctorClientPort;
@@ -19,6 +20,8 @@ import com.group01.appointment.domain.vo.DoctorId;
 import com.group01.appointment.domain.vo.PatientId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Service
 public class CreateAppointmentUseCase {
@@ -56,6 +59,9 @@ public class CreateAppointmentUseCase {
         DoctorSlot slot = doctorClientPort.getSlot(command.doctorId(), command.slotId());
         if (slot.booked()) {
             throw new IllegalStateException("Slot is already booked");
+        }
+        if (!LocalDateTime.now().isBefore(slot.startTime())) {
+            throw new BadRequestException("Không thể chọn hoặc đặt slot khám trong quá khứ");
         }
 
         DoctorSlot bookedSlot = doctorClientPort.bookSlot(command.doctorId(), command.slotId());

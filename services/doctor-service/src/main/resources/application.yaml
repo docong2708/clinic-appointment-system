@@ -3,3 +3,7 @@ spring:
     name: doctor-service
   config:
     import: optional:configserver:${SPRING_CLOUD_CONFIG_URI:http://localhost:8888}
+
+app:
+  flyway:
+    repair-on-validation-error: true

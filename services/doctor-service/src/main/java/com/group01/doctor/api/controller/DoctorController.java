@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.group01.commonsecurity.currentuser.CurrentUserHolder;
 import com.group01.doctor.application.dto.CreateDoctorRequest;
 import com.group01.doctor.application.dto.DoctorDto;
+import com.group01.doctor.application.dto.DoctorIdentityResponse;
 import com.group01.doctor.application.dto.DoctorProfileResponse;
 import com.group01.doctor.application.dto.UpdateDoctorRequest;
 import com.group01.doctor.application.dto.UpdateProfileRequest;
@@ -91,6 +92,12 @@ public class DoctorController {
         UUID userId = CurrentUserHolder.require().userId();
         DoctorProfileResponse profile = getDoctorProfileUseCase.execute(userId);
         return ResponseEntity.ok(profile);
+    }
+
+    @GetMapping("/internal/by-user/{userId}")
+    public ResponseEntity<DoctorIdentityResponse> getDoctorIdentityByUserId(@PathVariable("userId") UUID userId) {
+        DoctorProfileResponse profile = getDoctorProfileUseCase.execute(userId);
+        return ResponseEntity.ok(new DoctorIdentityResponse(profile.getId(), profile.getUserId(), profile.getName()));
     }
 
     @PutMapping("/me")

@@ -210,8 +210,7 @@ public class RabbitMQNotificationListener {
         if (payload instanceof AppointmentCreatedEvent event && hasText(event.patientEmail())) {
             return event.patientEmail();
         }
-        throw new IllegalStateException("Notification destination email is missing for payload type: "
-                + payload.getClass().getSimpleName());
+        return "patient-notification";
     }
 
     private boolean hasText(String value) {

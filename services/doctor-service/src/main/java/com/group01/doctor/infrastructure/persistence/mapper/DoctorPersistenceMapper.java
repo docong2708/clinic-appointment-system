@@ -3,7 +3,6 @@ package com.group01.doctor.infrastructure.persistence.mapper;
 import com.group01.doctor.domain.model.Doctor;
 import com.group01.doctor.domain.model.Slot;
 import com.group01.doctor.domain.valueobject.DoctorId;
-import com.group01.doctor.domain.valueobject.SlotId;
 import com.group01.doctor.infrastructure.persistence.entity.DoctorJpaEntity;
 import com.group01.doctor.infrastructure.persistence.entity.SlotJpaEntity;
 import org.springframework.stereotype.Component;
@@ -14,6 +13,11 @@ import java.util.stream.Collectors;
 
 @Component
 public class DoctorPersistenceMapper {
+    private final SlotPersistenceMapper slotPersistenceMapper;
+
+    public DoctorPersistenceMapper(SlotPersistenceMapper slotPersistenceMapper) {
+        this.slotPersistenceMapper = slotPersistenceMapper;
+    }
 
     public DoctorJpaEntity toJpaEntity(Doctor domain) {
         if (domain == null) return null;
@@ -33,13 +37,7 @@ public class DoctorPersistenceMapper {
 
         if (domain.getSlots() != null) {
             List<SlotJpaEntity> slots = domain.getSlots().stream()
-                    .map(slot -> SlotJpaEntity.builder()
-                            .id(slot.getId().value())
-                            .doctor(jpaEntity)
-                            .startTime(slot.getStartTime())
-                            .endTime(slot.getEndTime())
-                            .status(slot.getStatus())
-                            .build())
+                    .map(slot -> slotPersistenceMapper.toJpaEntity(slot, jpaEntity))
                     .collect(Collectors.toList());
             jpaEntity.setSlots(slots);
         }
@@ -52,13 +50,7 @@ public class DoctorPersistenceMapper {
         List<Slot> slots = new ArrayList<>();
         if (entity.getSlots() != null) {
             slots = entity.getSlots().stream()
-                    .map(slotEntity -> new Slot(
-                            SlotId.of(slotEntity.getId()),
-                            DoctorId.of(slotEntity.getDoctor().getId()),
-                            slotEntity.getStartTime(),
-                            slotEntity.getEndTime(),
-                            slotEntity.getStatus()
-                    ))
+                    .map(slotPersistenceMapper::toDomain)
                     .collect(Collectors.toList());
         }
 

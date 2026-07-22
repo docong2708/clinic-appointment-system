@@ -1,6 +1,8 @@
 package com.group01.doctor.api.exception;
 
 import com.group01.doctor.domain.exception.DoctorNotFoundException;
+import com.group01.doctor.domain.exception.DoctorLeaveConflictException;
+import com.group01.doctor.domain.exception.BadRequestException;
 import com.group01.doctor.domain.exception.DomainException;
 import com.group01.doctor.domain.exception.SlotOverlapException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -43,9 +45,21 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.CONFLICT, ex.getMessage(), request, null);
     }
 
+    @ExceptionHandler(DoctorLeaveConflictException.class)
+    public ResponseEntity<ErrorResponse> handleDoctorLeaveConflict(DoctorLeaveConflictException ex, HttpServletRequest request) {
+        log.warn("Doctor leave conflict: {}", ex.getMessage());
+        return buildResponse(HttpStatus.CONFLICT, ex.getMessage(), request, null);
+    }
+
     @ExceptionHandler({DomainException.class, IllegalArgumentException.class})
     public ResponseEntity<ErrorResponse> handleDomainException(RuntimeException ex, HttpServletRequest request) {
         log.warn("Domain exception: {}", ex.getMessage());
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException ex, HttpServletRequest request) {
+        log.warn("Bad request: {}", ex.getMessage());
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request, null);
     }
 

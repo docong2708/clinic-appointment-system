@@ -80,6 +80,8 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.POST, "/api/appointments").hasRole("PATIENT")
                         .pathMatchers(HttpMethod.GET, "/api/appointments/my").hasRole("PATIENT")
                         .pathMatchers(HttpMethod.GET, "/api/appointments/doctor/**").hasRole("DOCTOR")
+                        .pathMatchers(HttpMethod.GET, "/api/doctor/appointments", "/api/doctor/appointments/**").hasRole("DOCTOR")
+                        .pathMatchers(HttpMethod.POST, "/api/doctor/appointments/**").hasRole("DOCTOR")
 
                         .pathMatchers("/api/patients/**").hasAnyRole("ADMIN", "PATIENT")
                         .pathMatchers("/api/notifications/**").authenticated()
