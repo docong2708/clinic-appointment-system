@@ -36,28 +36,30 @@ public class RabbitMQNotificationListener {
     @Transactional
     public void handleAppointmentCreated(AppointmentCreatedEvent event) {
         log.info("Received AppointmentCreatedEvent: {}", event.eventId());
-        processEvent(event.eventId(), "APPOINTMENT_CREATED", event.patientUserId(), event);
+        java.util.UUID recipientId = event.patientUserId() != null ? event.patientUserId() : (event.patientId() != null ? event.patientId() : java.util.UUID.randomUUID());
+        processEvent(event.eventId(), "APPOINTMENT_CREATED", recipientId, event);
     }
 
     @RabbitHandler
     @Transactional
     public void handleAppointmentConfirmed(AppointmentConfirmedEvent event) {
-        log.info("Received AppointmentConfirmedEvent: {}", event.eventId());
-        processEvent(event.eventId(), "APPOINTMENT_CONFIRMED", event.patientUserId(), event);
+        log.info("Ignoring AppointmentConfirmedEvent email: {}", event.eventId());
     }
 
     @RabbitHandler
     @Transactional
     public void handleAppointmentCanceled(AppointmentCanceledEvent event) {
         log.info("Received AppointmentCanceledEvent: {}", event.eventId());
-        processEvent(event.eventId(), "APPOINTMENT_CANCELED", event.patientUserId(), event);
+        java.util.UUID recipientId = event.patientUserId() != null ? event.patientUserId() : (event.patientId() != null ? event.patientId() : java.util.UUID.randomUUID());
+        processEvent(event.eventId(), "APPOINTMENT_CANCELED", recipientId, event);
     }
 
     @RabbitHandler
     @Transactional
     public void handleAppointmentUpdated(AppointmentUpdatedEvent event) {
         log.info("Received AppointmentUpdatedEvent: {}", event.eventId());
-        processEvent(event.eventId(), "APPOINTMENT_UPDATED", event.patientUserId(), event);
+        java.util.UUID recipientId = event.patientUserId() != null ? event.patientUserId() : (event.patientId() != null ? event.patientId() : java.util.UUID.randomUUID());
+        processEvent(event.eventId(), "APPOINTMENT_UPDATED", recipientId, event);
     }
 
     private void processEvent(java.util.UUID eventId, String eventType, java.util.UUID recipientId, Object payload) {
@@ -215,6 +217,7 @@ public class RabbitMQNotificationListener {
         return "Bạn có thông báo mới về lịch hẹn.";
     }
 
+<<<<<<< HEAD
 private String destinationFor(Object payload) {
     if (payload instanceof AppointmentCreatedEvent event
             && hasText(event.patientEmail())) {
@@ -238,6 +241,27 @@ private String destinationFor(Object payload) {
 
     return "patient@clinic.com";
 }
+=======
+    private String destinationFor(Object payload) {
+        if (payload instanceof AppointmentCreatedEvent event && hasText(event.patientEmail())) {
+            return event.patientEmail();
+        }
+        if (payload instanceof AppointmentConfirmedEvent event) {
+            return event.patientId() != null ? event.patientId().toString() : "patient@clinic.com";
+        }
+        if (payload instanceof AppointmentCanceledEvent event) {
+            if (hasText(event.patientEmail())) {
+                return event.patientEmail();
+            }
+            return "patient@clinic.com";
+        }
+        if (payload instanceof AppointmentUpdatedEvent event && hasText(event.patientEmail())) {
+            return event.patientEmail();
+        }
+
+        return "patient@clinic.com";
+    }
+>>>>>>> 9afc03d (fix(notification): add recipient email fallback, mock mail sender default, and skip confirmation email)
 
     private boolean hasText(String value) {
         return value != null && !value.isBlank();

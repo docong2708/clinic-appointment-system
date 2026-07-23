@@ -41,4 +41,4 @@ mail:
 
 notification:
   sender:
-    mock: ${NOTIFICATION_SENDER_MOCK:false}
+    mock: ${NOTIFICATION_SENDER_MOCK:true}

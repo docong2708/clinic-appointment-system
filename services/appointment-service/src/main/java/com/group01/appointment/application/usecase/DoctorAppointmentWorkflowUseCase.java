@@ -134,7 +134,6 @@ public class DoctorAppointmentWorkflowUseCase {
         appointment.cancelByDoctor(CancelReason.of(reason), doctorUserId);
         AppointmentAggregate saved = persist(appointment);
 
-        PatientClientPort.PatientProfile patient = patientClientPort.getPatientProfile(saved.getPatientId().value());
         AppointmentNotificationDetails notificationDetails = notificationDetailsResolver.resolve(saved);
         notificationPort.publishAppointmentCanceled(AppointmentEventMapper.canceled(saved, notificationDetails));
 

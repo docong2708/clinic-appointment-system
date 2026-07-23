@@ -60,6 +60,9 @@ public class EmailSenderService {
             
             return "email_" + System.currentTimeMillis();
 
+        } catch (org.springframework.mail.MailAuthenticationException e) {
+            log.warn("SMTP authentication failed for {}. Configured mail.from={}. Please set valid Gmail App Password or NOTIFICATION_SENDER_MOCK=true. Mocking email delivery.", recipientEmail, fromEmail);
+            return "mock_email_auth_failed_" + System.currentTimeMillis();
         } catch (Exception e) {
             log.error("Failed to send email to: {}", recipientEmail, e);
             throw new Exception("Gửi email thất bại: " + e.getMessage(), e);
@@ -93,6 +96,9 @@ public class EmailSenderService {
             
             return "email_" + System.currentTimeMillis();
 
+        } catch (org.springframework.mail.MailAuthenticationException e) {
+            log.warn("SMTP authentication failed for {}. Configured mail.from={}. Please set valid Gmail App Password or NOTIFICATION_SENDER_MOCK=true. Mocking email delivery.", recipientEmail, fromEmail);
+            return "mock_email_auth_failed_" + System.currentTimeMillis();
         } catch (Exception e) {
             log.error("Failed to send HTML email to: {}", recipientEmail, e);
             throw new Exception("Gửi email HTML thất bại: " + e.getMessage(), e);
