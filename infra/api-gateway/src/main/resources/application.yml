@@ -3,3 +3,11 @@ spring:
     name: api-gateway
   config:
     import: optional:configserver:${SPRING_CLOUD_CONFIG_URI:http://localhost:8888}
+
+app:
+  auth:
+    jwt-issuer: clinic-appointment-system
+    jwt-secret: ${APP_AUTH_JWT_SECRET:clinic-appointment-system-jwt-secret-key-32bytes-long-secret-2026}
+    access-token-max-age-seconds: 3600
+    refresh-token-max-age-seconds: 604800
+    frontend-origin: http://localhost:5173

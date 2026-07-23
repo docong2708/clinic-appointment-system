@@ -93,6 +93,7 @@ public class RabbitMQNotificationListener {
                     .aggregateType("Appointment")
                     .aggregateId(aggregateId(payload, eventId))
                     .sourceInboxEventId(inboxEvent.getId())
+                    .payload(payloadFor(payload))
                     .build();
 
             createNotificationUseCase.handle(command);
@@ -214,23 +215,18 @@ public class RabbitMQNotificationListener {
         return "Bạn có thông báo mới về lịch hẹn.";
     }
 
-private String destinationFor(Object payload) {
-    if (payload instanceof AppointmentCreatedEvent event && hasText(event.patientEmail())) {
-        return event.patientEmail();
+    private String destinationFor(Object payload) {
+        if (payload instanceof AppointmentCreatedEvent event && hasText(event.patientEmail())) {
+            return event.patientEmail();
+        }
+        if (payload instanceof AppointmentCanceledEvent event && hasText(event.patientEmail())) {
+            return event.patientEmail();
+        }
+        if (payload instanceof AppointmentUpdatedEvent event && hasText(event.patientEmail())) {
+            return event.patientEmail();
+        }
+        return "patient@clinic.com";
     }
-    if (payload instanceof AppointmentConfirmedEvent event && hasText(event.patientEmail())) {
-        return event.patientEmail();
-    }
-    if (payload instanceof AppointmentCanceledEvent event && hasText(event.patientEmail())) {
-        return event.patientEmail();
-    }
-    if (payload instanceof AppointmentUpdatedEvent event && hasText(event.patientEmail())) {
-        return event.patientEmail();
-    }
-
-    throw new IllegalStateException("Thiếu email nhận thông báo cho loại payload: "
-            + payload.getClass().getSimpleName());
-}
 
     private boolean hasText(String value) {
         return value != null && !value.isBlank();
@@ -250,5 +246,19 @@ private String destinationFor(Object payload) {
             return event.appointmentId();
         }
         return fallback;
+    }
+
+    private java.util.Map<String, Object> payloadFor(Object payload) {
+        java.util.Map<String, Object> map = new java.util.LinkedHashMap<>();
+        if (payload instanceof AppointmentCanceledEvent event) {
+            map.put("appointmentId", event.appointmentId() != null ? event.appointmentId().toString() : "");
+            map.put("doctorName", hasText(event.doctorName()) ? event.doctorName() : "Bác sĩ phòng khám");
+            map.put("patientName", hasText(event.patientEmail()) ? event.patientEmail() : "Bệnh nhân");
+            map.put("cancelReason", hasText(event.cancelReason()) ? event.cancelReason() : "Bác sĩ hủy lịch khám");
+            map.put("reason", hasText(event.cancelReason()) ? event.cancelReason() : "Bác sĩ hủy lịch khám");
+            map.put("appointmentStartTime", event.startTime() != null ? event.startTime().toString() : "");
+            map.put("appointmentDateTime", event.startTime() != null ? event.startTime().toString() : "");
+        }
+        return map;
     }
 }
