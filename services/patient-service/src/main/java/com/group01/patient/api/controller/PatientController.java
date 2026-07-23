@@ -12,11 +12,8 @@ import com.group01.patient.application.command.CreateMedicalRecordCommand;
 import com.group01.patient.application.command.CreatePatientCommand;
 import com.group01.patient.application.command.UpdateMedicalRecordCommand;
 import com.group01.patient.application.command.UpdatePatientCommand;
-import com.group01.patient.application.command.CreateMedicalRecordCommand;
-import com.group01.patient.application.command.UpdatePatientCommand;
-import com.group01.patient.application.command.UpdateMedicalRecordCommand;
-import com.group01.patient.application.result.MedicalRecordResult;
 import com.group01.patient.application.result.CreatePatientResult;
+import com.group01.patient.application.result.MedicalRecordResult;
 import com.group01.patient.application.usecase.CreateMedicalRecordUseCase;
 import com.group01.patient.application.usecase.CreatePatientUseCase;
 import com.group01.patient.application.usecase.DeleteMedicalRecordUseCase;
@@ -28,8 +25,6 @@ import com.group01.patient.application.usecase.UpdatePatientUseCase;
 import com.group01.patient.domain.exception.PatientNotFoundException;
 import com.group01.patient.infrastructure.persistence.PatientJpaEntity;
 import com.group01.patient.infrastructure.persistence.PatientJpaRepository;
-import com.group01.commonsecurity.currentuser.CurrentUser;
-import com.group01.commonsecurity.currentuser.CurrentUserHolder;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -127,26 +122,6 @@ public class PatientController {
                 userId,
                 toUpdatePatientCommand(request)
         )));
-    }
-
-    @GetMapping("/me")
-    public ResponseEntity<PatientResponse> getMyProfile() {
-        PatientJpaEntity patient = currentPatient();
-        return ResponseEntity.ok(PatientResponse.from(patient));
-    }
-
-    @PutMapping("/me")
-    public ResponseEntity<PatientResponse> updateMyProfile(
-            @Valid @RequestBody UpdatePatientRequest request
-    ) {
-        requireRole("PATIENT");
-        PatientJpaEntity patient = currentPatient();
-        patient.setFirstName(request.firstName());
-        patient.setLastName(request.lastName());
-        patient.setDateOfBirth(request.dateOfBirth());
-        patient.setGender(request.gender());
-        patient.setContactInformation(request.contactInformation());
-        return ResponseEntity.ok(PatientResponse.from(patientJpaRepository.save(patient)));
     }
 
     @GetMapping("/{patientId}")

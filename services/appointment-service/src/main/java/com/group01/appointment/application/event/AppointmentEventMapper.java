@@ -73,13 +73,18 @@ public final class AppointmentEventMapper {
         );
     }
 
-    public static AppointmentConfirmedEvent confirmed(AppointmentAggregate appointment) {
+    public static AppointmentConfirmedEvent confirmed(
+            AppointmentAggregate appointment,
+            AppointmentNotificationDetails details
+    ) {
         LocalDateTime occurredAt = LocalDateTime.now();
 
         return new AppointmentConfirmedEvent(
                 UUID.randomUUID(),
                 appointment.getAppointmentId().value(),
+                details.patientUserId(),
                 appointment.getPatientId().value(),
+                details.patientEmail(),
                 appointment.getDoctorId().value(),
                 appointment.getAppointmentTime().startTime(),
                 appointment.getAppointmentTime().endTime(),

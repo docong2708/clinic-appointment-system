@@ -1,12 +1,13 @@
 package com.group01.appointment.infrastructure.scheduler;
 
+import com.group01.appointment.application.port.DoctorClientPort;
 import com.group01.appointment.domain.aggregate.AppointmentAggregate;
 import com.group01.appointment.domain.repository.AppointmentLogRepository;
 import com.group01.appointment.domain.repository.AppointmentRepository;
 import com.group01.appointment.domain.vo.ActorRole;
+import com.group01.appointment.domain.vo.CancelReason;
 import com.group01.appointment.infrastructure.persistence.AppointmentJpaRepository;
 import com.group01.appointment.infrastructure.persistence.AppointmentMapper;
-import com.group01.appointment.application.port.DoctorClientPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -72,10 +73,10 @@ public class AppointmentStatusScheduler {
         int expiredCount = 0;
         for (AppointmentAggregate appointment : pendingExpired) {
             try {
-                appointment.cancelByDoctor(
+                appointment.cancel(
+                        CancelReason.of("Auto cancelled because appointment start time passed before confirmation"),
                         SYSTEM_ACTOR_ID,
-                        "Tự động hủy do quá hạn khung giờ khám mà chưa được xác nhận",
-                        LocalDateTime.now()
+                        ActorRole.SYSTEM
                 );
                 AppointmentAggregate saved = appointmentRepository.save(appointment);
                 appointmentLogRepository.saveAll(appointment.getLogs());
