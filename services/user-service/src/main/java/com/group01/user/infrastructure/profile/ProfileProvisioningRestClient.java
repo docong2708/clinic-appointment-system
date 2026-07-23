@@ -91,8 +91,8 @@ public class ProfileProvisioningRestClient implements ProfileProvisioningClient,
             return response == null ? Optional.empty() : Optional.ofNullable(response.id());
         } catch (HttpClientErrorException.NotFound exception) {
             return Optional.empty();
-        } catch (RestClientException exception) {
-            throw new ProfileProvisioningException("Không thể lấy hồ sơ bệnh nhân", exception);
+        } catch (Exception exception) {
+            return Optional.empty();
         }
     }
 

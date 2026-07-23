@@ -13,15 +13,20 @@ import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 /**
  * Service to send emails via SMTP.
  * Handles actual email delivery to mail provider.
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class EmailSenderService {
     private final JavaMailSender mailSender;
+
+    public EmailSenderService(@Autowired(required = false) JavaMailSender mailSender) {
+        this.mailSender = mailSender;
+    }
 
     @Value("${mail.from:noreply@example.com}")
     private String fromEmail;
@@ -39,6 +44,10 @@ public class EmailSenderService {
      * @throws Exception if sending fails
      */
     public String sendEmail(String recipientEmail, String subject, String body) throws Exception {
+        if (mailSender == null) {
+            log.warn("JavaMailSender is not configured. Email sending to {} skipped.", recipientEmail);
+            return "mock_email_" + System.currentTimeMillis();
+        }
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromAddress());
@@ -67,6 +76,10 @@ public class EmailSenderService {
      * @throws Exception if sending fails
      */
     public String sendHtmlEmail(String recipientEmail, String subject, String htmlBody) throws Exception {
+        if (mailSender == null) {
+            log.warn("JavaMailSender is not configured. HTML email sending to {} skipped.", recipientEmail);
+            return "mock_email_" + System.currentTimeMillis();
+        }
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, false, StandardCharsets.UTF_8.name());

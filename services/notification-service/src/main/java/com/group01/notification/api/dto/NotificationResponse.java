@@ -21,4 +21,5 @@ public class NotificationResponse {
     private Short priority;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime readAt;
 }

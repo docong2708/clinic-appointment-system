@@ -1,4 +1,3 @@
-
 networks:
   clinic-network:
     driver: bridge
@@ -164,7 +163,7 @@ services:
       dockerfile: infra/config-server/Dockerfile
     container_name: config-server
     ports:
-      - "8888:8888"
+      - "8889:8888"
     volumes:
       - ../clinic-config-repo:/config-repo
     environment:
@@ -177,10 +176,11 @@ services:
     networks:
       - clinic-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8888/actuator/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 20s
 
   eureka-server:
     build:
@@ -196,12 +196,13 @@ services:
       - clinic-network
     depends_on:
       config-server:
-        condition: service_healthy
+        condition: service_started
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8761/actuator/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 20s
 
   api-gateway:
     build:
@@ -221,7 +222,7 @@ services:
       - clinic-network
     depends_on:
       eureka-server:
-        condition: service_healthy
+        condition: service_started
 
   # ==========================================
   # 4. BUSINESS MICROSERVICES
@@ -249,7 +250,7 @@ services:
       - clinic-network
     depends_on:
       eureka-server:
-        condition: service_healthy
+        condition: service_started
       appointment-db:
         condition: service_healthy
       rabbitmq:
@@ -272,7 +273,7 @@ services:
       - clinic-network
     depends_on:
       eureka-server:
-        condition: service_healthy
+        condition: service_started
       payment-db:
         condition: service_healthy
       appointment-service:
@@ -297,7 +298,7 @@ services:
       - clinic-network
     depends_on:
       eureka-server:
-        condition: service_healthy
+        condition: service_started
       doctor-db:
         condition: service_healthy
       rabbitmq:
@@ -323,7 +324,7 @@ services:
       - clinic-network
     depends_on:
       eureka-server:
-        condition: service_healthy
+        condition: service_started
       notification-db:
         condition: service_healthy
       rabbitmq:
@@ -348,7 +349,7 @@ services:
       - clinic-network
     depends_on:
       eureka-server:
-        condition: service_healthy
+        condition: service_started
       patient-db:
         condition: service_healthy
       rabbitmq:
@@ -376,7 +377,7 @@ services:
       - clinic-network
     depends_on:
       eureka-server:
-        condition: service_healthy
+        condition: service_started
       user-db:
         condition: service_healthy
       rabbitmq:

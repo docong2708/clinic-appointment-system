@@ -30,6 +30,7 @@ public class RegisterUseCase {
         ));
 
         provisionDoctorProfile(user, command, role);
+        provisionPatientProfile(user, command, role);
 
         log.info("Register user completed userId={} email={} role={}",
                 user.getId(), user.getEmail().value(), role);
@@ -45,6 +46,25 @@ public class RegisterUseCase {
                     command.phoneNumber(),
                     command.email()
             );
+        }
+    }
+
+    private void provisionPatientProfile(User user, RegisterCommand command, String role) {
+        if ("PATIENT".equals(role)) {
+            try {
+                java.time.LocalDate dob = (command.dateOfBirth() != null && !command.dateOfBirth().isBlank())
+                        ? java.time.LocalDate.parse(command.dateOfBirth())
+                        : null;
+                profileProvisioningClient.createPatientProfile(
+                        user.getId(),
+                        command.fullName(),
+                        dob,
+                        command.gender(),
+                        command.contactInformation()
+                );
+            } catch (Exception exception) {
+                log.warn("Could not provision patient profile for userId {}: {}", user.getId(), exception.getMessage());
+            }
         }
     }
 }

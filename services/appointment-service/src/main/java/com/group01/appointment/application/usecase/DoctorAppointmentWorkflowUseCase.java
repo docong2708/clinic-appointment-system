@@ -136,7 +136,6 @@ public class DoctorAppointmentWorkflowUseCase {
 
         PatientClientPort.PatientProfile patient = patientClientPort.getPatientProfile(saved.getPatientId().value());
         AppointmentNotificationDetails notificationDetails = notificationDetailsResolver.resolve(saved);
-        notificationPort.publishAppointmentCanceled(AppointmentEventMapper.canceled(saved, notificationDetails));
 
         String recipientEmail = notificationDetails.patientEmail();
         if (recipientEmail == null || !recipientEmail.contains("@")) {
@@ -151,6 +150,10 @@ public class DoctorAppointmentWorkflowUseCase {
                 log.warn("Failed to fetch user email for patient userId: {} - {}", patient.userId(), e.getMessage());
             }
         }
+
+        DoctorClientPort.DoctorProfile doctor = doctorClientPort.getDoctor(saved.getDoctorId().value());
+        notificationPort.publishAppointmentCanceled(AppointmentEventMapper.canceled(saved,
+                new AppointmentNotificationDetails(patient.userId(), recipientEmail, doctor.name(), doctor.specialization())));
 
         log.info("Sending doctor cancellation email to recipient: {}", recipientEmail);
 

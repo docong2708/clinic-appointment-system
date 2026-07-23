@@ -52,12 +52,12 @@ public final class AppointmentEventMapper {
         return new AppointmentCanceledEvent(
                 UUID.randomUUID(),
                 appointment.getAppointmentId().value(),
-                details.patientUserId(),
+                details != null ? details.patientUserId() : null,
                 appointment.getPatientId().value(),
-                details.patientEmail(),
+                details != null ? details.patientEmail() : null,
                 appointment.getDoctorId().value(),
-                details.doctorName(),
-                details.doctorSpecialization(),
+                details != null ? details.doctorName() : null,
+                details != null ? details.doctorSpecialization() : null,
                 appointment.getAppointmentTime().startTime(),
                 appointment.getAppointmentTime().endTime(),
                 appointment.getCancelReason() == null
@@ -73,30 +73,33 @@ public final class AppointmentEventMapper {
         );
     }
 
-    public static AppointmentConfirmedEvent confirmed(
-            AppointmentAggregate appointment,
-            AppointmentNotificationDetails details
-    ) {
-        LocalDateTime occurredAt = LocalDateTime.now();
+public static AppointmentCanceledEvent canceled(AppointmentAggregate appointment) {
+    return canceled(appointment, null);
+}
 
-        return new AppointmentConfirmedEvent(
-                UUID.randomUUID(),
-                appointment.getAppointmentId().value(),
-                details.patientUserId(),
-                appointment.getPatientId().value(),
-                details.patientEmail(),
-                appointment.getDoctorId().value(),
-                appointment.getAppointmentTime().startTime(),
-                appointment.getAppointmentTime().endTime(),
-                appointment.getStatus().name(),
-                appointment.getPaymentStatus() == null
-                        ? null
-                        : appointment.getPaymentStatus().name(),
-                appointment.getConfirmedAt(),
-                occurredAt
-        );
-    }
+public static AppointmentConfirmedEvent confirmed(
+        AppointmentAggregate appointment,
+        AppointmentNotificationDetails details
+) {
+    LocalDateTime occurredAt = LocalDateTime.now();
 
+    return new AppointmentConfirmedEvent(
+            UUID.randomUUID(),
+            appointment.getAppointmentId().value(),
+            details != null ? details.patientUserId() : null,
+            appointment.getPatientId().value(),
+            details != null ? details.patientEmail() : null,
+            appointment.getDoctorId().value(),
+            appointment.getAppointmentTime().startTime(),
+            appointment.getAppointmentTime().endTime(),
+            appointment.getStatus().name(),
+            appointment.getPaymentStatus() == null
+                    ? null
+                    : appointment.getPaymentStatus().name(),
+            appointment.getConfirmedAt(),
+            occurredAt
+    );
+}
     public static AppointmentUpdatedEvent updated(
             AppointmentAggregate appointment,
             AppointmentNotificationDetails details,

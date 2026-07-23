@@ -1,8 +1,38 @@
+server:
+  port: ${SERVER_PORT:8083}
+
 spring:
   application:
     name: notification-service
   config:
-    import: optional:configserver:${SPRING_CLOUD_CONFIG_URI:http://localhost:8888}
+    import: optional:configserver:${SPRING_CLOUD_CONFIG_URI:http://localhost:8889}
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:${NOTIFICATION_DB_URL:jdbc:postgresql://localhost:55434/notification_db}}
+    username: ${SPRING_DATASOURCE_USERNAME:${NOTIFICATION_DB_USERNAME:postgres}}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres_password}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:admin}
+    password: ${SPRING_RABBITMQ_PASSWORD:admin}
+  mail:
+    host: ${SPRING_MAIL_HOST:smtp.gmail.com}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:noreply@clinic.local}
+    password: ${SPRING_MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 mail:
   from: ${spring.mail.username:noreply@clinic.local}
