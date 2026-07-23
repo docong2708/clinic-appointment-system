@@ -7,6 +7,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -40,8 +41,22 @@ import java.util.Set;
 @Configuration
 @EnableConfigurationProperties({PublicEndpointProperties.class, AuthProperties.class})
 public class SecurityConfig {
+
+    private static final List<HttpMethod> CORS_METHODS = List.of(
+            HttpMethod.GET,
+            HttpMethod.POST,
+            HttpMethod.PUT,
+            HttpMethod.PATCH,
+            HttpMethod.DELETE,
+            HttpMethod.OPTIONS
+    );
+
     @Bean
-    SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http, ObjectMapper objectMapper) {
+    SecurityWebFilterChain securityWebFilterChain(
+            ServerHttpSecurity http,
+            ObjectMapper objectMapper,
+            AuthProperties authProperties
+    ) {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .cors(Customizer.withDefaults())
@@ -49,9 +64,9 @@ public class SecurityConfig {
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
                 .exceptionHandling(exceptionHandling -> exceptionHandling
                         .authenticationEntryPoint((exchange, exception) ->
-                                writeError(exchange, objectMapper, HttpStatus.UNAUTHORIZED, "Bạn cần đăng nhập để tiếp tục"))
+                                writeError(exchange, objectMapper, authProperties, HttpStatus.UNAUTHORIZED, "Unauthorized"))
                         .accessDeniedHandler((exchange, exception) ->
-                                writeError(exchange, objectMapper, HttpStatus.FORBIDDEN, "Bạn không có quyền thực hiện thao tác này")))
+                                writeError(exchange, objectMapper, authProperties, HttpStatus.FORBIDDEN, "Forbidden")))
                 .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -126,10 +141,12 @@ public class SecurityConfig {
     @Bean
     CorsWebFilter corsWebFilter(AuthProperties authProperties) {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowCredentials(false);
-        config.setAllowedOrigins(List.of(authProperties.frontendOrigin()));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowCredentials(true);
+        config.setAllowedOriginPatterns(allowedOriginPatterns(authProperties));
+        config.setAllowedMethods(CORS_METHODS.stream().map(HttpMethod::name).toList());
         config.setAllowedHeaders(List.of("*"));
+        config.setExposedHeaders(List.of(HttpHeaders.AUTHORIZATION, HttpHeaders.CONTENT_TYPE));
+        config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
@@ -164,16 +181,18 @@ public class SecurityConfig {
     private Mono<Void> writeError(
             ServerWebExchange exchange,
             ObjectMapper objectMapper,
+            AuthProperties authProperties,
             HttpStatus status,
             String message
     ) {
+        addCorsHeaders(exchange, authProperties);
         exchange.getResponse().setStatusCode(status);
         exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
 
         GatewayErrorResponse body = new GatewayErrorResponse(
                 LocalDateTime.now(),
                 status.value(),
-                reasonPhrase(status),
+                status.getReasonPhrase(),
                 message,
                 exchange.getRequest().getPath().value(),
                 null
@@ -187,11 +206,33 @@ public class SecurityConfig {
         }
     }
 
-    private String reasonPhrase(HttpStatus status) {
-        return switch (status) {
-            case UNAUTHORIZED -> "Chưa xác thực";
-            case FORBIDDEN -> "Không có quyền truy cập";
-            default -> status.getReasonPhrase();
-        };
+    private void addCorsHeaders(ServerWebExchange exchange, AuthProperties authProperties) {
+        String origin = exchange.getRequest().getHeaders().getOrigin();
+        if (origin == null || origin.isBlank() || !isAllowedOrigin(origin, authProperties)) {
+            return;
+        }
+
+        HttpHeaders headers = exchange.getResponse().getHeaders();
+        headers.setAccessControlAllowOrigin(origin);
+        headers.setAccessControlAllowCredentials(true);
+        headers.setAccessControlAllowMethods(CORS_METHODS);
+        headers.setAccessControlAllowHeaders(List.of("*"));
+        headers.setAccessControlExposeHeaders(List.of(HttpHeaders.AUTHORIZATION, HttpHeaders.CONTENT_TYPE));
+        headers.setAccessControlMaxAge(3600L);
+        headers.setVary(List.of(
+                HttpHeaders.ORIGIN,
+                HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD,
+                HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS
+        ));
+    }
+
+    private boolean isAllowedOrigin(String origin, AuthProperties authProperties) {
+        return origin.equals(authProperties.frontendOrigin())
+                || origin.startsWith("http://localhost:")
+                || origin.startsWith("http://127.0.0.1:");
+    }
+
+    private List<String> allowedOriginPatterns(AuthProperties authProperties) {
+        return List.of(authProperties.frontendOrigin(), "http://localhost:*", "http://127.0.0.1:*");
     }
 }

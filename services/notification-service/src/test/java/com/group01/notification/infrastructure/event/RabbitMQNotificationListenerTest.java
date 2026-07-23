@@ -200,9 +200,9 @@ public class RabbitMQNotificationListenerTest {
         org.assertj.core.api.Assertions.assertThat(command.getRecipientUserId()).isEqualTo(patientUserId);
         org.assertj.core.api.Assertions.assertThat(command.getBody()).contains(
                 "Dr. Tran Thi B",
-                "Previous time",
+                "Thời gian cũ",
                 previousStartTime.toString(),
-                "New time",
+                "Thời gian mới",
                 newStartTime.toString()
         );
         org.assertj.core.api.Assertions.assertThat(command.getBody()).doesNotContain(appointmentId.toString(), doctorId.toString());

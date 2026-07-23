@@ -17,7 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,7 +29,7 @@ class RegisterUseCaseTest {
     private ProfileProvisioningClient profileProvisioningClient;
 
     @Test
-    void patientRegistrationDoesNotProvisionPatientProfile() {
+    void patientRegistrationProvisionsPatientProfile() {
         User user = user();
         when(createUserUseCase.execute(any(CreateUserCommand.class))).thenReturn(user);
         RegisterUseCase useCase = new RegisterUseCase(createUserUseCase, profileProvisioningClient);
@@ -50,7 +49,14 @@ class RegisterUseCaseTest {
         ArgumentCaptor<CreateUserCommand> commandCaptor = ArgumentCaptor.forClass(CreateUserCommand.class);
         verify(createUserUseCase).execute(commandCaptor.capture());
         assertThat(commandCaptor.getValue().roles()).containsExactly("PATIENT");
-        verifyNoInteractions(profileProvisioningClient);
+        verify(profileProvisioningClient).createPatientProfile(
+                user.getId(),
+                "Patient One",
+                LocalDate.of(1995, 1, 1),
+                "FEMALE",
+                "patient@example.com"
+        );
+        verify(profileProvisioningClient, never()).createDoctorProfile(any(), any(), any(), any(), any());
     }
 
     @Test

@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.Set;
 
 @Service
@@ -19,8 +20,11 @@ public class RegisterUseCase {
 
     @Transactional
     public User execute(RegisterCommand command) {
-        String role = command.role() == null || command.role().isBlank() ? "PATIENT" : command.role().trim().toUpperCase();
+        String role = command.role() == null || command.role().isBlank()
+                ? "PATIENT"
+                : command.role().trim().toUpperCase();
         log.info("Register user requested email={} role={}", command.email(), role);
+
         User user = createUserUseCase.execute(new CreateUserCommand(
                 command.email(),
                 command.password(),
@@ -52,9 +56,7 @@ public class RegisterUseCase {
     private void provisionPatientProfile(User user, RegisterCommand command, String role) {
         if ("PATIENT".equals(role)) {
             try {
-                java.time.LocalDate dob = (command.dateOfBirth() != null && !command.dateOfBirth().isBlank())
-                        ? java.time.LocalDate.parse(command.dateOfBirth())
-                        : null;
+                LocalDate dob = command.dateOfBirth();
                 profileProvisioningClient.createPatientProfile(
                         user.getId(),
                         command.fullName(),

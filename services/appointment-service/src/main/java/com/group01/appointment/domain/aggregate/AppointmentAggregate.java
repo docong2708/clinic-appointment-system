@@ -106,7 +106,7 @@ public class AppointmentAggregate {
                 appointmentTime,
                 appointmentReason,
                 null,
-                AppointmentStatus.CONFIRMED,
+                AppointmentStatus.PENDING,
                 PaymentStatus.PENDING,
                 null,
                 null,
@@ -124,7 +124,7 @@ public class AppointmentAggregate {
         aggregate.addLog(
                 AppointmentLogAction.CREATE,
                 null,
-                AppointmentStatus.CONFIRMED,
+                AppointmentStatus.PENDING,
                 "Create appointment",
                 actorId,
                 ActorRole.PATIENT

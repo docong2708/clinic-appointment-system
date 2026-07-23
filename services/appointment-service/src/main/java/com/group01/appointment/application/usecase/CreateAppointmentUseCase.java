@@ -1,11 +1,8 @@
 package com.group01.appointment.application.usecase;
 
 import com.group01.appointment.application.command.CreateAppointmentCommand;
-import com.group01.appointment.application.event.AppointmentEventMapper;
 import com.group01.appointment.application.port.DoctorClientPort;
 import com.group01.appointment.application.port.DoctorClientPort.AssignedDoctorSlot;
-import com.group01.appointment.application.port.DoctorClientPort.DoctorProfile;
-import com.group01.appointment.application.port.NotificationPort;
 import com.group01.appointment.application.port.PatientClientPort;
 import com.group01.appointment.application.result.AppointmentResult;
 import com.group01.appointment.application.result.AppointmentResultMapper;
@@ -29,20 +26,17 @@ public class CreateAppointmentUseCase {
     private final AppointmentLogRepository appointmentLogRepository;
     private final PatientClientPort patientClientPort;
     private final DoctorClientPort doctorClientPort;
-    private final NotificationPort notificationPort;
 
     public CreateAppointmentUseCase(
             AppointmentRepository appointmentRepository,
             AppointmentLogRepository appointmentLogRepository,
             PatientClientPort patientClientPort,
-            DoctorClientPort doctorClientPort,
-            NotificationPort notificationPort
+            DoctorClientPort doctorClientPort
     ) {
         this.appointmentRepository = appointmentRepository;
         this.appointmentLogRepository = appointmentLogRepository;
         this.patientClientPort = patientClientPort;
         this.doctorClientPort = doctorClientPort;
-        this.notificationPort = notificationPort;
     }
 
     @Transactional
@@ -83,13 +77,6 @@ public class CreateAppointmentUseCase {
         AppointmentAggregate savedAppointment = appointmentRepository.save(appointment);
 
         appointmentLogRepository.saveAll(appointment.getLogs());
-        DoctorProfile doctor = slot.doctorProfile();
-        notificationPort.publishAppointmentCreated(AppointmentEventMapper.created(
-                savedAppointment,
-                command.patientEmail(),
-                command.patientUserId(),
-                doctor
-        ));
 
         return AppointmentResultMapper.from(savedAppointment);
     }

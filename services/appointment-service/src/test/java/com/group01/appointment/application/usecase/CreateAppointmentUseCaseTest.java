@@ -2,7 +2,6 @@ package com.group01.appointment.application.usecase;
 
 import com.group01.appointment.application.command.CreateAppointmentCommand;
 import com.group01.appointment.application.port.DoctorClientPort;
-import com.group01.appointment.application.port.NotificationPort;
 import com.group01.appointment.application.port.PatientClientPort;
 import com.group01.appointment.domain.aggregate.AppointmentAggregate;
 import com.group01.appointment.domain.repository.AppointmentLogRepository;
@@ -21,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,9 +36,6 @@ class CreateAppointmentUseCaseTest {
 
     @Mock
     private DoctorClientPort doctorClientPort;
-
-    @Mock
-    private NotificationPort notificationPort;
 
     @Test
     void createsAppointmentWithAutoAssignedDoctorSlot() {
@@ -59,10 +54,9 @@ class CreateAppointmentUseCaseTest {
         assertThat(result.patientId()).isEqualTo(patientId);
         assertThat(result.doctorId()).isEqualTo(assignedSlot.doctorId());
         assertThat(result.slotId()).isEqualTo(assignedSlot.id());
-        assertThat(result.status()).isEqualTo(AppointmentStatus.CONFIRMED.name());
+        assertThat(result.status()).isEqualTo(AppointmentStatus.PENDING.name());
         assertThat(result.paymentStatus()).isEqualTo(PaymentStatus.PENDING.name());
         verify(appointmentLogRepository).saveAll(any());
-        verify(notificationPort).publishAppointmentCreated(any());
     }
 
     @Test
@@ -81,7 +75,6 @@ class CreateAppointmentUseCaseTest {
                 .hasMessage("DB lỗi");
 
         verify(doctorClientPort).cancelSlotBooking(assignedSlot.doctorId(), assignedSlot.id());
-        verifyNoMoreInteractions(notificationPort);
     }
 
     private CreateAppointmentUseCase useCase() {
@@ -89,8 +82,7 @@ class CreateAppointmentUseCaseTest {
                 appointmentRepository,
                 appointmentLogRepository,
                 patientClientPort,
-                doctorClientPort,
-                notificationPort
+                doctorClientPort
         );
     }
 
