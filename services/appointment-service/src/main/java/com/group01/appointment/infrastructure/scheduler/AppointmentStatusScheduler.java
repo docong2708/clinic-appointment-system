@@ -59,4 +59,35 @@ public class AppointmentStatusScheduler {
             log.info("Auto marked {} confirmed appointments as NOT_CHECKIN after 10 minutes without check-in", updatedCount);
         }
     }
+
+    @Scheduled(fixedRate = 60000)
+    @Transactional
+    public void autoCancelExpiredPendingAppointments() {
+        OffsetDateTime now = LocalDateTime.now().atOffset(ZoneOffset.UTC);
+        List<AppointmentAggregate> pendingExpired = appointmentJpaRepository.findPendingAppointmentsStartedBefore(now)
+                .stream()
+                .map(appointmentMapper::toAggregate)
+                .toList();
+
+        int expiredCount = 0;
+        for (AppointmentAggregate appointment : pendingExpired) {
+            try {
+                appointment.cancelByDoctor(
+                        SYSTEM_ACTOR_ID,
+                        "Tự động hủy do quá hạn khung giờ khám mà chưa được xác nhận",
+                        LocalDateTime.now()
+                );
+                AppointmentAggregate saved = appointmentRepository.save(appointment);
+                appointmentLogRepository.saveAll(appointment.getLogs());
+                expiredCount++;
+                log.info("Auto cancelled expired pending appointment {}", saved.getAppointmentId().value());
+            } catch (RuntimeException ex) {
+                log.warn("Error auto cancelling pending appointment {}", appointment.getAppointmentId().value(), ex);
+            }
+        }
+
+        if (expiredCount > 0) {
+            log.info("Auto cancelled {} expired unconfirmed pending appointments", expiredCount);
+        }
+    }
 }
