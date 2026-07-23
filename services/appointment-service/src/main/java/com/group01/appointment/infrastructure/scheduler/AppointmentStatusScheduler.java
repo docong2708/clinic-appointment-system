@@ -4,6 +4,7 @@ import com.group01.appointment.domain.aggregate.AppointmentAggregate;
 import com.group01.appointment.domain.repository.AppointmentLogRepository;
 import com.group01.appointment.domain.repository.AppointmentRepository;
 import com.group01.appointment.domain.vo.ActorRole;
+import com.group01.appointment.domain.vo.CancelReason;
 import com.group01.appointment.infrastructure.persistence.AppointmentJpaRepository;
 import com.group01.appointment.infrastructure.persistence.AppointmentMapper;
 import com.group01.appointment.application.port.DoctorClientPort;
@@ -73,9 +74,8 @@ public class AppointmentStatusScheduler {
         for (AppointmentAggregate appointment : pendingExpired) {
             try {
                 appointment.cancelByDoctor(
-                        SYSTEM_ACTOR_ID,
-                        "Tự động hủy do quá hạn khung giờ khám mà chưa được xác nhận",
-                        LocalDateTime.now()
+                        CancelReason.of("Tự động hủy do quá hạn khung giờ khám mà chưa được xác nhận"),
+                        SYSTEM_ACTOR_ID
                 );
                 AppointmentAggregate saved = appointmentRepository.save(appointment);
                 appointmentLogRepository.saveAll(appointment.getLogs());

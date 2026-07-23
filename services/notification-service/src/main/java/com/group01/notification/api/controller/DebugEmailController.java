@@ -12,11 +12,14 @@ import org.slf4j.LoggerFactory;
 public class DebugEmailController {
     private static final Logger log = LoggerFactory.getLogger(DebugEmailController.class);
     
-    @Autowired
+    @Autowired(required = false)
     private JavaMailSender mailSender;
     
     @GetMapping("/test-simple-email")
     public String testSimpleEmail() {
+        if (mailSender == null) {
+            return "JavaMailSender bean is not configured on this profile.";
+        }
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom("mssclinicnotify@gmail.com");

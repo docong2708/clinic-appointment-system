@@ -129,26 +129,6 @@ public class PatientController {
         )));
     }
 
-    @GetMapping("/me")
-    public ResponseEntity<PatientResponse> getMyProfile() {
-        PatientJpaEntity patient = currentPatient();
-        return ResponseEntity.ok(PatientResponse.from(patient));
-    }
-
-    @PutMapping("/me")
-    public ResponseEntity<PatientResponse> updateMyProfile(
-            @Valid @RequestBody UpdatePatientRequest request
-    ) {
-        requireRole("PATIENT");
-        PatientJpaEntity patient = currentPatient();
-        patient.setFirstName(request.firstName());
-        patient.setLastName(request.lastName());
-        patient.setDateOfBirth(request.dateOfBirth());
-        patient.setGender(request.gender());
-        patient.setContactInformation(request.contactInformation());
-        return ResponseEntity.ok(PatientResponse.from(patientJpaRepository.save(patient)));
-    }
-
     @GetMapping("/{patientId}")
     public ResponseEntity<PatientResponse> getPatientById(@PathVariable("patientId") UUID patientId) {
         PatientJpaEntity patient = patientJpaRepository.findById(patientId)

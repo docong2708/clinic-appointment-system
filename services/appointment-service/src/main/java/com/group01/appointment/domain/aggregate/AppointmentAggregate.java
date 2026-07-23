@@ -106,7 +106,7 @@ public class AppointmentAggregate {
                 appointmentTime,
                 appointmentReason,
                 null,
-                AppointmentStatus.PENDING,
+                AppointmentStatus.CONFIRMED,
                 PaymentStatus.PENDING,
                 null,
                 null,
@@ -124,7 +124,7 @@ public class AppointmentAggregate {
         aggregate.addLog(
                 AppointmentLogAction.CREATE,
                 null,
-                AppointmentStatus.PENDING,
+                AppointmentStatus.CONFIRMED,
                 "Create appointment",
                 actorId,
                 ActorRole.PATIENT
@@ -249,7 +249,10 @@ public class AppointmentAggregate {
     public void confirmByDoctor(UUID performedBy) {
         validateActor(performedBy, ActorRole.DOCTOR);
 
-        if (this.status != AppointmentStatus.PENDING_DOCTOR_CONFIRMATION) {
+        if (this.status != AppointmentStatus.PENDING_DOCTOR_CONFIRMATION
+                && this.status != AppointmentStatus.PENDING
+                && this.status != AppointmentStatus.PENDING_PAYMENT
+                && this.status != AppointmentStatus.AWAITING_PAYMENT) {
             throw new IllegalStateException("Only doctor-pending appointment can be confirmed");
         }
 

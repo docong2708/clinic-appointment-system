@@ -218,8 +218,8 @@ private String destinationFor(Object payload) {
     if (payload instanceof AppointmentCreatedEvent event && hasText(event.patientEmail())) {
         return event.patientEmail();
     }
-    if (payload instanceof AppointmentConfirmedEvent event && hasText(event.patientEmail())) {
-        return event.patientEmail();
+    if (payload instanceof AppointmentConfirmedEvent event) {
+        return event.patientId() != null ? event.patientId().toString() : "patient@clinic.com";
     }
     if (payload instanceof AppointmentCanceledEvent event && hasText(event.patientEmail())) {
         return event.patientEmail();

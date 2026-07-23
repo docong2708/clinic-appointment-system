@@ -52,12 +52,12 @@ public final class AppointmentEventMapper {
         return new AppointmentCanceledEvent(
                 UUID.randomUUID(),
                 appointment.getAppointmentId().value(),
-                details.patientUserId(),
+                details != null ? details.patientUserId() : null,
                 appointment.getPatientId().value(),
-                details.patientEmail(),
+                details != null ? details.patientEmail() : null,
                 appointment.getDoctorId().value(),
-                details.doctorName(),
-                details.doctorSpecialization(),
+                details != null ? details.doctorName() : null,
+                details != null ? details.doctorSpecialization() : null,
                 appointment.getAppointmentTime().startTime(),
                 appointment.getAppointmentTime().endTime(),
                 appointment.getCancelReason() == null
@@ -71,6 +71,10 @@ public final class AppointmentEventMapper {
                 appointment.getStatus().name(),
                 occurredAt
         );
+    }
+
+    public static AppointmentCanceledEvent canceled(AppointmentAggregate appointment) {
+        return canceled(appointment, null);
     }
 
     public static AppointmentConfirmedEvent confirmed(AppointmentAggregate appointment) {
