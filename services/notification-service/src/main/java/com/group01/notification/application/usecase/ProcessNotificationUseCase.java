@@ -47,6 +47,10 @@ public class ProcessNotificationUseCase implements CreateNotificationUseCase {
                 command.getSourceInboxEventId()
         );
 
+        if (command.getPayload() != null && !command.getPayload().isEmpty()) {
+            notification.setPayload(command.getPayload());
+        }
+
         // 2. Tạo Delivery
         NotificationChannel channel = NotificationChannel.valueOf(command.getChannel());
         NotificationDelivery delivery = NotificationDelivery.create(

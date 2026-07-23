@@ -93,6 +93,7 @@ public class RabbitMQNotificationListener {
                     .aggregateType("Appointment")
                     .aggregateId(aggregateId(payload, eventId))
                     .sourceInboxEventId(inboxEvent.getId())
+                    .payload(payloadFor(payload))
                     .build();
 
             createNotificationUseCase.handle(command);
@@ -250,5 +251,19 @@ private String destinationFor(Object payload) {
             return event.appointmentId();
         }
         return fallback;
+    }
+
+    private java.util.Map<String, Object> payloadFor(Object payload) {
+        java.util.Map<String, Object> map = new java.util.LinkedHashMap<>();
+        if (payload instanceof AppointmentCanceledEvent event) {
+            map.put("appointmentId", event.appointmentId() != null ? event.appointmentId().toString() : "");
+            map.put("doctorName", hasText(event.doctorName()) ? event.doctorName() : "Bác sĩ phòng khám");
+            map.put("patientName", hasText(event.patientEmail()) ? event.patientEmail() : "Bệnh nhân");
+            map.put("cancelReason", hasText(event.cancelReason()) ? event.cancelReason() : "Bác sĩ hủy lịch khám");
+            map.put("reason", hasText(event.cancelReason()) ? event.cancelReason() : "Bác sĩ hủy lịch khám");
+            map.put("appointmentStartTime", event.startTime() != null ? event.startTime().toString() : "");
+            map.put("appointmentDateTime", event.startTime() != null ? event.startTime().toString() : "");
+        }
+        return map;
     }
 }

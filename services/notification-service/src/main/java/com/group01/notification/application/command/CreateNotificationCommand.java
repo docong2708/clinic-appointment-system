@@ -20,4 +20,5 @@ public class CreateNotificationCommand {
     private String aggregateType;
     private UUID aggregateId;
     private UUID sourceInboxEventId;
+    private java.util.Map<String, Object> payload;
 }
