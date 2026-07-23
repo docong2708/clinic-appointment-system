@@ -27,7 +27,7 @@ public class GenerateScheduleUseCase {
     @Transactional
     public DoctorDto execute(UUID doctorId, GenerateScheduleRequest request) {
         if (request == null) {
-            throw new IllegalArgumentException("Generate schedule request body is required");
+            throw new IllegalArgumentException("Nội dung yêu cầu tạo lịch không được để trống");
         }
 
         LocalDateTime currentStart = request.getStartTime();
@@ -35,16 +35,16 @@ public class GenerateScheduleUseCase {
         Integer durationMinutes = request.getSlotDurationMinutes();
 
         if (currentStart == null || endLimit == null) {
-            throw new IllegalArgumentException("Start time and end time must not be null");
+            throw new IllegalArgumentException("Thời gian bắt đầu và kết thúc không được để trống");
         }
         if (durationMinutes == null) {
-            throw new IllegalArgumentException("Slot duration is required");
+            throw new IllegalArgumentException("Thời lượng khung giờ không được để trống");
         }
         if (durationMinutes < 5) {
-            throw new IllegalArgumentException("Slot duration must be at least 5 minutes");
+            throw new IllegalArgumentException("Thời lượng khung giờ phải ít nhất 5 phút");
         }
         if (!currentStart.isBefore(endLimit)) {
-            throw new IllegalArgumentException("Start time must be before end time");
+            throw new IllegalArgumentException("Thời gian bắt đầu phải trước thời gian kết thúc");
         }
 
         log.info("Generating schedule doctorId={} startTime={} endTime={} slotDurationMinutes={}",
@@ -52,7 +52,7 @@ public class GenerateScheduleUseCase {
 
         DoctorId docId = DoctorId.of(doctorId);
         Doctor doctor = doctorRepository.findById(docId)
-                .orElseThrow(() -> new DoctorNotFoundException("Doctor with ID " + doctorId + " not found"));
+                .orElseThrow(() -> new DoctorNotFoundException("Không tìm thấy bác sĩ với mã " + doctorId));
 
         int duration = durationMinutes;
         int generatedSlots = 0;

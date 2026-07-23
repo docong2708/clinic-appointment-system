@@ -10,11 +10,17 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-@FeignClient(name = "patient-service-client", url = "${clients.patient-service.base-url:http://localhost:8080}")
+@FeignClient(name = "patient-service-client", url = "${clients.patient-service.base-url:${PATIENT_SERVICE_URL:http://localhost:8084}}")
 public interface PatientServiceClient {
+
+    @GetMapping("/api/patients/by-user/{userId}")
+    PatientResponse getPatientByUserId(@PathVariable("userId") UUID userId);
 
     @GetMapping("/api/patients/{patientId}")
     PatientResponse getPatientById(@PathVariable("patientId") UUID patientId);
+
+    @PostMapping("/api/patients")
+    PatientResponse createPatient(@RequestBody CreatePatientRequest request);
 
     @GetMapping("/api/internal/patients/{patientId}/doctor-view")
     PatientConsultationResponse getPatientConsultationView(@PathVariable("patientId") UUID patientId);
@@ -24,6 +30,16 @@ public interface PatientServiceClient {
             @PathVariable("patientId") UUID patientId,
             @RequestBody CreateConsultationMedicalRecordRequest request
     );
+
+    record CreatePatientRequest(
+            UUID userId,
+            String firstName,
+            String lastName,
+            LocalDate dateOfBirth,
+            String gender,
+            String contactInformation
+    ) {
+    }
 
     record PatientResponse(
             UUID id,

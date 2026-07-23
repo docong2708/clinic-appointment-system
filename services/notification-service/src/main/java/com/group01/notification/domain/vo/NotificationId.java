@@ -9,7 +9,7 @@ public class NotificationId {
 
     private NotificationId(UUID value) {
         if (value == null) {
-            throw new IllegalArgumentException("NotificationId cannot be null");
+            throw new IllegalArgumentException("Mã thông báo không được để trống");
         }
         this.value = value;
     }

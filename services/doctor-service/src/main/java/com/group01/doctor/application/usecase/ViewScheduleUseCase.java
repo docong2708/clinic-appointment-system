@@ -3,7 +3,6 @@ package com.group01.doctor.application.usecase;
 import com.group01.doctor.application.dto.SlotDto;
 import com.group01.doctor.application.mapper.DoctorAppMapper;
 import com.group01.doctor.domain.exception.DoctorNotFoundException;
-import com.group01.doctor.domain.model.Doctor;
 import com.group01.doctor.domain.model.SlotStatus;
 import com.group01.doctor.domain.repository.DoctorRepository;
 import com.group01.doctor.domain.repository.SlotRepository;

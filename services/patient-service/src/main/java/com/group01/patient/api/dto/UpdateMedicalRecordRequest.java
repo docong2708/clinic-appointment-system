@@ -9,15 +9,15 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record UpdateMedicalRecordRequest(
-        @NotNull(message = "Record date must not be null")
+        @NotNull(message = "Ngày ghi nhận hồ sơ không được để trống")
         LocalDate recordDate,
 
-        @NotBlank(message = "Diagnosis must not be blank")
+        @NotBlank(message = "Chẩn đoán không được để trống")
         String diagnosis,
 
         String treatment,
 
-        @Size(max = 2000, message = "Notes must not exceed 2000 characters")
+        @Size(max = 2000, message = "Ghi chú không được vượt quá 2000 ký tự")
         String notes,
 
         @Valid

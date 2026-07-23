@@ -39,7 +39,7 @@ public class RoleSecurityInterceptor implements HandlerInterceptor {
         if (currentUser == null) {
             String userId = request.getHeader("X-User-Id");
             if (userId == null || userId.isBlank()) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Access Denied: Missing X-User-Id header");
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Từ chối truy cập: thiếu header X-User-Id");
             }
             String email = request.getHeader("X-User-Email");
             String roleHeader = request.getHeader("X-User-Role");
@@ -58,7 +58,7 @@ public class RoleSecurityInterceptor implements HandlerInterceptor {
                 .anyMatch(finalUser::hasRole);
 
         if (!hasRequiredRole) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied: Required role missing");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Từ chối truy cập: người dùng không có quyền phù hợp");
         }
 
         return true;

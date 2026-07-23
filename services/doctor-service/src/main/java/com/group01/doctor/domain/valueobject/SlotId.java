@@ -6,7 +6,7 @@ public record SlotId(UUID value) {
 
     public SlotId {
         if (value == null) {
-            throw new IllegalArgumentException("Slot ID must not be null");
+            throw new IllegalArgumentException("Mã khung giờ không được để trống");
         }
     }
 

@@ -1,5 +1,6 @@
 package com.group01.appointment.infrastructure.persistence;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -9,6 +10,15 @@ import java.util.List;
 import java.util.UUID;
 
 public interface AppointmentJpaRepository extends JpaRepository<AppointmentJpaEntity, UUID> {
+
+    List<AppointmentJpaEntity> findByPatientIdOrderByStartTimeDesc(UUID patientId);
+
+    List<AppointmentJpaEntity> findByStatusAndUpdatedAtBeforeOrderByUpdatedAtAsc(
+            String status,
+            OffsetDateTime updatedAt,
+            Pageable pageable
+    );
+
     @Query("""
             select a
             from AppointmentJpaEntity a

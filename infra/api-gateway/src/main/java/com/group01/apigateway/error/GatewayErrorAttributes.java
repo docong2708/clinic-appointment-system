@@ -34,16 +34,32 @@ public class GatewayErrorAttributes extends DefaultErrorAttributes {
     }
 
     private String reasonPhrase(int statusCode, Map<String, Object> defaultAttributes) {
+        HttpStatus status = HttpStatus.resolve(statusCode);
+        if (status != null) {
+            return reasonPhrase(status);
+        }
         Object error = defaultAttributes.get("error");
         if (error instanceof String value && !value.isBlank()) {
             return value;
         }
-        HttpStatus status = HttpStatus.resolve(statusCode);
-        return status == null ? "HTTP " + statusCode : status.getReasonPhrase();
+        return "HTTP " + statusCode;
     }
 
     private String message(Map<String, Object> defaultAttributes, String fallback) {
         Object message = defaultAttributes.get("message");
         return message instanceof String value && !value.isBlank() ? value : fallback;
+    }
+
+    private String reasonPhrase(HttpStatus status) {
+        return switch (status) {
+            case BAD_REQUEST -> "Yêu cầu không hợp lệ";
+            case UNAUTHORIZED -> "Chưa xác thực";
+            case FORBIDDEN -> "Không có quyền truy cập";
+            case NOT_FOUND -> "Không tìm thấy";
+            case CONFLICT -> "Xung đột dữ liệu";
+            case SERVICE_UNAVAILABLE -> "Dịch vụ tạm thời không khả dụng";
+            case INTERNAL_SERVER_ERROR -> "Lỗi hệ thống";
+            default -> status.getReasonPhrase();
+        };
     }
 }

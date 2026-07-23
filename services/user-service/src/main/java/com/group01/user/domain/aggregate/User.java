@@ -29,7 +29,7 @@ public class User {
 
     public void updateProfile(String fullName, PhoneNumber phoneNumber) {
         if (fullName == null || fullName.isBlank()) {
-            throw new IllegalArgumentException("Full name is required");
+            throw new IllegalArgumentException("Họ tên không được để trống");
         }
         this.fullName = fullName.trim();
         this.phoneNumber = phoneNumber;
@@ -41,7 +41,7 @@ public class User {
 
     public void changeStatus(UserStatus status) {
         if (status == null) {
-            throw new IllegalArgumentException("User status is required");
+            throw new IllegalArgumentException("Trạng thái người dùng không được để trống");
         }
         this.status = status;
     }

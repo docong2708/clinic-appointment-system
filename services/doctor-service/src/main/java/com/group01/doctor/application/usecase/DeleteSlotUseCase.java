@@ -22,12 +22,12 @@ public class DeleteSlotUseCase {
     @Transactional
     public void execute(UUID doctorId, UUID slotId) {
         Doctor doctor = doctorRepository.findById(DoctorId.of(doctorId))
-                .orElseThrow(() -> new DoctorNotFoundException("Doctor with ID " + doctorId + " not found"));
+                .orElseThrow(() -> new DoctorNotFoundException("Không tìm thấy bác sĩ với mã " + doctorId));
 
         Slot slot = doctor.getSlots().stream()
                 .filter(s -> s.getId().value().equals(slotId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Slot with ID " + slotId + " not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy khung giờ với mã " + slotId));
 
         doctor.removeSlot(slot);
         doctorRepository.save(doctor);

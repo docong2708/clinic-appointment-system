@@ -18,6 +18,6 @@ public class GetNotificationUseCaseImpl implements GetNotificationUseCase {
     @Override
     public NotificationAggregate handle(NotificationId notificationId) {
         return notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new RuntimeException("Notification not found: " + notificationId.value()));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông báo: " + notificationId.value()));
     }
 }

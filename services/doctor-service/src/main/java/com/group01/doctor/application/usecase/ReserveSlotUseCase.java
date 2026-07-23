@@ -29,12 +29,12 @@ public class ReserveSlotUseCase {
     @Transactional
     public SlotDto execute(UUID doctorId, UUID slotId) {
         Doctor doctor = doctorRepository.findById(DoctorId.of(doctorId))
-                .orElseThrow(() -> new DoctorNotFoundException("Doctor with ID " + doctorId + " not found"));
+                .orElseThrow(() -> new DoctorNotFoundException("Không tìm thấy bác sĩ với mã " + doctorId));
 
         Slot slot = doctor.getSlots().stream()
                 .filter(s -> s.getId().value().equals(slotId))
                 .findFirst()
-                .orElseThrow(() -> new DomainException("Slot with ID " + slotId + " not found"));
+                .orElseThrow(() -> new DomainException("Không tìm thấy khung giờ với mã " + slotId));
 
         if (!slot.getStartTime().isAfter(LocalDateTime.now())) {
             throw new BadRequestException("Không thể chọn hoặc đặt slot khám trong quá khứ");
@@ -47,7 +47,7 @@ public class ReserveSlotUseCase {
         Slot savedSlot = saved.getSlots().stream()
                 .filter(s -> s.getId().value().equals(slotId))
                 .findFirst()
-                .orElseThrow(() -> new DomainException("Slot with ID " + slotId + " not found after save"));
+                .orElseThrow(() -> new DomainException("Không tìm thấy khung giờ với mã " + slotId + " sau khi lưu"));
 
         return mapper.toDto(savedSlot);
     }

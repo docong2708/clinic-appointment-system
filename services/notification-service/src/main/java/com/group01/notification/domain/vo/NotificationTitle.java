@@ -11,10 +11,10 @@ public class NotificationTitle {
 
     private NotificationTitle(String value) {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("Title cannot be blank");
+            throw new IllegalArgumentException("Tiêu đề không được để trống");
         }
         if (value.length() > MAX_LENGTH) {
-            throw new IllegalArgumentException("Title cannot exceed " + MAX_LENGTH + " characters");
+            throw new IllegalArgumentException("Tiêu đề không được vượt quá " + MAX_LENGTH + " ký tự");
         }
         this.value = value.trim();
     }

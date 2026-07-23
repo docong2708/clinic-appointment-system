@@ -3,20 +3,3 @@ spring:
     name: api-gateway
   config:
     import: optional:configserver:${SPRING_CLOUD_CONFIG_URI:http://localhost:8888}
-  cloud:
-    gateway:
-      server:
-        webflux:
-          routes:
-            - id: auth-service
-              uri: ${USER_SERVICE_URI:http://localhost:8085}
-              predicates:
-                - Path=/auth/**
-            - id: appointment-service-doctor
-              uri: ${APPOINTMENT_SERVICE_URI:http://localhost:8081}
-              predicates:
-                - Path=/api/doctor/appointments,/api/doctor/appointments/**
-            - id: appointment-service
-              uri: ${APPOINTMENT_SERVICE_URI:http://localhost:8081}
-              predicates:
-                - Path=/api/appointments,/api/appointments/**

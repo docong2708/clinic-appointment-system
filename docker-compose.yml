@@ -11,12 +11,13 @@ volumes:
   doctor-db-data:
   notification-db-data:
   patient-db-data:
+  payment-db-data:
   user-db-data:
   rabbitmq-data:
 
 services:
   # ==========================================
-  # 1. ISOLATED DATABASES (5 DATABASES)
+  # 1. ISOLATED DATABASES
   # ==========================================
   appointment-db:
     image: postgres:15-alpine
@@ -113,6 +114,25 @@ services:
       timeout: 5s
       retries: 5
 
+  payment-db:
+    image: postgres:15-alpine
+    container_name: payment-db
+    environment:
+      POSTGRES_DB: payment_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_password
+    ports:
+      - "55437:5432"
+    networks:
+      - clinic-network
+    volumes:
+      - payment-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d payment_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   # ==========================================
   # 2. MESSAGE BROKERS
   # ==========================================
@@ -146,11 +166,12 @@ services:
     ports:
       - "8888:8888"
     volumes:
-      - ./clinic-config-repo:/config-repo
+      - ../clinic-config-repo:/config-repo
     environment:
-      - CONFIG_REPO_URI=${CONFIG_REPO_URI:?CONFIG_REPO_URI is required}
-      - GIT_USERNAME=${GIT_USERNAME:?GIT_USERNAME is required}
-      - GIT_TOKEN=${GIT_TOKEN:?GIT_TOKEN is required}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-native}
+      - CONFIG_REPO_URI=${CONFIG_REPO_URI:-file:///config-repo}
+      - GIT_USERNAME=${GIT_USERNAME:-}
+      - GIT_TOKEN=${GIT_TOKEN:-}
       - ENCRYPT_KEY=${ENCRYPT_KEY:?ENCRYPT_KEY is required for decrypting config secrets}
     networks:
       - clinic-network
@@ -194,6 +215,7 @@ services:
       - EUREKA_URL=http://eureka-server:8761/eureka/
       - JWT_ISSUER=clinic-appointment-system
       - USER_SERVICE_URI=http://user-service:8085
+      - PAYMENT_SERVICE_URI=http://payment-service:8086
     networks:
       - clinic-network
     depends_on:
@@ -220,6 +242,7 @@ services:
       - SPRING_RABBITMQ_PASSWORD=admin
       - DOCTOR_SERVICE_URL=http://doctor-service:8082
       - PATIENT_SERVICE_URL=http://patient-service:8084
+      - USER_SERVICE_URL=http://user-service:8085
       - NOTIFICATION_SERVICE_URL=http://notification-service:8083
     networks:
       - clinic-network
@@ -230,6 +253,29 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: services/payment-service/Dockerfile
+    container_name: payment-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - EUREKA_URL=http://eureka-server:8761/eureka/
+      - PAYMENT_DB_URL=jdbc:postgresql://payment-db:5432/payment_db
+      - PAYMENT_DB_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres_password
+      - APPOINTMENT_SERVICE_URL=http://appointment-service:8081
+    networks:
+      - clinic-network
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      payment-db:
+        condition: service_healthy
+      appointment-service:
+        condition: service_started
 
   doctor-service:
     build:

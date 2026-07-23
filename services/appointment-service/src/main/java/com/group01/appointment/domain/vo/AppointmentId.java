@@ -6,7 +6,7 @@ public record AppointmentId(UUID value) {
 
     public AppointmentId {
         if (value == null) {
-            throw new IllegalArgumentException("Appointment id must not be null");
+            throw new IllegalArgumentException("Mã lịch hẹn không được để trống");
         }
     }
 

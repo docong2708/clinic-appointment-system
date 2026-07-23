@@ -2,11 +2,9 @@ package com.group01.appointment.application.usecase;
 
 import com.group01.appointment.application.command.CreateAppointmentCommand;
 import com.group01.appointment.application.event.AppointmentEventMapper;
-import com.group01.appointment.application.exception.BadRequestException;
-import com.group01.appointment.application.exception.DoctorNotFoundException;
-import com.group01.appointment.application.exception.PatientNotFoundException;
 import com.group01.appointment.application.port.DoctorClientPort;
-import com.group01.appointment.application.port.DoctorClientPort.DoctorSlot;
+import com.group01.appointment.application.port.DoctorClientPort.AssignedDoctorSlot;
+import com.group01.appointment.application.port.DoctorClientPort.DoctorProfile;
 import com.group01.appointment.application.port.NotificationPort;
 import com.group01.appointment.application.port.PatientClientPort;
 import com.group01.appointment.application.result.AppointmentResult;
@@ -22,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 public class CreateAppointmentUseCase {
@@ -48,37 +47,32 @@ public class CreateAppointmentUseCase {
 
     @Transactional
     public AppointmentResult execute(CreateAppointmentCommand command) {
-        if (!patientClientPort.existsById(command.patientId())) {
-            throw new PatientNotFoundException(command.patientId());
-        }
+        validate(command);
 
-        if (!doctorClientPort.existsById(command.doctorId())) {
-            throw new DoctorNotFoundException(command.doctorId());
-        }
-
-        DoctorSlot slot = doctorClientPort.getSlot(command.doctorId(), command.slotId());
-        if (slot.booked()) {
-            throw new IllegalStateException("Slot is already booked");
-        }
-        if (!LocalDateTime.now().isBefore(slot.startTime())) {
-            throw new BadRequestException("Không thể chọn hoặc đặt slot khám trong quá khứ");
-        }
-
-        DoctorSlot bookedSlot = doctorClientPort.bookSlot(command.doctorId(), command.slotId());
+        UUID patientId = patientClientPort.getOrCreatePatientIdByUserId(command.patientUserId(), command.patientEmail());
+        AssignedDoctorSlot assignedSlot = doctorClientPort.assignSlot(
+                command.specialization().trim(),
+                command.startTime(),
+                command.endTime()
+        );
 
         try {
-            return createAppointment(command, bookedSlot);
+            return createAppointment(command, assignedSlot, patientId);
         } catch (RuntimeException exception) {
-            cancelSlotBooking(command);
+            cancelSlotBooking(assignedSlot);
             throw exception;
         }
     }
 
-    private AppointmentResult createAppointment(CreateAppointmentCommand command, DoctorSlot slot) {
+    private AppointmentResult createAppointment(
+            CreateAppointmentCommand command,
+            AssignedDoctorSlot slot,
+            UUID patientId
+    ) {
         AppointmentAggregate appointment = AppointmentAggregate.create(
-                PatientId.of(command.patientId()),
-                DoctorId.of(command.doctorId()),
-                command.slotId(),
+                PatientId.of(patientId),
+                DoctorId.of(slot.doctorId()),
+                slot.id(),
                 command.rescheduledFromAppointmentId(),
                 AppointmentTime.of(slot.startTime(), slot.endTime()),
                 AppointmentReason.of(command.reason()),
@@ -89,14 +83,38 @@ public class CreateAppointmentUseCase {
         AppointmentAggregate savedAppointment = appointmentRepository.save(appointment);
 
         appointmentLogRepository.saveAll(appointment.getLogs());
-        notificationPort.publishAppointmentCreated(AppointmentEventMapper.created(savedAppointment, command.patientEmail()));
+        DoctorProfile doctor = slot.doctorProfile();
+        notificationPort.publishAppointmentCreated(AppointmentEventMapper.created(
+                savedAppointment,
+                command.patientEmail(),
+                command.patientUserId(),
+                doctor
+        ));
 
         return AppointmentResultMapper.from(savedAppointment);
     }
 
-    private void cancelSlotBooking(CreateAppointmentCommand command) {
+    private void validate(CreateAppointmentCommand command) {
+        if (command.specialization() == null || command.specialization().isBlank()) {
+            throw new IllegalArgumentException("Chuyên khoa không được để trống");
+        }
+        if (command.startTime() == null) {
+            throw new IllegalArgumentException("Thời gian bắt đầu không được để trống");
+        }
+        if (command.endTime() == null) {
+            throw new IllegalArgumentException("Thời gian kết thúc không được để trống");
+        }
+        if (!command.startTime().isBefore(command.endTime())) {
+            throw new IllegalArgumentException("Thời gian bắt đầu phải trước thời gian kết thúc");
+        }
+        if (command.startTime().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Không thể đặt khung giờ trong quá khứ");
+        }
+    }
+
+    private void cancelSlotBooking(AssignedDoctorSlot assignedSlot) {
         try {
-            doctorClientPort.cancelSlotBooking(command.doctorId(), command.slotId());
+            doctorClientPort.cancelSlotBooking(assignedSlot.doctorId(), assignedSlot.id());
         } catch (RuntimeException ignored) {
             // Keep the original create-appointment failure as the response cause.
         }

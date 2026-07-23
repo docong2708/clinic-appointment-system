@@ -37,15 +37,15 @@ public class AppointmentLog {
             LocalDateTime createdAt
     ) {
         if (id == null) {
-            throw new IllegalArgumentException("Appointment log id must not be null");
+            throw new IllegalArgumentException("Mã nhật ký lịch hẹn không được để trống");
         }
 
         if (appointmentId == null) {
-            throw new IllegalArgumentException("Appointment id must not be null");
+            throw new IllegalArgumentException("Mã lịch hẹn không được để trống");
         }
 
         if (action == null) {
-            throw new IllegalArgumentException("Appointment log action must not be null");
+            throw new IllegalArgumentException("Hành động nhật ký lịch hẹn không được để trống");
         }
 
         this.id = id;

@@ -19,7 +19,7 @@ public class Prescription {
 
     public static Prescription create(String medicationName, String dosage, String frequency, String duration) {
         return Prescription.builder()
-                .medicationName(requireText(medicationName, "Medication name is required"))
+                .medicationName(requireText(medicationName, "Tên thuốc không được để trống"))
                 .dosage(trimNullable(dosage))
                 .frequency(trimNullable(frequency))
                 .duration(trimNullable(duration))

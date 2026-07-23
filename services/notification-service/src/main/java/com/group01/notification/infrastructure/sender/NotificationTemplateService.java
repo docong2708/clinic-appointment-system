@@ -23,13 +23,13 @@ public class NotificationTemplateService {
     public String renderTemplate(String templateKey, Map<String, Object> variables) {
         try {
             NotificationTemplate template = templateRepository.findByKeyAndActiveTrue(templateKey)
-                    .orElseThrow(() -> new IllegalArgumentException("Template not found: " + templateKey));
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy mẫu thông báo: " + templateKey));
             
             String content = template.getBody();
             return replaceVariables(content, variables);
         } catch (Exception e) {
             log.error("Error rendering template: {}", templateKey, e);
-            return "Template rendering failed";
+            return "Render mẫu thông báo thất bại";
         }
     }
 

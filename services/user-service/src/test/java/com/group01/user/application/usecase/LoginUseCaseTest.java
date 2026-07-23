@@ -65,6 +65,6 @@ class LoginUseCaseTest {
 
         assertThatThrownBy(() -> useCase.execute("john@example.com", "bad"))
                 .isInstanceOf(AuthenticationFailedException.class)
-                .hasMessage("Invalid credentials");
+                .hasMessage("Email hoặc mật khẩu không đúng");
     }
 }

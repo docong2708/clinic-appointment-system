@@ -26,13 +26,13 @@ public class UpdateAvailabilityUseCase {
     @Transactional
     public DoctorDto execute(UUID doctorId, AddSlotRequest request) {
         if (request == null) {
-            throw new IllegalArgumentException("Add slot request body is required");
+            throw new IllegalArgumentException("Nội dung yêu cầu thêm khung giờ không được để trống");
         }
         if (request.getStartTime() == null || request.getEndTime() == null) {
-            throw new IllegalArgumentException("Start time and end time are required");
+            throw new IllegalArgumentException("Thời gian bắt đầu và kết thúc không được để trống");
         }
         if (!request.getStartTime().isBefore(request.getEndTime())) {
-            throw new IllegalArgumentException("Start time must be before end time");
+            throw new IllegalArgumentException("Thời gian bắt đầu phải trước thời gian kết thúc");
         }
 
         log.info("Adding slot doctorId={} startTime={} endTime={}",
@@ -40,7 +40,7 @@ public class UpdateAvailabilityUseCase {
 
         DoctorId docId = DoctorId.of(doctorId);
         Doctor doctor = doctorRepository.findById(docId)
-                .orElseThrow(() -> new DoctorNotFoundException("Doctor with ID " + doctorId + " not found"));
+                .orElseThrow(() -> new DoctorNotFoundException("Không tìm thấy bác sĩ với mã " + doctorId));
 
         Slot newSlot = Slot.create(docId, request.getStartTime(), request.getEndTime());
         doctor.addSlot(newSlot);

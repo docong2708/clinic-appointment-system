@@ -28,7 +28,7 @@ public class MedicalRecord {
         return MedicalRecord.builder()
                 .patientId(requirePatientId(patientId))
                 .recordDate(requireRecordDate(recordDate))
-                .diagnosis(requireText(diagnosis, "Diagnosis is required"))
+                .diagnosis(requireText(diagnosis, "Chẩn đoán không được để trống"))
                 .treatment(trimNullable(treatment))
                 .notes(trimNullable(notes))
                 .build();
@@ -36,21 +36,21 @@ public class MedicalRecord {
 
     public void update(LocalDate recordDate, String diagnosis, String treatment, String notes) {
         this.recordDate = requireRecordDate(recordDate);
-        this.diagnosis = requireText(diagnosis, "Diagnosis is required");
+        this.diagnosis = requireText(diagnosis, "Chẩn đoán không được để trống");
         this.treatment = trimNullable(treatment);
         this.notes = trimNullable(notes);
     }
 
     private static UUID requirePatientId(UUID value) {
         if (value == null) {
-            throw new IllegalArgumentException("Patient id is required");
+            throw new IllegalArgumentException("Mã bệnh nhân không được để trống");
         }
         return value;
     }
 
     private static LocalDate requireRecordDate(LocalDate recordDate) {
         if (recordDate == null) {
-            throw new IllegalArgumentException("Record date is required");
+            throw new IllegalArgumentException("Ngày ghi nhận hồ sơ không được để trống");
         }
         return recordDate;
     }

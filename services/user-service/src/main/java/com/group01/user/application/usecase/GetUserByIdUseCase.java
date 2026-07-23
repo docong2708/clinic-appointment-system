@@ -17,6 +17,6 @@ public class GetUserByIdUseCase {
     @Transactional(readOnly = true)
     public User execute(UUID id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("User not found: " + id));
+                .orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng: " + id));
     }
 }

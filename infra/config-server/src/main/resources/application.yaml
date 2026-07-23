@@ -4,12 +4,17 @@ server:
 spring:
   application:
     name: config-server
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:native}
 
   cloud:
     config:
+      enabled: false
       server:
+        native:
+          search-locations: ${CONFIG_REPO_URI:file:${user.dir}/../clinic-config-repo}
         git:
-          uri: ${CONFIG_REPO_URI:https://github.com/hieult-dev/clinic-config-repo.git}
+          uri: ${CONFIG_GIT_REPO_URI:${CONFIG_REPO_URI:https://github.com/hieult-dev/clinic-config-repo.git}}
           default-label: main
 
           username: ${GIT_USERNAME:}

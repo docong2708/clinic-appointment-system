@@ -6,7 +6,7 @@ public record DoctorId(UUID value) {
 
     public DoctorId {
         if (value == null) {
-            throw new IllegalArgumentException("Doctor ID must not be null");
+            throw new IllegalArgumentException("Mã bác sĩ không được để trống");
         }
     }
 

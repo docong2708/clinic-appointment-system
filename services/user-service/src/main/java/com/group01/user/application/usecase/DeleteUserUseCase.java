@@ -17,7 +17,7 @@ public class DeleteUserUseCase {
     @Transactional
     public User execute(UUID id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("User not found: " + id));
+                .orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng: " + id));
         user.deactivate();
         return userRepository.save(user);
     }

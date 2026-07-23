@@ -72,7 +72,7 @@ public class NotificationRetryScheduler {
             );
 
             if (notif.isEmpty()) {
-                log.warn("Notification not found for delivery: {}", deliveryEntity.getId());
+                log.warn("Không tìm thấy thông báo cho lượt gửi: {}", deliveryEntity.getId());
                 return;
             }
 

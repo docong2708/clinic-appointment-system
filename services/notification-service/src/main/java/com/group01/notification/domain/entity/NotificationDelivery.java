@@ -32,7 +32,7 @@ public class NotificationDelivery {
             String destination
     ) {
         if (destination == null || destination.isBlank()) {
-            throw new IllegalArgumentException("Destination cannot be blank");
+            throw new IllegalArgumentException("Địa chỉ nhận không được để trống");
         }
 
         NotificationDelivery delivery = new NotificationDelivery();

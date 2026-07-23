@@ -6,7 +6,7 @@ public record MedicalRecordId(UUID value) {
 
     public MedicalRecordId {
         if (value == null) {
-            throw new IllegalArgumentException("Medical record id must not be null");
+            throw new IllegalArgumentException("Mã hồ sơ khám không được để trống");
         }
     }
 

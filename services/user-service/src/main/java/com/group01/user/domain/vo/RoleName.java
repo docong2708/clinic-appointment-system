@@ -7,7 +7,7 @@ public enum RoleName {
 
     public static RoleName from(String value) {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("Role name is required");
+            throw new IllegalArgumentException("Tên vai trò không được để trống");
         }
         return RoleName.valueOf(value.trim().toUpperCase());
     }

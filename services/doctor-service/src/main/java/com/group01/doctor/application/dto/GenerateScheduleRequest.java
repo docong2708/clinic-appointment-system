@@ -12,13 +12,13 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GenerateScheduleRequest {
-    @NotNull(message = "Start time is required")
+    @NotNull(message = "Thời gian bắt đầu không được để trống")
     private LocalDateTime startTime;
 
-    @NotNull(message = "End time is required")
+    @NotNull(message = "Thời gian kết thúc không được để trống")
     private LocalDateTime endTime;
 
-    @NotNull(message = "Slot duration is required")
-    @Min(value = 5, message = "Slot duration must be at least 5 minutes")
+    @NotNull(message = "Thời lượng khung giờ không được để trống")
+    @Min(value = 5, message = "Thời lượng khung giờ phải ít nhất 5 phút")
     private Integer slotDurationMinutes = 30;
 }

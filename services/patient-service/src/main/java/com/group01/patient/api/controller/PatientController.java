@@ -1,21 +1,35 @@
 package com.group01.patient.api.controller;
 
+import com.group01.commonsecurity.currentuser.CurrentUser;
+import com.group01.commonsecurity.currentuser.CurrentUserHolder;
 import com.group01.patient.api.dto.CreateMedicalRecordRequest;
 import com.group01.patient.api.dto.CreatePatientRequest;
 import com.group01.patient.api.dto.MedicalRecordResponse;
 import com.group01.patient.api.dto.PatientResponse;
 import com.group01.patient.api.dto.UpdateMedicalRecordRequest;
+import com.group01.patient.api.dto.UpdatePatientRequest;
 import com.group01.patient.application.command.CreateMedicalRecordCommand;
+import com.group01.patient.application.command.CreatePatientCommand;
+import com.group01.patient.application.command.UpdateMedicalRecordCommand;
+import com.group01.patient.application.command.UpdatePatientCommand;
+import com.group01.patient.application.command.CreateMedicalRecordCommand;
+import com.group01.patient.application.command.UpdatePatientCommand;
 import com.group01.patient.application.command.UpdateMedicalRecordCommand;
 import com.group01.patient.application.result.MedicalRecordResult;
+import com.group01.patient.application.result.CreatePatientResult;
 import com.group01.patient.application.usecase.CreateMedicalRecordUseCase;
+import com.group01.patient.application.usecase.CreatePatientUseCase;
 import com.group01.patient.application.usecase.DeleteMedicalRecordUseCase;
 import com.group01.patient.application.usecase.GetMedicalRecordUseCase;
 import com.group01.patient.application.usecase.GetMedicalRecordsByPatientUseCase;
+import com.group01.patient.application.usecase.GetPatientByUserIdUseCase;
 import com.group01.patient.application.usecase.UpdateMedicalRecordUseCase;
+import com.group01.patient.application.usecase.UpdatePatientUseCase;
 import com.group01.patient.domain.exception.PatientNotFoundException;
 import com.group01.patient.infrastructure.persistence.PatientJpaEntity;
 import com.group01.patient.infrastructure.persistence.PatientJpaRepository;
+import com.group01.commonsecurity.currentuser.CurrentUser;
+import com.group01.commonsecurity.currentuser.CurrentUserHolder;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -36,24 +50,33 @@ import java.util.UUID;
 public class PatientController {
 
     private final CreateMedicalRecordUseCase createMedicalRecordUseCase;
+    private final CreatePatientUseCase createPatientUseCase;
     private final GetMedicalRecordUseCase getMedicalRecordUseCase;
     private final GetMedicalRecordsByPatientUseCase getMedicalRecordsByPatientUseCase;
+    private final GetPatientByUserIdUseCase getPatientByUserIdUseCase;
     private final UpdateMedicalRecordUseCase updateMedicalRecordUseCase;
+    private final UpdatePatientUseCase updatePatientUseCase;
     private final DeleteMedicalRecordUseCase deleteMedicalRecordUseCase;
     private final PatientJpaRepository patientJpaRepository;
 
     public PatientController(
             CreateMedicalRecordUseCase createMedicalRecordUseCase,
+            CreatePatientUseCase createPatientUseCase,
             GetMedicalRecordUseCase getMedicalRecordUseCase,
             GetMedicalRecordsByPatientUseCase getMedicalRecordsByPatientUseCase,
+            GetPatientByUserIdUseCase getPatientByUserIdUseCase,
             UpdateMedicalRecordUseCase updateMedicalRecordUseCase,
+            UpdatePatientUseCase updatePatientUseCase,
             DeleteMedicalRecordUseCase deleteMedicalRecordUseCase,
             PatientJpaRepository patientJpaRepository
     ) {
         this.createMedicalRecordUseCase = createMedicalRecordUseCase;
+        this.createPatientUseCase = createPatientUseCase;
         this.getMedicalRecordUseCase = getMedicalRecordUseCase;
         this.getMedicalRecordsByPatientUseCase = getMedicalRecordsByPatientUseCase;
+        this.getPatientByUserIdUseCase = getPatientByUserIdUseCase;
         this.updateMedicalRecordUseCase = updateMedicalRecordUseCase;
+        this.updatePatientUseCase = updatePatientUseCase;
         this.deleteMedicalRecordUseCase = deleteMedicalRecordUseCase;
         this.patientJpaRepository = patientJpaRepository;
     }
@@ -65,30 +88,65 @@ public class PatientController {
 
     @PostMapping
     public ResponseEntity<PatientResponse> createPatient(@Valid @RequestBody CreatePatientRequest request) {
-        if (patientJpaRepository.existsByUserId(request.userId())) {
-            throw new IllegalArgumentException("Patient profile already exists for user id: " + request.userId());
+        CreatePatientResult result = createPatientUseCase.execute(new CreatePatientCommand(
+                request.userId(),
+                request.firstName(),
+                request.lastName(),
+                request.dateOfBirth(),
+                request.gender(),
+                request.contactInformation()
+        ));
+
+        PatientResponse response = PatientResponse.from(result.patient());
+        if (!result.created()) {
+            return ResponseEntity.ok(response);
         }
 
-        PatientJpaEntity patient = PatientJpaEntity.builder()
-                .userId(request.userId())
-                .firstName(request.firstName())
-                .lastName(request.lastName())
-                .dateOfBirth(request.dateOfBirth())
-                .gender(request.gender())
-                .contactInformation(request.contactInformation())
-                .build();
-
-        PatientJpaEntity saved = patientJpaRepository.save(patient);
         return ResponseEntity
-                .created(URI.create("/api/patients/" + saved.getId()))
-                .body(PatientResponse.from(saved));
+                .created(URI.create("/api/patients/" + response.id()))
+                .body(response);
     }
 
     @GetMapping("/by-user/{userId}")
     public ResponseEntity<PatientResponse> getPatientByUserId(@PathVariable("userId") UUID userId) {
-        PatientJpaEntity patient = patientJpaRepository.findByUserId(userId)
-                .orElseThrow(() -> new PatientNotFoundException(userId));
+        return ResponseEntity.ok(PatientResponse.from(getPatientByUserIdUseCase.execute(userId)));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<PatientResponse> getMyPatientProfile() {
+        UUID userId = CurrentUserHolder.require().userId();
+        return ResponseEntity.ok(PatientResponse.from(getPatientByUserIdUseCase.execute(userId)));
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<PatientResponse> updateMyPatientProfile(
+            @Valid @RequestBody UpdatePatientRequest request
+    ) {
+        UUID userId = CurrentUserHolder.require().userId();
+        return ResponseEntity.ok(PatientResponse.from(updatePatientUseCase.upsertByUserId(
+                userId,
+                toUpdatePatientCommand(request)
+        )));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<PatientResponse> getMyProfile() {
+        PatientJpaEntity patient = currentPatient();
         return ResponseEntity.ok(PatientResponse.from(patient));
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<PatientResponse> updateMyProfile(
+            @Valid @RequestBody UpdatePatientRequest request
+    ) {
+        requireRole("PATIENT");
+        PatientJpaEntity patient = currentPatient();
+        patient.setFirstName(request.firstName());
+        patient.setLastName(request.lastName());
+        patient.setDateOfBirth(request.dateOfBirth());
+        patient.setGender(request.gender());
+        patient.setContactInformation(request.contactInformation());
+        return ResponseEntity.ok(PatientResponse.from(patientJpaRepository.save(patient)));
     }
 
     @GetMapping("/{patientId}")
@@ -98,6 +156,17 @@ public class PatientController {
         return ResponseEntity.ok(PatientResponse.from(patient));
     }
 
+    @PutMapping("/{patientId}")
+    public ResponseEntity<PatientResponse> updatePatient(
+            @PathVariable("patientId") UUID patientId,
+            @Valid @RequestBody UpdatePatientRequest request
+    ) {
+        return ResponseEntity.ok(PatientResponse.from(updatePatientUseCase.updateById(
+                patientId,
+                toUpdatePatientCommand(request)
+        )));
+    }
+
     // ---- Medical Records ----
 
     @PostMapping("/{patientId}/medical-records")
@@ -105,6 +174,8 @@ public class PatientController {
             @PathVariable("patientId") UUID patientId,
             @Valid @RequestBody CreateMedicalRecordRequest request
     ) {
+        requireAnyRole("DOCTOR", "ADMIN");
+        requirePatient(patientId);
         List<CreateMedicalRecordCommand.PrescriptionCommand> prescriptions = request.prescriptions() == null
                 ? List.of()
                 : request.prescriptions().stream()
@@ -130,7 +201,18 @@ public class PatientController {
     public ResponseEntity<List<MedicalRecordResponse>> getMedicalRecordsByPatient(
             @PathVariable("patientId") UUID patientId
     ) {
+        authorizeRecordRead(patientId);
         List<MedicalRecordResponse> records = getMedicalRecordsByPatientUseCase.execute(patientId)
+                .stream()
+                .map(MedicalRecordResponse::from)
+                .toList();
+        return ResponseEntity.ok(records);
+    }
+
+    @GetMapping("/me/medical-records")
+    public ResponseEntity<List<MedicalRecordResponse>> getMyMedicalRecords() {
+        PatientJpaEntity patient = currentPatient();
+        List<MedicalRecordResponse> records = getMedicalRecordsByPatientUseCase.execute(patient.getId())
                 .stream()
                 .map(MedicalRecordResponse::from)
                 .toList();
@@ -142,7 +224,9 @@ public class PatientController {
             @PathVariable("patientId") UUID patientId,
             @PathVariable("recordId") UUID recordId
     ) {
+        authorizeRecordRead(patientId);
         MedicalRecordResult result = getMedicalRecordUseCase.execute(recordId);
+        requireRecordPatient(result, patientId);
         return ResponseEntity.ok(MedicalRecordResponse.from(result));
     }
 
@@ -152,6 +236,9 @@ public class PatientController {
             @PathVariable("recordId") UUID recordId,
             @Valid @RequestBody UpdateMedicalRecordRequest request
     ) {
+        requireAnyRole("DOCTOR", "ADMIN");
+        requirePatient(patientId);
+        requireRecordPatient(getMedicalRecordUseCase.execute(recordId), patientId);
         List<CreateMedicalRecordCommand.PrescriptionCommand> prescriptions = request.prescriptions() == null
                 ? List.of()
                 : request.prescriptions().stream()
@@ -176,7 +263,64 @@ public class PatientController {
             @PathVariable("patientId") UUID patientId,
             @PathVariable("recordId") UUID recordId
     ) {
+        requireAnyRole("DOCTOR", "ADMIN");
+        requirePatient(patientId);
+        requireRecordPatient(getMedicalRecordUseCase.execute(recordId), patientId);
         deleteMedicalRecordUseCase.execute(recordId);
         return ResponseEntity.noContent().build();
     }
+
+private UpdatePatientCommand toUpdatePatientCommand(UpdatePatientRequest request) {
+    return new UpdatePatientCommand(
+            request.firstName(),
+            request.lastName(),
+            request.dateOfBirth(),
+            request.gender(),
+            request.contactInformation()
+    );
+}
+
+private PatientJpaEntity currentPatient() {
+    CurrentUser user = CurrentUserHolder.require();
+    requireRole("PATIENT");
+    return patientJpaRepository.findByUserId(user.userId())
+            .orElseThrow(() -> new PatientNotFoundException(user.userId()));
+}
+
+private PatientJpaEntity requirePatient(UUID patientId) {
+    return patientJpaRepository.findById(patientId)
+            .orElseThrow(() -> new PatientNotFoundException(patientId));
+}
+
+private void authorizeRecordRead(UUID patientId) {
+    CurrentUser user = CurrentUserHolder.require();
+    if (user.hasRole("DOCTOR") || user.hasRole("ADMIN")) {
+        requirePatient(patientId);
+        return;
+    }
+    PatientJpaEntity patient = currentPatient();
+    if (!patient.getId().equals(patientId)) {
+        throw new SecurityException("You are not allowed to access another patient's medical records");
+    }
+}
+
+private void requireRecordPatient(MedicalRecordResult record, UUID patientId) {
+    if (!patientId.equals(record.patientId())) {
+        throw new PatientNotFoundException(patientId);
+    }
+}
+
+private void requireRole(String role) {
+    requireAnyRole(role);
+}
+
+private void requireAnyRole(String... roles) {
+    CurrentUser user = CurrentUserHolder.require();
+    for (String role : roles) {
+        if (user.hasRole(role)) {
+            return;
+        }
+    }
+    throw new SecurityException("Required role: " + String.join(" or ", roles));
+}
 }

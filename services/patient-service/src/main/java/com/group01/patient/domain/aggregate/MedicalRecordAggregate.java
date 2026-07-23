@@ -16,7 +16,7 @@ public class MedicalRecordAggregate {
 
     public MedicalRecordAggregate(MedicalRecord medicalRecord, List<Prescription> prescriptions) {
         if (medicalRecord == null) {
-            throw new IllegalArgumentException("Medical record is required");
+            throw new IllegalArgumentException("Hồ sơ khám không được để trống");
         }
         this.medicalRecord = medicalRecord;
         this.prescriptions = prescriptions == null ? new ArrayList<>() : new ArrayList<>(prescriptions);

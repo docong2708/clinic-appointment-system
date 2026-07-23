@@ -36,7 +36,7 @@ public class RabbitMQNotificationListener {
     @Transactional
     public void handleAppointmentCreated(AppointmentCreatedEvent event) {
         log.info("Received AppointmentCreatedEvent: {}", event.eventId());
-        processEvent(event.eventId(), "APPOINTMENT_CREATED", event.patientId(), event);
+        processEvent(event.eventId(), "APPOINTMENT_CREATED", event.patientUserId(), event);
     }
 
     @RabbitHandler
@@ -50,14 +50,14 @@ public class RabbitMQNotificationListener {
     @Transactional
     public void handleAppointmentCanceled(AppointmentCanceledEvent event) {
         log.info("Received AppointmentCanceledEvent: {}", event.eventId());
-        processEvent(event.eventId(), "APPOINTMENT_CANCELED", event.patientId(), event);
+        processEvent(event.eventId(), "APPOINTMENT_CANCELED", event.patientUserId(), event);
     }
 
     @RabbitHandler
     @Transactional
     public void handleAppointmentUpdated(AppointmentUpdatedEvent event) {
         log.info("Received AppointmentUpdatedEvent: {}", event.eventId());
-        processEvent(event.eventId(), "APPOINTMENT_UPDATED", event.patientId(), event);
+        processEvent(event.eventId(), "APPOINTMENT_UPDATED", event.patientUserId(), event);
     }
 
     private void processEvent(java.util.UUID eventId, String eventType, java.util.UUID recipientId, Object payload) {
@@ -133,13 +133,15 @@ public class RabbitMQNotificationListener {
                     Your appointment request has been created.
 
                     Appointment ID: %s
-                    Doctor ID: %s
+                    Doctor: %s
+                    Specialization: %s
                     Time: %s - %s
                     Status: %s
                     Reason: %s
                     """.formatted(
                     event.appointmentId(),
-                    event.doctorId(),
+                    hasText(event.doctorName()) ? event.doctorName() : event.doctorId(),
+                    hasText(event.doctorSpecialization()) ? event.doctorSpecialization() : "",
                     event.startTime(),
                     event.endTime(),
                     event.status(),
@@ -170,14 +172,17 @@ public class RabbitMQNotificationListener {
             return """
                     Your appointment has been canceled.
 
-                    Appointment ID: %s
-                    Doctor ID: %s
+                    Doctor: %s
+                    Specialization: %s
+                    Time: %s - %s
                     Status: %s
                     Cancel reason: %s
                     Canceled by: %s
                     """.formatted(
-                    event.appointmentId(),
-                    event.doctorId(),
+                    hasText(event.doctorName()) ? event.doctorName() : "Clinic doctor",
+                    hasText(event.doctorSpecialization()) ? event.doctorSpecialization() : "",
+                    event.startTime(),
+                    event.endTime(),
                     event.status(),
                     event.cancelReason() == null ? "" : event.cancelReason(),
                     event.cancelledByRole() == null ? "" : event.cancelledByRole()
@@ -186,16 +191,19 @@ public class RabbitMQNotificationListener {
 
         if (payload instanceof AppointmentUpdatedEvent event) {
             return """
-                    Your appointment has been updated.
+                    Your appointment time has been changed.
 
-                    Appointment ID: %s
-                    Doctor ID: %s
-                    Time: %s - %s
+                    Doctor: %s
+                    Specialization: %s
+                    Previous time: %s - %s
+                    New time: %s - %s
                     Status: %s
                     Reason: %s
                     """.formatted(
-                    event.appointmentId(),
-                    event.doctorId(),
+                    hasText(event.doctorName()) ? event.doctorName() : "Clinic doctor",
+                    hasText(event.doctorSpecialization()) ? event.doctorSpecialization() : "",
+                    event.previousStartTime(),
+                    event.previousEndTime(),
                     event.startTime(),
                     event.endTime(),
                     event.status(),
@@ -206,12 +214,23 @@ public class RabbitMQNotificationListener {
         return "Your appointment has been " + eventType.toLowerCase().replace("_", " ") + ".";
     }
 
-    private String destinationFor(Object payload) {
-        if (payload instanceof AppointmentCreatedEvent event && hasText(event.patientEmail())) {
-            return event.patientEmail();
-        }
-        return "patient-notification";
+private String destinationFor(Object payload) {
+    if (payload instanceof AppointmentCreatedEvent event && hasText(event.patientEmail())) {
+        return event.patientEmail();
     }
+    if (payload instanceof AppointmentConfirmedEvent event && hasText(event.patientEmail())) {
+        return event.patientEmail();
+    }
+    if (payload instanceof AppointmentCanceledEvent event && hasText(event.patientEmail())) {
+        return event.patientEmail();
+    }
+    if (payload instanceof AppointmentUpdatedEvent event && hasText(event.patientEmail())) {
+        return event.patientEmail();
+    }
+
+    throw new IllegalStateException("Thiếu email nhận thông báo cho loại payload: "
+            + payload.getClass().getSimpleName());
+}
 
     private boolean hasText(String value) {
         return value != null && !value.isBlank();

@@ -65,35 +65,35 @@ public class Appointment {
             LocalDateTime updatedAt
     ) {
         if (id == null) {
-            throw new IllegalArgumentException("Appointment id must not be null");
+            throw new IllegalArgumentException("Mã lịch hẹn không được để trống");
         }
 
         if (patientId == null) {
-            throw new IllegalArgumentException("Patient id must not be null");
+            throw new IllegalArgumentException("Mã bệnh nhân không được để trống");
         }
 
         if (doctorId == null) {
-            throw new IllegalArgumentException("Doctor id must not be null");
+            throw new IllegalArgumentException("Mã bác sĩ không được để trống");
         }
 
         if (appointmentTime == null) {
-            throw new IllegalArgumentException("Appointment time must not be null");
+            throw new IllegalArgumentException("Thời gian lịch hẹn không được để trống");
         }
 
         if (status == null) {
-            throw new IllegalArgumentException("Appointment status must not be null");
+            throw new IllegalArgumentException("Trạng thái lịch hẹn không được để trống");
         }
 
         if (paymentStatus == null) {
-            throw new IllegalArgumentException("Payment status must not be null");
+            throw new IllegalArgumentException("Trạng thái thanh toán không được để trống");
         }
 
         if (createdAt == null) {
-            throw new IllegalArgumentException("Created at must not be null");
+            throw new IllegalArgumentException("Thời điểm tạo không được để trống");
         }
 
         if (updatedAt == null) {
-            throw new IllegalArgumentException("Updated at must not be null");
+            throw new IllegalArgumentException("Thời điểm cập nhật không được để trống");
         }
 
         this.id = id;
@@ -150,8 +150,8 @@ public class Appointment {
                 appointmentTime,
                 reason,
                 null,
-                AppointmentStatus.CONFIRMED,
-                PaymentStatus.NOT_REQUIRED,
+                AppointmentStatus.PENDING,
+                PaymentStatus.PENDING,
                 null,
                 null,
                 null,
@@ -220,23 +220,23 @@ public class Appointment {
             ActorRole cancelledByRole
     ) {
         if (cancelReason == null) {
-            throw new IllegalArgumentException("Cancel reason must not be null");
+            throw new IllegalArgumentException("Lý do hủy không được để trống");
         }
 
         if (cancelledBy == null) {
-            throw new IllegalArgumentException("Cancelled by must not be null");
+            throw new IllegalArgumentException("Người hủy lịch không được để trống");
         }
 
         if (cancelledByRole == null) {
-            throw new IllegalArgumentException("Cancelled by role must not be null");
+            throw new IllegalArgumentException("Vai trò người hủy lịch không được để trống");
         }
 
         if (this.status == AppointmentStatus.CANCELLED) {
-            throw new IllegalStateException("Appointment already cancelled");
+            throw new IllegalStateException("Lịch hẹn đã được hủy trước đó");
         }
 
         if (this.status == AppointmentStatus.COMPLETED) {
-            throw new IllegalStateException("Completed appointment cannot be cancelled");
+            throw new IllegalStateException("Không thể hủy lịch hẹn đã hoàn thành");
         }
 
         this.status = AppointmentStatus.CANCELLED;
@@ -250,7 +250,7 @@ public class Appointment {
 
     public void markPaymentPaid() {
         if (this.status == AppointmentStatus.CANCELLED) {
-            throw new IllegalStateException("Cancelled appointment cannot be paid");
+            throw new IllegalStateException("Không thể thanh toán lịch hẹn đã hủy");
         }
 
         this.paymentStatus = PaymentStatus.PAID;
@@ -261,7 +261,7 @@ public class Appointment {
 
     public void markPaymentFailed() {
         if (this.status == AppointmentStatus.CANCELLED) {
-            throw new IllegalStateException("Cancelled appointment cannot update payment");
+            throw new IllegalStateException("Không thể cập nhật thanh toán cho lịch hẹn đã hủy");
         }
 
         this.paymentStatus = PaymentStatus.FAILED;
@@ -270,11 +270,11 @@ public class Appointment {
 
     public void complete() {
         if (this.status == AppointmentStatus.CANCELLED) {
-            throw new IllegalStateException("Cancelled appointment cannot be completed");
+            throw new IllegalStateException("Không thể hoàn thành lịch hẹn đã hủy");
         }
 
         if (this.status != AppointmentStatus.CONFIRMED) {
-            throw new IllegalStateException("Only confirmed appointment can be completed");
+            throw new IllegalStateException("Chỉ có thể hoàn thành lịch hẹn đã được xác nhận");
         }
 
         this.status = AppointmentStatus.COMPLETED;

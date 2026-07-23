@@ -19,7 +19,7 @@ public class UpdateNotificationUseCaseImpl implements UpdateNotificationUseCase 
     @Override
     public NotificationAggregate handle(NotificationId notificationId, String title, String body) {
         NotificationAggregate notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new RuntimeException("Notification not found: " + notificationId.value()));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông báo: " + notificationId.value()));
         
         notification.updateContent(NotificationTitle.of(title), body);
         
