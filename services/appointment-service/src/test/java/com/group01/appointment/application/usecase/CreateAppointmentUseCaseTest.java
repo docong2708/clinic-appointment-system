@@ -59,7 +59,7 @@ class CreateAppointmentUseCaseTest {
         assertThat(result.patientId()).isEqualTo(patientId);
         assertThat(result.doctorId()).isEqualTo(assignedSlot.doctorId());
         assertThat(result.slotId()).isEqualTo(assignedSlot.id());
-        assertThat(result.status()).isEqualTo(AppointmentStatus.PENDING.name());
+        assertThat(result.status()).isEqualTo(AppointmentStatus.CONFIRMED.name());
         assertThat(result.paymentStatus()).isEqualTo(PaymentStatus.PENDING.name());
         verify(appointmentLogRepository).saveAll(any());
         verify(notificationPort).publishAppointmentCreated(any());

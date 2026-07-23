@@ -1,19 +1,23 @@
 server:
-  port: 8888
+  port: 8889
 
 spring:
   application:
     name: config-server
 
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:native}
+
   cloud:
     config:
       server:
+        native:
+          search-locations: ${CONFIG_NATIVE_REPO_URI:file:../clinic-config-repo}
         git:
           uri: ${CONFIG_GIT_REPO_URI:https://github.com/hieult-dev/clinic-config-repo.git}
           default-label: main
           clone-on-start: true
           force-pull: true
-
           username: ${GIT_USERNAME:}
           password: ${GIT_TOKEN:}
 

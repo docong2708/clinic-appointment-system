@@ -1,8 +1,22 @@
+server:
+  port: ${SERVER_PORT:8082}
+
 spring:
   application:
     name: doctor-service
   config:
-    import: optional:configserver:${SPRING_CLOUD_CONFIG_URI:http://localhost:8888}
+    import: optional:configserver:${SPRING_CLOUD_CONFIG_URI:http://localhost:8889}
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:${DOCTOR_DB_URL:jdbc:postgresql://localhost:55433/doctor_db}}
+    username: ${SPRING_DATASOURCE_USERNAME:${DOCTOR_DB_USERNAME:postgres}}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres_password}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
 app:
   flyway:

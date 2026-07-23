@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface SpringDataDoctorLeaveRepository extends JpaRepository<DoctorLeaveJpaEntity, UUID> {
+public interface            SpringDataDoctorLeaveRepository extends JpaRepository<DoctorLeaveJpaEntity, UUID> {
     @Query("""
             select l
             from DoctorLeaveJpaEntity l

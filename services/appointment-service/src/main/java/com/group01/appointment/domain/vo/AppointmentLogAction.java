@@ -16,3 +16,4 @@ public enum AppointmentLogAction {
     CHECK_OUT,
     MARK_NOT_CHECKIN
 }
+

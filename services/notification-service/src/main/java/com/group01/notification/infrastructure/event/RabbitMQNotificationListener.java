@@ -215,18 +215,29 @@ public class RabbitMQNotificationListener {
         return "Bạn có thông báo mới về lịch hẹn.";
     }
 
-    private String destinationFor(Object payload) {
-        if (payload instanceof AppointmentCreatedEvent event && hasText(event.patientEmail())) {
-            return event.patientEmail();
-        }
-        if (payload instanceof AppointmentCanceledEvent event && hasText(event.patientEmail())) {
-            return event.patientEmail();
-        }
-        if (payload instanceof AppointmentUpdatedEvent event && hasText(event.patientEmail())) {
-            return event.patientEmail();
-        }
-        return "patient@clinic.com";
+private String destinationFor(Object payload) {
+    if (payload instanceof AppointmentCreatedEvent event
+            && hasText(event.patientEmail())) {
+        return event.patientEmail();
     }
+
+    if (payload instanceof AppointmentConfirmedEvent event
+            && hasText(event.patientEmail())) {
+        return event.patientEmail();
+    }
+
+    if (payload instanceof AppointmentCanceledEvent event
+            && hasText(event.patientEmail())) {
+        return event.patientEmail();
+    }
+
+    if (payload instanceof AppointmentUpdatedEvent event
+            && hasText(event.patientEmail())) {
+        return event.patientEmail();
+    }
+
+    return "patient@clinic.com";
+}
 
     private boolean hasText(String value) {
         return value != null && !value.isBlank();

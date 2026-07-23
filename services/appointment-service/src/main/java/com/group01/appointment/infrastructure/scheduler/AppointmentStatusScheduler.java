@@ -61,34 +61,54 @@ public class AppointmentStatusScheduler {
         }
     }
 
-    @Scheduled(fixedRate = 60000)
-    @Transactional
-    public void autoCancelExpiredPendingAppointments() {
-        OffsetDateTime now = LocalDateTime.now().atOffset(ZoneOffset.UTC);
-        List<AppointmentAggregate> pendingExpired = appointmentJpaRepository.findPendingAppointmentsStartedBefore(now)
-                .stream()
-                .map(appointmentMapper::toAggregate)
-                .toList();
+@Scheduled(fixedRate = 60000)
+@Transactional
+public void autoCancelExpiredPendingAppointments() {
+    OffsetDateTime now = LocalDateTime.now().atOffset(ZoneOffset.UTC);
 
-        int expiredCount = 0;
-        for (AppointmentAggregate appointment : pendingExpired) {
-            try {
-                appointment.cancel(
-                        CancelReason.of("Tự động hủy do quá hạn khung giờ khám mà chưa được xác nhận"),
-                        SYSTEM_ACTOR_ID,
-                        ActorRole.SYSTEM
-                );
-                AppointmentAggregate saved = appointmentRepository.save(appointment);
-                appointmentLogRepository.saveAll(appointment.getLogs());
-                expiredCount++;
-                log.info("Auto cancelled expired pending appointment {}", saved.getAppointmentId().value());
-            } catch (RuntimeException ex) {
-                log.warn("Error auto cancelling pending appointment {}", appointment.getAppointmentId().value(), ex);
-            }
-        }
+    List<AppointmentAggregate> pendingExpired =
+            appointmentJpaRepository.findPendingAppointmentsStartedBefore(now)
+                    .stream()
+                    .map(appointmentMapper::toAggregate)
+                    .toList();
 
-        if (expiredCount > 0) {
-            log.info("Auto cancelled {} expired unconfirmed pending appointments", expiredCount);
+    int expiredCount = 0;
+
+    for (AppointmentAggregate appointment : pendingExpired) {
+        try {
+            appointment.cancel(
+                    CancelReason.of(
+                            "Tự động hủy do quá hạn khung giờ khám mà chưa được xác nhận"
+                    ),
+                    SYSTEM_ACTOR_ID,
+                    ActorRole.SYSTEM
+            );
+
+            AppointmentAggregate saved =
+                    appointmentRepository.save(appointment);
+
+            appointmentLogRepository.saveAll(appointment.getLogs());
+
+            expiredCount++;
+
+            log.info(
+                    "Auto cancelled expired pending appointment {}",
+                    saved.getAppointmentId().value()
+            );
+        } catch (RuntimeException ex) {
+            log.warn(
+                    "Error auto cancelling pending appointment {}",
+                    appointment.getAppointmentId().value(),
+                    ex
+            );
         }
     }
+
+    if (expiredCount > 0) {
+        log.info(
+                "Auto cancelled {} expired unconfirmed pending appointments",
+                expiredCount
+        );
+    }
+}
 }
