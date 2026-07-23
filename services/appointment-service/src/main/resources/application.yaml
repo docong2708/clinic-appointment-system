@@ -6,19 +6,3 @@ spring:
     name: appointment-service
   config:
     import: optional:configserver:${SPRING_CLOUD_CONFIG_URI:http://localhost:8889}
-  datasource:
-    url: ${SPRING_DATASOURCE_URL:${APPOINTMENT_DB_URL:jdbc:postgresql://localhost:55432/appointment_db}}
-    username: ${SPRING_DATASOURCE_USERNAME:${APPOINTMENT_DB_USERNAME:postgres}}
-    password: ${SPRING_DATASOURCE_PASSWORD:postgres_password}
-    driver-class-name: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-  rabbitmq:
-    host: ${SPRING_RABBITMQ_HOST:localhost}
-    port: ${SPRING_RABBITMQ_PORT:5672}
-    username: ${SPRING_RABBITMQ_USERNAME:admin}
-    password: ${SPRING_RABBITMQ_PASSWORD:admin}

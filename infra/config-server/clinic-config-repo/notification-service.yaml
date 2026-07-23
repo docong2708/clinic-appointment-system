@@ -2,11 +2,17 @@ server:
   port: ${SERVER_PORT:8083}
 
 spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:${NOTIFICATION_DB_URL:jdbc:postgresql://localhost:5432/notification_db}}
+    username: ${SPRING_DATASOURCE_USERNAME:${NOTIFICATION_DB_USERNAME:postgres}}
+    password: ${SPRING_DATASOURCE_PASSWORD:{cipher}2d0e87e8266ddc10708d3deda0dbe471459951270483e73b21657e9ec249e65a}
+    driver-class-name: org.postgresql.Driver
+
   mail:
-    host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:lehieu2004s@gmail.com}
-    password: '{cipher}34141583bc2cbee8e3fba0ad74abfc35b59717d218dde47fdd3076e59074460caa233054b04278926a73e08ee2ffd15d'
+    host: ${SPRING_MAIL_HOST:${MAIL_HOST:smtp.gmail.com}}
+    port: ${SPRING_MAIL_PORT:${MAIL_PORT:587}}
+    username: ${SPRING_MAIL_USERNAME:${MAIL_USERNAME:lehieu2004s@gmail.com}}
+    password: ${SPRING_MAIL_PASSWORD:{cipher}34141583bc2cbee8e3fba0ad74abfc35b59717d218dde47fdd3076e59074460caa233054b04278926a73e08ee2ffd15d}
     properties:
       mail:
         smtp:
@@ -18,17 +24,11 @@ spring:
           timeout: 5000
           writetimeout: 5000
 
-  datasource:
-    url: ${NOTIFICATION_DB_URL:jdbc:postgresql://localhost:5432/notification_db}
-    username: ${NOTIFICATION_DB_USERNAME:postgres}
-    password: '{cipher}2d0e87e8266ddc10708d3deda0dbe471459951270483e73b21657e9ec249e65a'
-    driver-class-name: org.postgresql.Driver
-
   rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USERNAME:admin}
-    password: '{cipher}59d9f2020bc7192ccf3367a29b5f6375dc4d21178f690deec83a590a37eaafaf'
+    host: ${SPRING_RABBITMQ_HOST:${RABBITMQ_HOST:localhost}}
+    port: ${SPRING_RABBITMQ_PORT:${RABBITMQ_PORT:5672}}
+    username: ${SPRING_RABBITMQ_USERNAME:${RABBITMQ_USERNAME:admin}}
+    password: ${SPRING_RABBITMQ_PASSWORD:{cipher}59d9f2020bc7192ccf3367a29b5f6375dc4d21178f690deec83a590a37eaafaf}
 
   jpa:
     hibernate:
@@ -48,23 +48,36 @@ spring:
     locations: classpath:db/migration
 
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}}
+
     consumer:
       group-id: notification-service
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
     listener:
       ack-mode: manual
+
+mail:
+  from: ${spring.mail.username:noreply@clinic.local}
+  from-name: ${MAIL_FROM_NAME:MSS Clinic}
+  provider: SMTP
+
+notification:
+  sender:
+    mock: ${NOTIFICATION_SENDER_MOCK:false}
 
 management:
   endpoints:
     web:
       exposure:
         include: health,info,refresh
+
   endpoint:
     health:
       show-details: always
