@@ -8,6 +8,8 @@ import com.group01.appointment.application.exception.AppointmentTimeValidationEx
 import com.group01.appointment.application.exception.DoctorCancellationNotAllowedException;
 import com.group01.appointment.application.exception.ForbiddenAppointmentActionException;
 import com.group01.appointment.application.event.AppointmentEventMapper;
+import com.group01.appointment.application.event.AppointmentNotificationDetails;
+import com.group01.appointment.application.event.AppointmentNotificationDetailsResolver;
 import com.group01.appointment.application.port.DoctorClientPort;
 import com.group01.appointment.application.port.NotificationPort;
 import com.group01.appointment.application.port.PatientClientPort;
@@ -37,6 +39,7 @@ public class DoctorAppointmentWorkflowUseCase {
     private final DoctorClientPort doctorClientPort;
     private final PatientClientPort patientClientPort;
     private final NotificationPort notificationPort;
+    private final AppointmentNotificationDetailsResolver notificationDetailsResolver;
     private final com.group01.appointment.infrastructure.client.UserServiceClient userServiceClient;
 
     public DoctorAppointmentWorkflowUseCase(
@@ -45,6 +48,7 @@ public class DoctorAppointmentWorkflowUseCase {
             DoctorClientPort doctorClientPort,
             PatientClientPort patientClientPort,
             NotificationPort notificationPort,
+            AppointmentNotificationDetailsResolver notificationDetailsResolver,
             com.group01.appointment.infrastructure.client.UserServiceClient userServiceClient
     ) {
         this.appointmentRepository = appointmentRepository;
@@ -52,6 +56,7 @@ public class DoctorAppointmentWorkflowUseCase {
         this.doctorClientPort = doctorClientPort;
         this.patientClientPort = patientClientPort;
         this.notificationPort = notificationPort;
+        this.notificationDetailsResolver = notificationDetailsResolver;
         this.userServiceClient = userServiceClient;
     }
 
@@ -130,10 +135,10 @@ public class DoctorAppointmentWorkflowUseCase {
         AppointmentAggregate saved = persist(appointment);
 
         PatientClientPort.PatientProfile patient = patientClientPort.getPatientProfile(saved.getPatientId().value());
-        
-        notificationPort.publishAppointmentCanceled(AppointmentEventMapper.canceled(saved));
+        AppointmentNotificationDetails notificationDetails = notificationDetailsResolver.resolve(saved);
+        notificationPort.publishAppointmentCanceled(AppointmentEventMapper.canceled(saved, notificationDetails));
 
-        String recipientEmail = patient.contactInformation();
+        String recipientEmail = notificationDetails.patientEmail();
         if (recipientEmail == null || !recipientEmail.contains("@")) {
             try {
                 if (patient.userId() != null) {
@@ -167,7 +172,8 @@ public class DoctorAppointmentWorkflowUseCase {
         AppointmentAggregate appointment = getDoctorOwnedAppointment(appointmentId, doctorUserId);
         appointment.confirmByDoctor(doctorUserId);
         AppointmentAggregate saved = persist(appointment);
-        notificationPort.publishAppointmentConfirmed(AppointmentEventMapper.confirmed(saved));
+        AppointmentNotificationDetails notificationDetails = notificationDetailsResolver.resolve(saved);
+        notificationPort.publishAppointmentConfirmed(AppointmentEventMapper.confirmed(saved, notificationDetails));
         return AppointmentResultMapper.from(saved);
     }
 

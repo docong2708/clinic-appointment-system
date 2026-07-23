@@ -14,7 +14,7 @@ import java.util.List;
 @Service
 public class ExpireAwaitingPaymentAppointmentsUseCase {
 
-    private static final Duration PAYMENT_TIMEOUT = Duration.ofMinutes(15);
+    private static final Duration PAYMENT_TIMEOUT = Duration.ofMinutes(5);
     private static final int BATCH_SIZE = 50;
 
     private final AppointmentRepository appointmentRepository;

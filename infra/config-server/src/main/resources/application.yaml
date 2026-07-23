@@ -4,24 +4,18 @@ server:
 spring:
   application:
     name: config-server
-  profiles:
-    active: ${SPRING_PROFILES_ACTIVE:native}
 
   cloud:
     config:
-      enabled: false
       server:
-        native:
-          search-locations: ${CONFIG_REPO_URI:file:${user.dir}/../clinic-config-repo}
         git:
-          uri: ${CONFIG_GIT_REPO_URI:${CONFIG_REPO_URI:https://github.com/hieult-dev/clinic-config-repo.git}}
+          uri: ${CONFIG_GIT_REPO_URI:https://github.com/hieult-dev/clinic-config-repo.git}
           default-label: main
+          clone-on-start: true
+          force-pull: true
 
           username: ${GIT_USERNAME:}
           password: ${GIT_TOKEN:}
-
-          clone-on-start: true
-          force-pull: true
 
 encrypt:
   key: ${ENCRYPT_KEY}
@@ -31,6 +25,7 @@ management:
     web:
       exposure:
         include: health,info
+
   endpoint:
     health:
       show-details: always
