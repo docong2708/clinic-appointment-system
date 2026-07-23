@@ -69,8 +69,7 @@ public class NotificationController {
 
     @PutMapping("/{id}/read")
     public NotificationResponse markAsRead(@PathVariable("id") UUID id) {
-        NotificationAggregate result = getUseCase.handle(NotificationId.of(id));
-        result.markAsRead();
+        NotificationAggregate result = updateUseCase.markAsRead(NotificationId.of(id));
         return toResponse(result);
     }
 
@@ -92,6 +91,7 @@ public class NotificationController {
                 .priority(aggregate.getPriority())
                 .createdAt(aggregate.getCreatedAt())
                 .updatedAt(aggregate.getUpdatedAt())
+                .readAt(aggregate.getReadAt())
                 .build();
     }
 }
