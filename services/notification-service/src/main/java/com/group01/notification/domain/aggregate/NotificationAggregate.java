@@ -28,11 +28,16 @@ public class NotificationAggregate {
     private Integer templateVersion;
     private String actionUrl;
     private List<NotificationDelivery> deliveries;
+    private java.util.Map<String, Object> payload;
     private LocalDateTime readAt;
     private LocalDateTime archivedAt;
     private LocalDateTime expiresAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    public void setPayload(java.util.Map<String, Object> payload) {
+        this.payload = payload;
+    }
 
     private NotificationAggregate() {
         this.deliveries = new ArrayList<>();
