@@ -1,0 +1,41 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: doctor-service
+
+  datasource:
+    url: ${DOCTOR_DB_URL:jdbc:postgresql://localhost:5432/doctor_db}
+    username: ${DOCTOR_DB_USERNAME:postgres}
+    password: "{cipher}84b595fe1be3995d7258b42c10b60ffa796e534759920b983bf0d6af585e682d"
+    driver-class-name: org.postgresql.Driver
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:admin}
+    password: '{cipher}59d9f2020bc7192ccf3367a29b5f6375dc4d21178f690deec83a590a37eaafaf'
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,refresh
+  endpoint:
+    health:
+      show-details: always

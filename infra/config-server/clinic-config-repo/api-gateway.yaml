@@ -1,0 +1,79 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: auth-service
+              uri: ${USER_SERVICE_URI:lb://user-service}
+              predicates:
+                - Path=/auth/**
+
+            - id: user-service-users
+              uri: lb://user-service
+              predicates:
+                - Path=/api/users/**
+
+            - id: patient-service
+              uri: lb://patient-service
+              predicates:
+                - Path=/api/patients/**
+
+            - id: doctor-service
+              uri: lb://doctor-service
+              predicates:
+                - Path=/api/doctors/**
+
+            - id: appointment-service
+              uri: lb://appointment-service
+              predicates:
+                - Path=/api/appointments/**
+
+            - id: payment-service
+              uri: ${PAYMENT_SERVICE_URI:lb://payment-service}
+              predicates:
+                - Path=/api/payments,/api/payments/**
+
+            - id: notification-service
+              uri: lb://notification-service
+              predicates:
+                - Path=/api/notifications/**
+
+gateway:
+  security:
+    public-endpoints:
+      - POST /api/users/register
+      - POST /auth/login
+      - POST /auth/refresh
+      - POST /auth/logout
+      - GET /actuator/**
+
+eureka:
+  instance:
+    prefer-ip-address: true
+
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,refresh
+
+app:
+  auth:
+    jwt-issuer: ${JWT_ISSUER:clinic-appointment-system}
+    jwt-secret: '{cipher}dcb9d925249eacd04024f2a34f33e572149b17ab6520dc599f0f1c9927b854d86f566f154c45e368f99ce1702c44523f73fae3e984a73a30720654a1c408ff89'
+    access-token-max-age-seconds: ${ACCESS_TOKEN_MAX_AGE_SECONDS:3600}
+    refresh-token-max-age-seconds: ${REFRESH_TOKEN_MAX_AGE_SECONDS:604800}
+    frontend-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
