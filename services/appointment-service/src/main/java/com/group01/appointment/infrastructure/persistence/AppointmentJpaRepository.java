@@ -51,7 +51,13 @@ public interface AppointmentJpaRepository extends JpaRepository<AppointmentJpaEn
             where a.status = 'CONFIRMED'
               and a.startTime < :cutoffTime
             """)
-    List<AppointmentJpaEntity> findConfirmedAppointmentsStartedBefore(
-            @Param("cutoffTime") OffsetDateTime cutoffTime
-    );
+    List<AppointmentJpaEntity> findConfirmedAppointmentsStartedBefore(@Param("cutoffTime") OffsetDateTime cutoffTime);
+
+    @Query("""
+            select a
+            from AppointmentJpaEntity a
+            where a.status in ('PENDING_DOCTOR_CONFIRMATION', 'PENDING_PAYMENT', 'PENDING', 'BOOKED')
+              and a.startTime < :cutoffTime
+            """)
+    List<AppointmentJpaEntity> findPendingAppointmentsStartedBefore(@Param("cutoffTime") OffsetDateTime cutoffTime);
 }
