@@ -2,6 +2,8 @@ package com.group01.appointment.application.usecase;
 
 import com.group01.appointment.application.command.MarkAppointmentPaymentCommand;
 import com.group01.appointment.application.event.AppointmentEventMapper;
+import com.group01.appointment.application.event.AppointmentNotificationDetails;
+import com.group01.appointment.application.event.AppointmentNotificationDetailsResolver;
 import com.group01.appointment.application.exception.AppointmentNotFoundException;
 import com.group01.appointment.application.port.NotificationPort;
 import com.group01.appointment.application.result.AppointmentResult;
@@ -20,15 +22,18 @@ public class MarkAppointmentPaymentPaidUseCase {
     private final AppointmentRepository appointmentRepository;
     private final AppointmentLogRepository appointmentLogRepository;
     private final NotificationPort notificationPort;
+    private final AppointmentNotificationDetailsResolver notificationDetailsResolver;
 
     public MarkAppointmentPaymentPaidUseCase(
             AppointmentRepository appointmentRepository,
             AppointmentLogRepository appointmentLogRepository,
-            NotificationPort notificationPort
+            NotificationPort notificationPort,
+            AppointmentNotificationDetailsResolver notificationDetailsResolver
     ) {
         this.appointmentRepository = appointmentRepository;
         this.appointmentLogRepository = appointmentLogRepository;
         this.notificationPort = notificationPort;
+        this.notificationDetailsResolver = notificationDetailsResolver;
     }
 
     @Transactional
@@ -39,7 +44,8 @@ public class MarkAppointmentPaymentPaidUseCase {
         appointment.markPaymentPaid(command.performedBy(), ActorRole.valueOf(command.performedByRole()));
         AppointmentAggregate savedAppointment = appointmentRepository.save(appointment);
         appointmentLogRepository.saveAll(appointment.getLogs());
-        notificationPort.publishAppointmentConfirmed(AppointmentEventMapper.confirmed(savedAppointment));
+        AppointmentNotificationDetails notificationDetails = notificationDetailsResolver.resolve(savedAppointment);
+        notificationPort.publishAppointmentConfirmed(AppointmentEventMapper.confirmed(savedAppointment, notificationDetails));
 
         return AppointmentResultMapper.from(savedAppointment);
     }

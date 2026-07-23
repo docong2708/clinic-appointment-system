@@ -73,29 +73,33 @@ public final class AppointmentEventMapper {
         );
     }
 
-    public static AppointmentCanceledEvent canceled(AppointmentAggregate appointment) {
-        return canceled(appointment, null);
-    }
+public static AppointmentCanceledEvent canceled(AppointmentAggregate appointment) {
+    return canceled(appointment, null);
+}
 
-    public static AppointmentConfirmedEvent confirmed(AppointmentAggregate appointment) {
-        LocalDateTime occurredAt = LocalDateTime.now();
+public static AppointmentConfirmedEvent confirmed(
+        AppointmentAggregate appointment,
+        AppointmentNotificationDetails details
+) {
+    LocalDateTime occurredAt = LocalDateTime.now();
 
-        return new AppointmentConfirmedEvent(
-                UUID.randomUUID(),
-                appointment.getAppointmentId().value(),
-                appointment.getPatientId().value(),
-                appointment.getDoctorId().value(),
-                appointment.getAppointmentTime().startTime(),
-                appointment.getAppointmentTime().endTime(),
-                appointment.getStatus().name(),
-                appointment.getPaymentStatus() == null
-                        ? null
-                        : appointment.getPaymentStatus().name(),
-                appointment.getConfirmedAt(),
-                occurredAt
-        );
-    }
-
+    return new AppointmentConfirmedEvent(
+            UUID.randomUUID(),
+            appointment.getAppointmentId().value(),
+            details != null ? details.patientUserId() : null,
+            appointment.getPatientId().value(),
+            details != null ? details.patientEmail() : null,
+            appointment.getDoctorId().value(),
+            appointment.getAppointmentTime().startTime(),
+            appointment.getAppointmentTime().endTime(),
+            appointment.getStatus().name(),
+            appointment.getPaymentStatus() == null
+                    ? null
+                    : appointment.getPaymentStatus().name(),
+            appointment.getConfirmedAt(),
+            occurredAt
+    );
+}
     public static AppointmentUpdatedEvent updated(
             AppointmentAggregate appointment,
             AppointmentNotificationDetails details,

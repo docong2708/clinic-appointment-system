@@ -43,7 +43,7 @@ public class RabbitMQNotificationListener {
     @Transactional
     public void handleAppointmentConfirmed(AppointmentConfirmedEvent event) {
         log.info("Received AppointmentConfirmedEvent: {}", event.eventId());
-        processEvent(event.eventId(), "APPOINTMENT_CONFIRMED", event.patientId(), event);
+        processEvent(event.eventId(), "APPOINTMENT_CONFIRMED", event.patientUserId(), event);
     }
 
     @RabbitHandler
@@ -93,6 +93,7 @@ public class RabbitMQNotificationListener {
                     .aggregateType("Appointment")
                     .aggregateId(aggregateId(payload, eventId))
                     .sourceInboxEventId(inboxEvent.getId())
+                    .payload(payloadFor(payload))
                     .build();
 
             createNotificationUseCase.handle(command);
@@ -119,25 +120,25 @@ public class RabbitMQNotificationListener {
 
     private String titleFor(String eventType) {
         return switch (eventType) {
-            case "APPOINTMENT_CREATED" -> "Appointment request received";
-            case "APPOINTMENT_CONFIRMED" -> "Appointment confirmed";
-            case "APPOINTMENT_CANCELED" -> "Appointment canceled";
-            case "APPOINTMENT_UPDATED" -> "Appointment updated";
-            default -> "Appointment notification";
+            case "APPOINTMENT_CREATED" -> "Đã nhận yêu cầu đặt lịch";
+            case "APPOINTMENT_CONFIRMED" -> "Lịch hẹn đã được xác nhận";
+            case "APPOINTMENT_CANCELED" -> "Lịch hẹn đã bị hủy";
+            case "APPOINTMENT_UPDATED" -> "Lịch hẹn đã được cập nhật";
+            default -> "Thông báo lịch hẹn";
         };
     }
 
     private String bodyFor(String eventType, Object payload) {
         if (payload instanceof AppointmentCreatedEvent event) {
             return """
-                    Your appointment request has been created.
+                    Yêu cầu đặt lịch của bạn đã được tạo.
 
-                    Appointment ID: %s
-                    Doctor: %s
-                    Specialization: %s
-                    Time: %s - %s
-                    Status: %s
-                    Reason: %s
+                    Mã lịch hẹn: %s
+                    Bác sĩ: %s
+                    Chuyên khoa: %s
+                    Thời gian: %s - %s
+                    Trạng thái: %s
+                    Lý do khám: %s
                     """.formatted(
                     event.appointmentId(),
                     hasText(event.doctorName()) ? event.doctorName() : event.doctorId(),
@@ -151,13 +152,13 @@ public class RabbitMQNotificationListener {
 
         if (payload instanceof AppointmentConfirmedEvent event) {
             return """
-                    Your appointment has been confirmed.
+                    Lịch hẹn của bạn đã được xác nhận.
 
-                    Appointment ID: %s
-                    Doctor ID: %s
-                    Time: %s - %s
-                    Status: %s
-                    Payment status: %s
+                    Mã lịch hẹn: %s
+                    Mã bác sĩ: %s
+                    Thời gian: %s - %s
+                    Trạng thái: %s
+                    Trạng thái thanh toán: %s
                     """.formatted(
                     event.appointmentId(),
                     event.doctorId(),
@@ -170,16 +171,16 @@ public class RabbitMQNotificationListener {
 
         if (payload instanceof AppointmentCanceledEvent event) {
             return """
-                    Your appointment has been canceled.
+                    Lịch hẹn của bạn đã bị hủy.
 
-                    Doctor: %s
-                    Specialization: %s
-                    Time: %s - %s
-                    Status: %s
-                    Cancel reason: %s
-                    Canceled by: %s
+                    Bác sĩ: %s
+                    Chuyên khoa: %s
+                    Thời gian: %s - %s
+                    Trạng thái: %s
+                    Lý do hủy: %s
+                    Người hủy: %s
                     """.formatted(
-                    hasText(event.doctorName()) ? event.doctorName() : "Clinic doctor",
+                    hasText(event.doctorName()) ? event.doctorName() : "Bác sĩ phòng khám",
                     hasText(event.doctorSpecialization()) ? event.doctorSpecialization() : "",
                     event.startTime(),
                     event.endTime(),
@@ -191,16 +192,16 @@ public class RabbitMQNotificationListener {
 
         if (payload instanceof AppointmentUpdatedEvent event) {
             return """
-                    Your appointment time has been changed.
+                    Thời gian lịch hẹn của bạn đã được thay đổi.
 
-                    Doctor: %s
-                    Specialization: %s
-                    Previous time: %s - %s
-                    New time: %s - %s
-                    Status: %s
-                    Reason: %s
+                    Bác sĩ: %s
+                    Chuyên khoa: %s
+                    Thời gian cũ: %s - %s
+                    Thời gian mới: %s - %s
+                    Trạng thái: %s
+                    Lý do: %s
                     """.formatted(
-                    hasText(event.doctorName()) ? event.doctorName() : "Clinic doctor",
+                    hasText(event.doctorName()) ? event.doctorName() : "Bác sĩ phòng khám",
                     hasText(event.doctorSpecialization()) ? event.doctorSpecialization() : "",
                     event.previousStartTime(),
                     event.previousEndTime(),
@@ -211,25 +212,31 @@ public class RabbitMQNotificationListener {
             ).trim();
         }
 
-        return "Your appointment has been " + eventType.toLowerCase().replace("_", " ") + ".";
+        return "Bạn có thông báo mới về lịch hẹn.";
     }
 
 private String destinationFor(Object payload) {
-    if (payload instanceof AppointmentCreatedEvent event && hasText(event.patientEmail())) {
-        return event.patientEmail();
-    }
-    if (payload instanceof AppointmentConfirmedEvent event) {
-        return event.patientId() != null ? event.patientId().toString() : "patient@clinic.com";
-    }
-    if (payload instanceof AppointmentCanceledEvent event && hasText(event.patientEmail())) {
-        return event.patientEmail();
-    }
-    if (payload instanceof AppointmentUpdatedEvent event && hasText(event.patientEmail())) {
+    if (payload instanceof AppointmentCreatedEvent event
+            && hasText(event.patientEmail())) {
         return event.patientEmail();
     }
 
-    throw new IllegalStateException("Thiếu email nhận thông báo cho loại payload: "
-            + payload.getClass().getSimpleName());
+    if (payload instanceof AppointmentConfirmedEvent event
+            && hasText(event.patientEmail())) {
+        return event.patientEmail();
+    }
+
+    if (payload instanceof AppointmentCanceledEvent event
+            && hasText(event.patientEmail())) {
+        return event.patientEmail();
+    }
+
+    if (payload instanceof AppointmentUpdatedEvent event
+            && hasText(event.patientEmail())) {
+        return event.patientEmail();
+    }
+
+    return "patient@clinic.com";
 }
 
     private boolean hasText(String value) {
@@ -250,5 +257,19 @@ private String destinationFor(Object payload) {
             return event.appointmentId();
         }
         return fallback;
+    }
+
+    private java.util.Map<String, Object> payloadFor(Object payload) {
+        java.util.Map<String, Object> map = new java.util.LinkedHashMap<>();
+        if (payload instanceof AppointmentCanceledEvent event) {
+            map.put("appointmentId", event.appointmentId() != null ? event.appointmentId().toString() : "");
+            map.put("doctorName", hasText(event.doctorName()) ? event.doctorName() : "Bác sĩ phòng khám");
+            map.put("patientName", hasText(event.patientEmail()) ? event.patientEmail() : "Bệnh nhân");
+            map.put("cancelReason", hasText(event.cancelReason()) ? event.cancelReason() : "Bác sĩ hủy lịch khám");
+            map.put("reason", hasText(event.cancelReason()) ? event.cancelReason() : "Bác sĩ hủy lịch khám");
+            map.put("appointmentStartTime", event.startTime() != null ? event.startTime().toString() : "");
+            map.put("appointmentDateTime", event.startTime() != null ? event.startTime().toString() : "");
+        }
+        return map;
     }
 }

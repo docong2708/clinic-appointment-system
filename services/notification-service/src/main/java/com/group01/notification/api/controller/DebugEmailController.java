@@ -24,8 +24,8 @@ public class DebugEmailController {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom("mssclinicnotify@gmail.com");
             message.setTo("phudinh193@gmail.com");
-            message.setSubject("Test Email - Direct SMTP");
-            message.setText("This is a test email from Notification Service.\n\nIf you receive this, SMTP is working!");
+            message.setSubject("Email kiểm tra - SMTP trực tiếp");
+            message.setText("Đây là email kiểm tra từ Notification Service.\n\nNếu bạn nhận được email này, cấu hình SMTP đang hoạt động.");
             
             log.info("Attempting to send email...");
             mailSender.send(message);

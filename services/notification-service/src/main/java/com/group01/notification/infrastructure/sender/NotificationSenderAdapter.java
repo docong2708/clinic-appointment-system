@@ -81,6 +81,9 @@ public class NotificationSenderAdapter implements NotificationSenderPort {
 
     private Map<String, Object> notificationPayload(NotificationAggregate aggregate) {
         Map<String, Object> payload = new LinkedHashMap<>();
+        if (aggregate.getPayload() != null && !aggregate.getPayload().isEmpty()) {
+            payload.putAll(aggregate.getPayload());
+        }
         payload.put("title", value(aggregate.getTitle() == null ? null : aggregate.getTitle().value()));
         payload.put("titleHtml", escapeHtml(value(aggregate.getTitle() == null ? null : aggregate.getTitle().value())));
         payload.put("body", escapeHtml(value(aggregate.getBody())).replace("\n", "<br>"));

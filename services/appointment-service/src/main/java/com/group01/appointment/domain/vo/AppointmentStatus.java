@@ -14,4 +14,3 @@ public enum AppointmentStatus {
     CHECKOUT_SUCCESS,
     COMPLETED
 }
-

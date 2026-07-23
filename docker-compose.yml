@@ -168,7 +168,8 @@ services:
       - ../clinic-config-repo:/config-repo
     environment:
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-native}
-      - CONFIG_REPO_URI=${CONFIG_REPO_URI:-file:///config-repo}
+      - CONFIG_NATIVE_REPO_URI=${CONFIG_NATIVE_REPO_URI:-file:///config-repo}
+      - CONFIG_GIT_REPO_URI=${CONFIG_GIT_REPO_URI:-https://github.com/hieult-dev/clinic-config-repo.git}
       - GIT_USERNAME=${GIT_USERNAME:-}
       - GIT_TOKEN=${GIT_TOKEN:-}
       - ENCRYPT_KEY=${ENCRYPT_KEY:?ENCRYPT_KEY is required for decrypting config secrets}
