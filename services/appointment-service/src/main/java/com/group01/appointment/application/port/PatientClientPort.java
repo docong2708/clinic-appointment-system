@@ -30,6 +30,9 @@ public interface PatientClientPort {
             String gender,
             String contactInformation
     ) {
+        public PatientProfile(UUID id, UUID userId, String firstName, String lastName, String contactInformation) {
+            this(id, userId, firstName, lastName, null, null, contactInformation);
+        }
     }
 
     record MedicalRecord(
