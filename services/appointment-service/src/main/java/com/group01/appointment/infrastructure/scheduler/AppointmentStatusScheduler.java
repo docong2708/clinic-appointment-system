@@ -74,7 +74,7 @@ public class AppointmentStatusScheduler {
         for (AppointmentAggregate appointment : pendingExpired) {
             try {
                 appointment.cancel(
-                        CancelReason.of("Auto cancelled because appointment start time passed before confirmation"),
+                        CancelReason.of("Tự động hủy do quá hạn khung giờ khám mà chưa được xác nhận"),
                         SYSTEM_ACTOR_ID,
                         ActorRole.SYSTEM
                 );

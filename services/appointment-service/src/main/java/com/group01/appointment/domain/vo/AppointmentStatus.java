@@ -3,13 +3,13 @@ package com.group01.appointment.domain.vo;
 public enum AppointmentStatus {
     PENDING,
     AWAITING_PAYMENT,
-    CONFIRMED,
-    CANCELLED,
     PAYMENT_EXPIRED,
-    COMPLETED,
     PENDING_PAYMENT,
     PENDING_DOCTOR_CONFIRMATION,
+    CONFIRMED,
+    CANCELLED,
     CANCELLED_BY_DOCTOR,
+    COMPLETED,
     NOT_CHECKIN,
     CHECKIN_SUCCESS,
     CHECKOUT_SUCCESS

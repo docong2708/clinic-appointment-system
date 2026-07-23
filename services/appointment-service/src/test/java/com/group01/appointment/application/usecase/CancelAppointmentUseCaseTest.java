@@ -153,6 +153,8 @@ class CancelAppointmentUseCaseTest {
                         patientUserId,
                         "Patient",
                         "One",
+                        null,
+                        null,
                         "patient@example.com"
                 ));
         when(userClientPort.getUser(patientUserId))

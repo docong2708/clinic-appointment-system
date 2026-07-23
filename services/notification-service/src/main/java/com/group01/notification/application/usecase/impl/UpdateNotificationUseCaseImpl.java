@@ -22,7 +22,17 @@ public class UpdateNotificationUseCaseImpl implements UpdateNotificationUseCase 
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thông báo: " + notificationId.value()));
         
         notification.updateContent(NotificationTitle.of(title), body);
-        
+
+        return notificationRepository.save(notification);
+    }
+
+    @Override
+    public NotificationAggregate markAsRead(NotificationId notificationId) {
+        NotificationAggregate notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông báo: " + notificationId.value()));
+
+        notification.markAsRead();
+
         return notificationRepository.save(notification);
     }
 }
