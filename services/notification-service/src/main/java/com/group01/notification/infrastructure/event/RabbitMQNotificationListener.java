@@ -215,23 +215,18 @@ public class RabbitMQNotificationListener {
         return "Your appointment has been " + eventType.toLowerCase().replace("_", " ") + ".";
     }
 
-private String destinationFor(Object payload) {
-    if (payload instanceof AppointmentCreatedEvent event && hasText(event.patientEmail())) {
-        return event.patientEmail();
+    private String destinationFor(Object payload) {
+        if (payload instanceof AppointmentCreatedEvent event && hasText(event.patientEmail())) {
+            return event.patientEmail();
+        }
+        if (payload instanceof AppointmentCanceledEvent event && hasText(event.patientEmail())) {
+            return event.patientEmail();
+        }
+        if (payload instanceof AppointmentUpdatedEvent event && hasText(event.patientEmail())) {
+            return event.patientEmail();
+        }
+        return "patient@clinic.com";
     }
-    if (payload instanceof AppointmentConfirmedEvent event && hasText(event.patientEmail())) {
-        return event.patientEmail();
-    }
-    if (payload instanceof AppointmentCanceledEvent event && hasText(event.patientEmail())) {
-        return event.patientEmail();
-    }
-    if (payload instanceof AppointmentUpdatedEvent event && hasText(event.patientEmail())) {
-        return event.patientEmail();
-    }
-
-    throw new IllegalStateException("Thiếu email nhận thông báo cho loại payload: "
-            + payload.getClass().getSimpleName());
-}
 
     private boolean hasText(String value) {
         return value != null && !value.isBlank();
